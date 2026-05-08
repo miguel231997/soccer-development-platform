@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mvn validate *)"
+      "Bash(mvn validate *)",
+      "Bash(mvn compile *)",
+      "Bash(psql *)",
+      "Bash(pkill -f \"spring-boot:run\")",
+      "Bash(pkill -f \"soccer-development-api\")"
     ]
   }
 }
