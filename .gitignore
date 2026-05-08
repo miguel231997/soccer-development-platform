@@ -1,0 +1,17 @@
+target/
+.mvn/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+.idea/
+*.iml
+*.iws
+.vscode/
+
+.DS_Store
+
+application-local.yml
+application-secrets.yml
