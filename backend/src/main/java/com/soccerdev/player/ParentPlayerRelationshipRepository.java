@@ -16,4 +16,6 @@ public interface ParentPlayerRelationshipRepository extends JpaRepository<Parent
     Optional<ParentPlayerRelationship> findByParentUserIdAndPlayerId(Long parentUserId, Long playerId);
 
     boolean existsByParentUserIdAndPlayerId(Long parentUserId, Long playerId);
+
+    boolean existsByParentUserIdAndPlayerTeamId(Long parentUserId, Long teamId);
 }

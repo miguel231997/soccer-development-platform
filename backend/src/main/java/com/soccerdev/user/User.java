@@ -1,5 +1,6 @@
 package com.soccerdev.user;
 
+import com.soccerdev.club.Club;
 import com.soccerdev.common.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -44,4 +45,8 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean enabled = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "club_id")
+    private Club club;
 }
