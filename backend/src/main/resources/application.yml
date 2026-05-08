@@ -15,10 +15,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    open-in-view: false
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
   flyway:
@@ -30,6 +30,11 @@ server:
   port: 8080
   servlet:
     context-path: /
+
+jwt:
+  # 64-byte base64 secret — replace with a secure random value in production
+  secret: c29jY2VyLWRldmVsb3BtZW50LXBsYXRmb3JtLWp3dC1zZWNyZXQta2V5LTIwMjQtcHJvZC1jaGFuZ2UtbWU=
+  expiration: 86400000  # 24 hours in milliseconds
 
 logging:
   level:

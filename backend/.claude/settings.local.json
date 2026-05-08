@@ -5,7 +5,15 @@
       "Bash(mvn compile *)",
       "Bash(psql *)",
       "Bash(pkill -f \"spring-boot:run\")",
-      "Bash(pkill -f \"soccer-development-api\")"
+      "Bash(pkill -f \"soccer-development-api\")",
+      "Bash(mvn clean *)",
+      "Bash(mvn spring-boot:run -q)",
+      "Bash(curl -s http://localhost:8080/api/health)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:8080/api/auth/me)",
+      "Bash(curl -s http://localhost:8080/api/auth/me -H 'Authorization: Bearer thisisnotavalidtoken')",
+      "Bash(curl -s -X POST http://localhost:8080/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"bad-email\",\"password\":\"short\"}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"coach@soccerdev.com\",\"password\":\"password123\"}')"
     ]
   }
 }
