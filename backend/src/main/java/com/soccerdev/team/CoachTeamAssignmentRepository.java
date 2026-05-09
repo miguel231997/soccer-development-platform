@@ -13,4 +13,6 @@ public interface CoachTeamAssignmentRepository extends JpaRepository<CoachTeamAs
     List<CoachTeamAssignment> findByTeamId(Long teamId);
 
     boolean existsByCoachUserIdAndTeamId(Long coachUserId, Long teamId);
+
+    boolean existsByCoachUserIdAndTeamClubId(Long coachUserId, Long clubId);
 }

@@ -18,4 +18,6 @@ public interface ParentPlayerRelationshipRepository extends JpaRepository<Parent
     boolean existsByParentUserIdAndPlayerId(Long parentUserId, Long playerId);
 
     boolean existsByParentUserIdAndPlayerTeamId(Long parentUserId, Long teamId);
+
+    boolean existsByParentUserIdAndPlayerTeamClubId(Long parentUserId, Long clubId);
 }

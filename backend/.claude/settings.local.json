@@ -13,7 +13,10 @@
       "Bash(curl -s http://localhost:8080/api/auth/me)",
       "Bash(curl -s http://localhost:8080/api/auth/me -H 'Authorization: Bearer thisisnotavalidtoken')",
       "Bash(curl -s -X POST http://localhost:8080/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"bad-email\",\"password\":\"short\"}')",
-      "Bash(curl -s -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"coach@soccerdev.com\",\"password\":\"password123\"}')"
+      "Bash(curl -s -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"coach@soccerdev.com\",\"password\":\"password123\"}')",
+      "Bash(mvn spring-boot:run)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(kill 31491)"
     ]
   }
 }

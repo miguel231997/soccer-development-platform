@@ -32,6 +32,26 @@ public class AuthorizationService {
     private final CoachTeamAssignmentRepository coachTeamAssignmentRepository;
     private final ParentPlayerRelationshipRepository parentPlayerRelationshipRepository;
 
+    // ── Club ─────────────────────────────────────────────────────────────────
+
+    public boolean canViewClub(User user, Long clubId) {
+        if (isAdmin(user)) return true;
+        return switch (user.getRole()) {
+            case DIRECTOR -> user.getClub() != null && user.getClub().getId().equals(clubId);
+            case COACH    -> coachTeamAssignmentRepository.existsByCoachUserIdAndTeamClubId(user.getId(), clubId);
+            case PARENT   -> parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerTeamClubId(user.getId(), clubId);
+            default       -> false;
+        };
+    }
+
+    public boolean canEditClub(User user, Long clubId) {
+        if (isAdmin(user)) return true;
+        if (user.getRole() == UserRole.DIRECTOR) {
+            return user.getClub() != null && user.getClub().getId().equals(clubId);
+        }
+        return false;
+    }
+
     // ── Player ───────────────────────────────────────────────────────────────
 
     public boolean canViewPlayer(User user, Long playerId) {

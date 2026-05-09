@@ -1,6 +1,8 @@
 package com.soccerdev.club;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -9,4 +11,10 @@ import java.util.List;
 public interface ClubRepository extends JpaRepository<Club, Long> {
 
     List<Club> findByStateIgnoreCase(String state);
+
+    @Query("SELECT DISTINCT t.club FROM CoachTeamAssignment cta JOIN cta.team t WHERE cta.coachUser.id = :coachId")
+    List<Club> findByAssignedCoachId(@Param("coachId") Long coachId);
+
+    @Query("SELECT DISTINCT p.team.club FROM ParentPlayerRelationship ppr JOIN ppr.player p WHERE ppr.parentUser.id = :parentId AND p.team IS NOT NULL")
+    List<Club> findByParentId(@Param("parentId") Long parentId);
 }
