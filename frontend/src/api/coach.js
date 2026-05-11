@@ -8,7 +8,13 @@ export const getTeam = (teamId) => api.get(`/api/teams/${teamId}`).then((r) => r
 export const listMatches = () => api.get('/api/matches').then((r) => r.data.data)
 export const listTeamMatches = (teamId) => api.get(`/api/teams/${teamId}/matches`).then((r) => r.data.data)
 export const getMatch = (matchId) => api.get(`/api/matches/${matchId}`).then((r) => r.data.data)
+export const createMatch = (data) => api.post('/api/matches', data).then((r) => r.data.data)
 export const finalizeMatch = (matchId) => api.post(`/api/matches/${matchId}/finalize`).then((r) => r.data.data)
+
+// Seasons & competitions (for match creation dropdowns)
+export const listSeasons = () => api.get('/api/seasons').then((r) => r.data.data)
+export const listSeasonPhases = (seasonId) => api.get(`/api/seasons/${seasonId}/phases`).then((r) => r.data.data)
+export const listCompetitions = () => api.get('/api/competitions').then((r) => r.data.data)
 
 // Players
 export const listPlayers = () => api.get('/api/players').then((r) => r.data.data)
