@@ -6,10 +6,15 @@ import {
   getChildEvaluations,
   getChildReports,
   listMyRegistrationRequests,
+  submitPlayerRegistration,
+  joinTeamWithCode,
 } from '../../api/parent'
+import { listTeams } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
+
+const POSITIONS = ['GK','CB','LB','RB','LWB','RWB','CDM','CM','CAM','LM','RM','LW','RW','CF','ST']
 
 // ─── Rating display helpers ───────────────────────────────────────────────────
 
@@ -94,6 +99,10 @@ export default function ParentDashboardPage() {
           {selected && <ChildPanel player={selected} />}
         </>
       )}
+
+      {/* Actions */}
+      <RegisterChildForm onSubmitted={() => window.location.reload()} />
+      <JoinTeamForm onJoined={() => window.location.reload()} />
 
       {/* Registration requests */}
       <RegistrationRequests requests={requests} loading={rLoading} />
@@ -391,6 +400,203 @@ function ReportCard({ report }) {
         </div>
       )}
     </div>
+  )
+}
+
+// ─── Register child form ─────────────────────────────────────────────────────
+
+function RegisterChildForm({ onSubmitted }) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [form, setForm] = useState({
+    teamId: '', firstName: '', lastName: '', dateOfBirth: '',
+    primaryPosition: '', secondaryPosition: '', strongFoot: 'RIGHT', jerseyNumber: '',
+  })
+
+  const teamsFetcher = useCallback(() => listTeams(), [])
+  const { data: teams } = useFetch(teamsFetcher)
+
+  const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault(); setError(''); setSuccess(''); setSaving(true)
+    try {
+      await submitPlayerRegistration({
+        teamId: Number(form.teamId),
+        firstName: form.firstName,
+        lastName: form.lastName,
+        dateOfBirth: form.dateOfBirth,
+        primaryPosition: form.primaryPosition,
+        secondaryPosition: form.secondaryPosition || null,
+        strongFoot: form.strongFoot || null,
+        jerseyNumber: form.jerseyNumber ? Number(form.jerseyNumber) : null,
+      })
+      setSuccess(`Registration request for ${form.firstName} submitted! The coach will review it shortly.`)
+      setForm({ teamId: '', firstName: '', lastName: '', dateOfBirth: '', primaryPosition: '', secondaryPosition: '', strongFoot: 'RIGHT', jerseyNumber: '' })
+      setOpen(false)
+      onSubmitted()
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to submit request.')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-700">Register a Child</h2>
+        <button onClick={() => setOpen((o) => !o)}
+          className="text-sm bg-green-700 text-white px-4 py-2 rounded hover:bg-green-600">
+          {open ? 'Cancel' : '+ Register Child'}
+        </button>
+      </div>
+
+      {success && <p className="text-green-700 bg-green-50 border border-green-200 rounded p-3 text-sm">{success}</p>}
+
+      {open && (
+        <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
+          <p className="text-sm text-gray-500">
+            Fill in your child's details. The coach will review and approve the request,
+            creating your child's player profile and linking them to you.
+          </p>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Team *</label>
+              <select value={form.teamId} onChange={set('teamId')} required
+                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Select team…</option>
+                {(teams ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">First name *</label>
+                <input type="text" value={form.firstName} onChange={set('firstName')} required
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last name *</label>
+                <input type="text" value={form.lastName} onChange={set('lastName')} required
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date of birth *</label>
+                <input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} required
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Jersey number</label>
+                <input type="number" min="1" max="99" value={form.jerseyNumber} onChange={set('jerseyNumber')}
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Primary position *</label>
+                <select value={form.primaryPosition} onChange={set('primaryPosition')} required
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <option value="">—</option>
+                  {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Secondary position</label>
+                <select value={form.secondaryPosition} onChange={set('secondaryPosition')}
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <option value="">—</option>
+                  {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Strong foot</label>
+                <select value={form.strongFoot} onChange={set('strongFoot')}
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <option value="RIGHT">Right</option>
+                  <option value="LEFT">Left</option>
+                  <option value="BOTH">Both</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" disabled={saving}
+                className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50">
+                {saving ? 'Submitting…' : 'Submit Request'}
+              </button>
+              <button type="button" onClick={() => setOpen(false)}
+                className="text-sm border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ─── Join another team form ───────────────────────────────────────────────────
+
+function JoinTeamForm({ onJoined }) {
+  const [open, setOpen] = useState(false)
+  const [code, setCode] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  const handleSubmit = async (e) => {
+    e.preventDefault(); setError(''); setSuccess(''); setSaving(true)
+    try {
+      await joinTeamWithCode(code.trim())
+      setSuccess('Successfully joined the team! You can now register children for this team.')
+      setCode(''); setOpen(false); onJoined()
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.data?.message || 'Invalid or expired code.')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-700">Join Another Team</h2>
+          <p className="text-xs text-gray-400">Have a child on a second team? Enter that team's parent code.</p>
+        </div>
+        <button onClick={() => setOpen((o) => !o)}
+          className="text-sm border border-green-700 text-green-700 px-4 py-2 rounded hover:bg-green-50">
+          {open ? 'Cancel' : 'Enter Code'}
+        </button>
+      </div>
+
+      {success && <p className="text-green-700 bg-green-50 border border-green-200 rounded p-3 text-sm">{success}</p>}
+
+      {open && (
+        <div className="bg-white border border-gray-200 rounded-lg p-5">
+          <p className="text-sm text-gray-500 mb-4">
+            Ask the other team's administrator for a parent registration code.
+            You won't create a new account — this just adds you to the team so you can register your child there.
+          </p>
+          {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+          <form onSubmit={handleSubmit} className="flex gap-3">
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="e.g. SLSA-PARENT-2025"
+              required
+              className="flex-1 border rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-500 uppercase"
+            />
+            <button type="submit" disabled={saving || !code.trim()}
+              className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50">
+              {saving ? 'Joining…' : 'Join'}
+            </button>
+          </form>
+        </div>
+      )}
+    </section>
   )
 }
 

@@ -1,8 +1,9 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useFetch } from '../../hooks/useFetch'
 import { listTeams, listMatches } from '../../api/coach'
+import { listRegistrationRequests, approveRegistrationRequest, rejectRegistrationRequest } from '../../api/admin'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 
@@ -135,7 +136,95 @@ export default function DashboardPage() {
         <Link to="/matches" className="text-sm border border-green-700 text-green-700 px-4 py-2 rounded hover:bg-green-50">All Matches</Link>
         <Link to="/players" className="text-sm border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50">Players</Link>
       </div>
+
+      <PendingRegistrationRequests />
     </div>
+  )
+}
+
+function PendingRegistrationRequests() {
+  const fetcher = useCallback(() => listRegistrationRequests(), [])
+  const { data: requests, loading } = useFetch(fetcher)
+  const [localUpdates, setLocalUpdates] = useState({})
+  const [acting, setActing] = useState(null)
+  const [rejectId, setRejectId] = useState(null)
+  const [rejectReason, setRejectReason] = useState('')
+
+  const all = (requests ?? []).map((r) => ({ ...r, ...(localUpdates[r.id] ?? {}) }))
+  const pending = all.filter((r) => r.status === 'PENDING')
+
+  if (loading || pending.length === 0) return null
+
+  const handleApprove = async (id) => {
+    setActing(id)
+    try {
+      const updated = await approveRegistrationRequest(id)
+      setLocalUpdates((p) => ({ ...p, [id]: updated }))
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to approve.')
+    } finally { setActing(null) }
+  }
+
+  const handleReject = async () => {
+    setActing(rejectId)
+    try {
+      const updated = await rejectRegistrationRequest(rejectId, rejectReason)
+      setLocalUpdates((p) => ({ ...p, [rejectId]: updated }))
+      setRejectId(null); setRejectReason('')
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to reject.')
+    } finally { setActing(null) }
+  }
+
+  return (
+    <section>
+      <h2 className="text-lg font-semibold text-gray-700 mb-3">
+        Player Registration Requests
+        <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded font-medium">{pending.length} pending</span>
+      </h2>
+      <div className="bg-white border border-yellow-200 rounded-lg divide-y divide-gray-100">
+        {pending.map((r) => (
+          <div key={r.id} className="px-4 py-3 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-medium text-sm text-gray-800">{r.firstName} {r.lastName}</p>
+              <p className="text-xs text-gray-500">
+                {r.teamName} · {r.primaryPosition}{r.jerseyNumber ? ` · #${r.jerseyNumber}` : ''} · DOB: {r.dateOfBirth}
+              </p>
+              <p className="text-xs text-gray-400">Submitted by {r.parentUserName}</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button disabled={acting === r.id} onClick={() => handleApprove(r.id)}
+                className="text-xs bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600 disabled:opacity-50">
+                {acting === r.id ? '…' : 'Approve'}
+              </button>
+              <button disabled={acting === r.id} onClick={() => setRejectId(r.id)}
+                className="text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-50 disabled:opacity-50">
+                Reject
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {rejectId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="font-semibold text-gray-800">Reject request</h3>
+            <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Reason (optional)" rows={3}
+              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => { setRejectId(null); setRejectReason('') }}
+                className="text-sm border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50">Cancel</button>
+              <button disabled={acting} onClick={handleReject}
+                className="text-sm bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500 disabled:opacity-50">
+                {acting ? 'Rejecting…' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   )
 }
 

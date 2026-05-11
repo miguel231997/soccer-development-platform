@@ -1,6 +1,8 @@
 package com.soccerdev.auth;
 
 import com.soccerdev.common.ApiResponse;
+import com.soccerdev.security.CurrentUserService;
+import com.soccerdev.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final CurrentUserService currentUserService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
@@ -36,5 +39,14 @@ public class AuthController {
             @AuthenticationPrincipal UserDetails userDetails) {
         CurrentUserResponse response = authService.getCurrentUser(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @PostMapping("/join-team")
+    public ResponseEntity<ApiResponse<Void>> joinTeam(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid JoinTeamRequest request) {
+        User user = currentUserService.getUser(userDetails);
+        authService.joinTeam(user, request.getRegistrationCode());
+        return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).message("Joined team successfully").build());
     }
 }

@@ -103,6 +103,41 @@ public class AuthService {
         return toAuthResponse(user, token);
     }
 
+    @Transactional
+    public void joinTeam(User user, String registrationCode) {
+        RegistrationCode code = registrationCodeRepository.findByCode(registrationCode)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid registration code"));
+
+        if (!code.isActive())
+            throw new IllegalArgumentException("Registration code is no longer active");
+        if (code.getExpiresAt() != null && code.getExpiresAt().isBefore(Instant.now()))
+            throw new IllegalArgumentException("Registration code has expired");
+        if (code.getMaxUses() != null && code.getUsesCount() >= code.getMaxUses())
+            throw new IllegalArgumentException("Registration code has reached its maximum uses");
+        if (code.getRole() != user.getRole())
+            throw new IllegalArgumentException("This code is for a " + code.getRole() + " account");
+
+        if (teamMembershipRepository.existsByUserIdAndTeamId(user.getId(), code.getTeam().getId())) {
+            return;
+        }
+
+        teamMembershipRepository.save(TeamMembership.builder()
+                .user(user)
+                .team(code.getTeam())
+                .role(user.getRole())
+                .build());
+
+        if (user.getRole() == UserRole.COACH) {
+            coachTeamAssignmentRepository.save(CoachTeamAssignment.builder()
+                    .coachUser(user)
+                    .team(code.getTeam())
+                    .build());
+        }
+
+        code.setUsesCount(code.getUsesCount() + 1);
+        registrationCodeRepository.save(code);
+    }
+
     @Transactional(readOnly = true)
     public CurrentUserResponse getCurrentUser(String email) {
         User user = userRepository.findByEmail(email)
