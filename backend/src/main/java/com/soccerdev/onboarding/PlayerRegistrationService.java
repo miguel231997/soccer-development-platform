@@ -52,6 +52,13 @@ public class PlayerRegistrationService {
             if (!parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(parent.getId(), existingPlayer.getId())) {
                 throw new AccessDeniedException("This player is not linked to your account");
             }
+            // Prevent duplicate team enrollment
+            if (playerTeamAssignmentRepository.existsByPlayerIdAndTeamIdAndActiveTrue(existingPlayer.getId(), team.getId())) {
+                throw new IllegalArgumentException(existingPlayer.getFirstName() + " is already on this team");
+            }
+            if (playerRegistrationRepository.existsByExistingPlayerIdAndTeamIdAndStatus(existingPlayer.getId(), team.getId(), RegistrationStatus.PENDING)) {
+                throw new IllegalArgumentException("A registration request for this team is already pending");
+            }
         } else {
             // New child: require name/dob/position
             if (input.getFirstName() == null || input.getFirstName().isBlank())
