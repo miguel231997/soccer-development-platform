@@ -1,9 +1,7 @@
 package com.soccerdev.auth;
 
-import com.soccerdev.user.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -24,6 +22,6 @@ public class RegisterRequest {
     @NotBlank(message = "Last name is required")
     private String lastName;
 
-    @NotNull(message = "Role is required")
-    private UserRole role;
+    @NotBlank(message = "Registration code is required")
+    private String registrationCode;
 }

@@ -5,14 +5,14 @@ import lombok.Getter;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
 public class PlayerResponse {
 
     private Long id;
-    private Long teamId;
-    private String teamName;
+    private List<PlayerTeamSummary> teams;
     private String firstName;
     private String lastName;
     private LocalDate dateOfBirth;

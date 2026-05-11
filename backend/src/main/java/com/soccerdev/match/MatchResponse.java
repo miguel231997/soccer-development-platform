@@ -34,4 +34,7 @@ public class MatchResponse {
     private Integer awayScore;
 
     private boolean finalized;
+
+    private Instant createdAt;
+    private Instant updatedAt;
 }

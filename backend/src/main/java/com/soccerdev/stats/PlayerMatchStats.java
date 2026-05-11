@@ -1,6 +1,6 @@
 package com.soccerdev.stats;
 
-import com.soccerdev.common.BaseIdEntity;
+import com.soccerdev.common.BaseEntity;
 import com.soccerdev.match.Match;
 import com.soccerdev.player.Player;
 import jakarta.persistence.*;
@@ -23,7 +23,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PlayerMatchStats extends BaseIdEntity {
+public class PlayerMatchStats extends BaseEntity {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

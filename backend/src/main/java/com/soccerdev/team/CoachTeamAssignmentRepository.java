@@ -1,6 +1,8 @@
 package com.soccerdev.team;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,4 +17,7 @@ public interface CoachTeamAssignmentRepository extends JpaRepository<CoachTeamAs
     boolean existsByCoachUserIdAndTeamId(Long coachUserId, Long teamId);
 
     boolean existsByCoachUserIdAndTeamClubId(Long coachUserId, Long clubId);
+
+    @Query("SELECT cta.team.id FROM CoachTeamAssignment cta WHERE cta.coachUser.id = :coachUserId")
+    List<Long> findTeamIdsByCoachUserId(@Param("coachUserId") Long coachUserId);
 }

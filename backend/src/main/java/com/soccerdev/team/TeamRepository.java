@@ -17,6 +17,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Query("SELECT t FROM CoachTeamAssignment cta JOIN cta.team t WHERE cta.coachUser.id = :coachId")
     List<Team> findByAssignedCoachId(@Param("coachId") Long coachId);
 
-    @Query("SELECT DISTINCT p.team FROM ParentPlayerRelationship ppr JOIN ppr.player p WHERE ppr.parentUser.id = :parentId AND p.team IS NOT NULL")
+    @Query("SELECT DISTINCT pta.team FROM ParentPlayerRelationship ppr JOIN ppr.player p JOIN p.teamAssignments pta WHERE ppr.parentUser.id = :parentId AND pta.active = true")
     List<Team> findByParentId(@Param("parentId") Long parentId);
 }

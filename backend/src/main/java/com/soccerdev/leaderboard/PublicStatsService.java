@@ -49,7 +49,12 @@ public class PublicStatsService {
 
         List<PlayerMatchStats> stats = statsRepository.findByPlayerId(playerId);
 
-        Team team = player.getTeam();
+        // Use first active team assignment for profile context; null-safe if player has no active team yet
+        var activeAssignment = player.getTeamAssignments().stream()
+                .filter(ta -> ta.isActive())
+                .findFirst()
+                .orElse(null);
+        Team team = activeAssignment != null ? activeAssignment.getTeam() : null;
         Club club = team != null ? team.getClub() : null;
 
         return PublicPlayerProfile.builder()
@@ -111,9 +116,7 @@ public class PublicStatsService {
         var stream = raw.stream();
 
         if (ageGroup != null) {
-            stream = stream.filter(s ->
-                    s.getPlayer().getTeam() != null &&
-                    ageGroup == s.getPlayer().getTeam().getAgeGroup());
+            stream = stream.filter(s -> ageGroup == s.getMatch().getTeam().getAgeGroup());
         }
         if (position != null) {
             stream = stream.filter(s -> position == s.getPlayer().getPrimaryPosition());
@@ -131,7 +134,7 @@ public class PublicStatsService {
 
     private PlayerLeaderboardEntry toEntry(List<PlayerMatchStats> stats) {
         Player p = stats.get(0).getPlayer();
-        Team t = p.getTeam();
+        Team t = stats.get(0).getMatch().getTeam();
         Club c = t != null ? t.getClub() : null;
 
         return PlayerLeaderboardEntry.builder()

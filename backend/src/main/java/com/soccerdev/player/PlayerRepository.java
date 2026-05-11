@@ -11,19 +11,78 @@ import java.util.Optional;
 @Repository
 public interface PlayerRepository extends JpaRepository<Player, Long> {
 
-    List<Player> findByTeamId(Long teamId);
+    @Query("""
+            SELECT DISTINCT p FROM Player p
+            LEFT JOIN FETCH p.teamAssignments ta
+            LEFT JOIN FETCH ta.team t
+            LEFT JOIN FETCH t.club
+            LEFT JOIN FETCH ta.season
+            """)
+    List<Player> findAllWithTeams();
 
-    List<Player> findByTeamIdAndActive(Long teamId, boolean active);
+    @Query("""
+            SELECT DISTINCT p FROM Player p
+            LEFT JOIN FETCH p.teamAssignments ta
+            LEFT JOIN FETCH ta.team t
+            LEFT JOIN FETCH t.club
+            LEFT JOIN FETCH ta.season
+            WHERE EXISTS (
+                SELECT 1 FROM PlayerTeamAssignment pta2
+                WHERE pta2.player.id = p.id AND pta2.team.id = :teamId AND pta2.active = true
+            )
+            """)
+    List<Player> findByTeamId(@Param("teamId") Long teamId);
 
-    List<Player> findByTeamIdIsNull();
+    @Query("""
+            SELECT DISTINCT p FROM Player p
+            LEFT JOIN FETCH p.teamAssignments ta
+            LEFT JOIN FETCH ta.team t
+            LEFT JOIN FETCH t.club
+            LEFT JOIN FETCH ta.season
+            WHERE EXISTS (
+                SELECT 1 FROM PlayerTeamAssignment pta2
+                WHERE pta2.player.id = p.id AND pta2.team.club.id = :clubId AND pta2.active = true
+            )
+            """)
+    List<Player> findByTeamClubId(@Param("clubId") Long clubId);
 
-    List<Player> findByTeamClubId(Long clubId);
-
-    @Query("SELECT p FROM Player p WHERE p.team.id IN (SELECT cta.team.id FROM CoachTeamAssignment cta WHERE cta.coachUser.id = :coachId)")
+    @Query("""
+            SELECT DISTINCT p FROM Player p
+            LEFT JOIN FETCH p.teamAssignments ta
+            LEFT JOIN FETCH ta.team t
+            LEFT JOIN FETCH t.club
+            LEFT JOIN FETCH ta.season
+            WHERE EXISTS (
+                SELECT 1 FROM PlayerTeamAssignment pta2
+                WHERE pta2.player.id = p.id AND pta2.active = true
+                AND pta2.team.id IN (
+                    SELECT cta.team.id FROM CoachTeamAssignment cta WHERE cta.coachUser.id = :coachId
+                )
+            )
+            """)
     List<Player> findByAssignedCoachId(@Param("coachId") Long coachId);
 
-    @Query("SELECT ppr.player FROM ParentPlayerRelationship ppr WHERE ppr.parentUser.id = :parentId")
+    @Query("""
+            SELECT DISTINCT p FROM Player p
+            LEFT JOIN FETCH p.teamAssignments ta
+            LEFT JOIN FETCH ta.team t
+            LEFT JOIN FETCH t.club
+            LEFT JOIN FETCH ta.season
+            WHERE p.id IN (
+                SELECT ppr.player.id FROM ParentPlayerRelationship ppr WHERE ppr.parentUser.id = :parentId
+            )
+            """)
     List<Player> findByParentId(@Param("parentId") Long parentId);
+
+    @Query("""
+            SELECT DISTINCT p FROM Player p
+            LEFT JOIN FETCH p.teamAssignments ta
+            LEFT JOIN FETCH ta.team t
+            LEFT JOIN FETCH t.club
+            LEFT JOIN FETCH ta.season
+            WHERE p.id = :id
+            """)
+    Optional<Player> findByIdWithTeams(@Param("id") Long id);
 
     Optional<Player> findByIdAndPublicProfileEnabledTrueAndActiveTrue(Long id);
 }

@@ -1,6 +1,8 @@
 package com.soccerdev.player;
 
 import com.soccerdev.security.AuthorizationService;
+import com.soccerdev.team.PlayerTeamAssignment;
+import com.soccerdev.team.PlayerTeamAssignmentRepository;
 import com.soccerdev.team.Team;
 import com.soccerdev.team.TeamRepository;
 import com.soccerdev.user.User;
@@ -21,11 +23,12 @@ public class PlayerService {
 
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
+    private final PlayerTeamAssignmentRepository playerTeamAssignmentRepository;
     private final AuthorizationService authorizationService;
 
     public List<PlayerResponse> list(User user) {
         List<Player> players = switch (user.getRole()) {
-            case ADMIN    -> playerRepository.findAll();
+            case ADMIN    -> playerRepository.findAllWithTeams();
             case DIRECTOR -> user.getClub() != null
                     ? playerRepository.findByTeamClubId(user.getClub().getId())
                     : Collections.emptyList();
@@ -37,7 +40,7 @@ public class PlayerService {
     }
 
     public PlayerResponse getById(User user, Long id) {
-        Player player = findOrThrow(id);
+        Player player = findWithTeams(id);
         if (!authorizationService.canViewPlayer(user, id)) {
             throw new AccessDeniedException("Access denied");
         }
@@ -58,7 +61,6 @@ public class PlayerService {
         }
 
         Player player = Player.builder()
-                .team(team)
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .dateOfBirth(request.getDateOfBirth())
@@ -67,25 +69,27 @@ public class PlayerService {
                 .strongFoot(request.getStrongFoot())
                 .jerseyNumber(request.getJerseyNumber())
                 .publicProfileEnabled(request.isPublicProfileEnabled())
-                .profileImageUrl(request.getProfileImageUrl())
                 .build();
-        return toResponse(playerRepository.save(player));
+        player = playerRepository.save(player);
+
+        if (team != null) {
+            playerTeamAssignmentRepository.save(PlayerTeamAssignment.builder()
+                    .player(player)
+                    .team(team)
+                    .active(true)
+                    .build());
+        }
+
+        return toResponse(findWithTeams(player.getId()));
     }
 
     @Transactional
     public PlayerResponse update(User user, Long id, PlayerRequest request) {
-        Player player = findOrThrow(id);
+        Player player = findWithTeams(id);
         if (!authorizationService.canEditPlayer(user, id)) {
             throw new AccessDeniedException("Access denied");
         }
 
-        Team team = null;
-        if (request.getTeamId() != null) {
-            team = teamRepository.findById(request.getTeamId())
-                    .orElseThrow(() -> new EntityNotFoundException("Team not found with id: " + request.getTeamId()));
-        }
-
-        player.setTeam(team);
         player.setFirstName(request.getFirstName());
         player.setLastName(request.getLastName());
         player.setDateOfBirth(request.getDateOfBirth());
@@ -94,13 +98,13 @@ public class PlayerService {
         player.setStrongFoot(request.getStrongFoot());
         player.setJerseyNumber(request.getJerseyNumber());
         player.setPublicProfileEnabled(request.isPublicProfileEnabled());
-        player.setProfileImageUrl(request.getProfileImageUrl());
         return toResponse(playerRepository.save(player));
     }
 
     @Transactional
     public void delete(User user, Long id) {
-        Player player = findOrThrow(id);
+        Player player = playerRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Player not found with id: " + id));
         if (!authorizationService.canEditPlayer(user, id)) {
             throw new AccessDeniedException("Access denied");
         }
@@ -108,16 +112,26 @@ public class PlayerService {
         playerRepository.save(player);
     }
 
-    private Player findOrThrow(Long id) {
-        return playerRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Player not found with id: " + id));
-    }
+    // ── Package-private helpers used by PlayerImageService ───────────────────
 
-    private PlayerResponse toResponse(Player player) {
+    PlayerResponse toResponse(Player player) {
+        List<PlayerTeamSummary> teams = player.getTeamAssignments() == null
+                ? List.of()
+                : player.getTeamAssignments().stream()
+                        .map(ta -> PlayerTeamSummary.builder()
+                                .teamId(ta.getTeam().getId())
+                                .teamName(ta.getTeam().getName())
+                                .seasonId(ta.getSeason() != null ? ta.getSeason().getId() : null)
+                                .seasonName(ta.getSeason() != null ? ta.getSeason().getName() : null)
+                                .active(ta.isActive())
+                                .joinedAt(ta.getJoinedAt())
+                                .leftAt(ta.getLeftAt())
+                                .build())
+                        .toList();
+
         return PlayerResponse.builder()
                 .id(player.getId())
-                .teamId(player.getTeam() != null ? player.getTeam().getId() : null)
-                .teamName(player.getTeam() != null ? player.getTeam().getName() : null)
+                .teams(teams)
                 .firstName(player.getFirstName())
                 .lastName(player.getLastName())
                 .dateOfBirth(player.getDateOfBirth())
@@ -131,5 +145,10 @@ public class PlayerService {
                 .createdAt(player.getCreatedAt())
                 .updatedAt(player.getUpdatedAt())
                 .build();
+    }
+
+    private Player findWithTeams(Long id) {
+        return playerRepository.findByIdWithTeams(id)
+                .orElseThrow(() -> new EntityNotFoundException("Player not found with id: " + id));
     }
 }

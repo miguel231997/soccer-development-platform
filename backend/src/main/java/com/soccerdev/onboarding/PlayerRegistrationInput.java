@@ -1,5 +1,7 @@
-package com.soccerdev.player;
+package com.soccerdev.onboarding;
 
+import com.soccerdev.player.Position;
+import com.soccerdev.player.StrongFoot;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,8 +10,9 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class PlayerRequest {
+public class PlayerRegistrationInput {
 
+    @NotNull
     private Long teamId;
 
     @NotBlank
@@ -30,6 +33,4 @@ public class PlayerRequest {
 
     @Min(1) @Max(99)
     private Integer jerseyNumber;
-
-    private boolean publicProfileEnabled;
 }

@@ -16,6 +16,7 @@ import com.soccerdev.team.AgeGroup;
 import com.soccerdev.team.CoachTeamAssignmentRepository;
 import com.soccerdev.team.CompetitiveLevel;
 import com.soccerdev.team.Gender;
+import com.soccerdev.team.PlayerTeamAssignmentRepository;
 import com.soccerdev.team.Team;
 import com.soccerdev.team.TeamRepository;
 import com.soccerdev.user.User;
@@ -30,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -44,6 +46,7 @@ class AuthorizationServiceTest {
     @Mock private DevelopmentReportRepository reportRepository;
     @Mock private CoachTeamAssignmentRepository coachTeamAssignmentRepository;
     @Mock private ParentPlayerRelationshipRepository parentPlayerRelationshipRepository;
+    @Mock private PlayerTeamAssignmentRepository playerTeamAssignmentRepository;
 
     @InjectMocks
     private AuthorizationService authorizationService;
@@ -71,7 +74,7 @@ class AuthorizationServiceTest {
         otherClub = makeClub(2L, "Rivals FC");
 
         team = makeTeam(10L, club);
-        player = makePlayer(100L, team);
+        player = makePlayer(100L);
 
         match = Match.builder()
                 .team(team)
@@ -121,34 +124,31 @@ class AuthorizationServiceTest {
 
         @Test
         void director_sameClub_true() {
-            when(playerRepository.findById(player.getId())).thenReturn(Optional.of(player));
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(player.getId(), club.getId())).thenReturn(true);
             assertThat(authorizationService.canViewPlayer(director, player.getId())).isTrue();
         }
 
         @Test
         void director_differentClub_false() {
-            when(playerRepository.findById(player.getId())).thenReturn(Optional.of(player));
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(player.getId(), otherClub.getId())).thenReturn(false);
             assertThat(authorizationService.canViewPlayer(directorOther, player.getId())).isFalse();
         }
 
         @Test
         void director_playerHasNoTeam_false() {
-            Player unassigned = makePlayer(101L, null);
-            when(playerRepository.findById(101L)).thenReturn(Optional.of(unassigned));
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(101L, club.getId())).thenReturn(false);
             assertThat(authorizationService.canViewPlayer(director, 101L)).isFalse();
         }
 
         @Test
         void coach_assigned_true() {
-            when(playerRepository.findById(player.getId())).thenReturn(Optional.of(player));
-            when(coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(coach.getId(), team.getId())).thenReturn(true);
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndCoachUserId(player.getId(), coach.getId())).thenReturn(true);
             assertThat(authorizationService.canViewPlayer(coach, player.getId())).isTrue();
         }
 
         @Test
         void coach_notAssigned_false() {
-            when(playerRepository.findById(player.getId())).thenReturn(Optional.of(player));
-            when(coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(coach.getId(), team.getId())).thenReturn(false);
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndCoachUserId(player.getId(), coach.getId())).thenReturn(false);
             assertThat(authorizationService.canViewPlayer(coach, player.getId())).isFalse();
         }
 
@@ -171,7 +171,7 @@ class AuthorizationServiceTest {
 
         @Test
         void notFound_false() {
-            when(playerRepository.findById(999L)).thenReturn(Optional.empty());
+            // No active assignment for player 999 → coach check returns false
             assertThat(authorizationService.canViewPlayer(coach, 999L)).isFalse();
         }
     }
@@ -198,8 +198,7 @@ class AuthorizationServiceTest {
 
         @Test
         void coach_assigned_true() {
-            when(playerRepository.findById(player.getId())).thenReturn(Optional.of(player));
-            when(coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(coach.getId(), team.getId())).thenReturn(true);
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndCoachUserId(player.getId(), coach.getId())).thenReturn(true);
             assertThat(authorizationService.canEditPlayer(coach, player.getId())).isTrue();
         }
     }
@@ -236,14 +235,15 @@ class AuthorizationServiceTest {
         @Test
         void parent_hasPlayerOnTeam_true() {
             when(teamRepository.findById(team.getId())).thenReturn(Optional.of(team));
-            when(parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerTeamId(parent.getId(), team.getId())).thenReturn(true);
+            when(parentPlayerRelationshipRepository.findPlayerIdsByParentUserId(parent.getId())).thenReturn(Set.of(player.getId()));
+            when(playerTeamAssignmentRepository.existsByPlayerIdInAndTeamIdAndActiveTrue(Set.of(player.getId()), team.getId())).thenReturn(true);
             assertThat(authorizationService.canViewTeam(parent, team.getId())).isTrue();
         }
 
         @Test
         void parent_noPlayerOnTeam_false() {
             when(teamRepository.findById(team.getId())).thenReturn(Optional.of(team));
-            when(parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerTeamId(parent.getId(), team.getId())).thenReturn(false);
+            when(parentPlayerRelationshipRepository.findPlayerIdsByParentUserId(parent.getId())).thenReturn(Set.of());
             assertThat(authorizationService.canViewTeam(parent, team.getId())).isFalse();
         }
 
@@ -303,7 +303,8 @@ class AuthorizationServiceTest {
         @Test
         void parent_hasPlayerOnMatchTeam_true() {
             when(matchRepository.findById(match.getId())).thenReturn(Optional.of(match));
-            when(parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerTeamId(parent.getId(), team.getId())).thenReturn(true);
+            when(parentPlayerRelationshipRepository.findPlayerIdsByParentUserId(parent.getId())).thenReturn(Set.of(player.getId()));
+            when(playerTeamAssignmentRepository.existsByPlayerIdInAndTeamIdAndActiveTrue(Set.of(player.getId()), team.getId())).thenReturn(true);
             assertThat(authorizationService.canViewMatch(parent, match.getId())).isTrue();
         }
 
@@ -351,6 +352,7 @@ class AuthorizationServiceTest {
         @Test
         void director_sameClub_true() {
             when(evaluationRepository.findById(evaluation.getId())).thenReturn(Optional.of(evaluation));
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(player.getId(), club.getId())).thenReturn(true);
             assertThat(authorizationService.canViewEvaluation(director, evaluation.getId())).isTrue();
         }
 
@@ -416,6 +418,7 @@ class AuthorizationServiceTest {
         @Test
         void director_sameClub_true() {
             when(evaluationRepository.findById(evaluation.getId())).thenReturn(Optional.of(evaluation));
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(player.getId(), club.getId())).thenReturn(true);
             assertThat(authorizationService.canEditEvaluation(director, evaluation.getId())).isTrue();
         }
     }
@@ -433,13 +436,14 @@ class AuthorizationServiceTest {
         @Test
         void director_sameClub_true() {
             when(reportRepository.findById(report.getId())).thenReturn(Optional.of(report));
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(player.getId(), club.getId())).thenReturn(true);
             assertThat(authorizationService.canViewDevelopmentReport(director, report.getId())).isTrue();
         }
 
         @Test
         void coach_assignedToPlayerTeam_true() {
             when(reportRepository.findById(report.getId())).thenReturn(Optional.of(report));
-            when(coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(coach.getId(), team.getId())).thenReturn(true);
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndCoachUserId(player.getId(), coach.getId())).thenReturn(true);
             assertThat(authorizationService.canViewDevelopmentReport(coach, report.getId())).isTrue();
         }
 
@@ -499,6 +503,7 @@ class AuthorizationServiceTest {
         @Test
         void director_sameClub_true() {
             when(reportRepository.findById(report.getId())).thenReturn(Optional.of(report));
+            when(playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(player.getId(), club.getId())).thenReturn(true);
             assertThat(authorizationService.canEditDevelopmentReport(director, report.getId())).isTrue();
         }
 
@@ -528,9 +533,8 @@ class AuthorizationServiceTest {
         return t;
     }
 
-    private Player makePlayer(Long id, Team team) {
+    private Player makePlayer(Long id) {
         Player p = Player.builder()
-                .team(team)
                 .firstName("Player")
                 .lastName("" + id)
                 .dateOfBirth(LocalDate.of(2010, 1, 1))

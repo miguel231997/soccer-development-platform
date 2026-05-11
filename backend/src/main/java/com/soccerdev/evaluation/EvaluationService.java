@@ -6,6 +6,7 @@ import com.soccerdev.player.ParentPlayerRelationshipRepository;
 import com.soccerdev.player.Player;
 import com.soccerdev.player.PlayerRepository;
 import com.soccerdev.security.AuthorizationService;
+import com.soccerdev.team.PlayerTeamAssignmentRepository;
 import com.soccerdev.user.User;
 import com.soccerdev.user.UserRole;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,6 +27,7 @@ public class EvaluationService {
     private final PlayerRepository playerRepository;
     private final ParentPlayerRelationshipRepository parentPlayerRelationshipRepository;
     private final AuthorizationService authorizationService;
+    private final PlayerTeamAssignmentRepository playerTeamAssignmentRepository;
 
     @Transactional
     public CoachEvaluationDto create(User coach, Long matchId, Long playerId, EvaluationRequest request) {
@@ -38,7 +40,7 @@ public class EvaluationService {
             throw new AccessDeniedException("Access denied");
         }
 
-        if (player.getTeam() == null || !player.getTeam().getId().equals(match.getTeam().getId())) {
+        if (!playerTeamAssignmentRepository.existsByPlayerIdAndTeamIdAndActiveTrue(playerId, match.getTeam().getId())) {
             throw new IllegalArgumentException("Player does not belong to the match team");
         }
 
@@ -67,9 +69,9 @@ public class EvaluationService {
         List<PlayerMatchEvaluation> evals = evaluationRepository.findByMatchId(matchId);
 
         if (user.getRole() == UserRole.PARENT) {
+            var linkedIds = parentPlayerRelationshipRepository.findPlayerIdsByParentUserId(user.getId());
             return evals.stream()
-                    .filter(e -> parentPlayerRelationshipRepository
-                            .existsByParentUserIdAndPlayerId(user.getId(), e.getPlayer().getId()))
+                    .filter(e -> linkedIds.contains(e.getPlayer().getId()))
                     .map(e -> (EvaluationView) toParentDto(e))
                     .toList();
         }

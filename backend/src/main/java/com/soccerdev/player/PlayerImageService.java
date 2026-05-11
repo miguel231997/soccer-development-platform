@@ -24,13 +24,14 @@ public class PlayerImageService {
     private static final List<String> ALLOWED_TYPES = List.of("image/jpeg", "image/png", "image/webp");
 
     private final PlayerRepository playerRepository;
+    private final PlayerService playerService;
     private final AuthorizationService authorizationService;
     private final ParentPlayerRelationshipRepository parentPlayerRelationshipRepository;
     private final Cloudinary cloudinary;
 
     @Transactional
     public PlayerResponse uploadProfileImage(User user, Long playerId, MultipartFile file) {
-        Player player = playerRepository.findById(playerId)
+        Player player = playerRepository.findByIdWithTeams(playerId)
                 .orElseThrow(() -> new EntityNotFoundException("Player not found with id: " + playerId));
 
         if (!canUploadImage(user, playerId)) {
@@ -40,7 +41,7 @@ public class PlayerImageService {
         validateFile(file);
 
         player.setProfileImageUrl(uploadToCloudinary(file, playerId));
-        return toResponse(playerRepository.save(player));
+        return playerService.toResponse(playerRepository.save(player));
     }
 
     private boolean canUploadImage(User user, Long playerId) {
@@ -77,25 +78,5 @@ public class PlayerImageService {
         } catch (IOException e) {
             throw new IllegalStateException("Failed to upload image to Cloudinary", e);
         }
-    }
-
-    private PlayerResponse toResponse(Player player) {
-        return PlayerResponse.builder()
-                .id(player.getId())
-                .teamId(player.getTeam() != null ? player.getTeam().getId() : null)
-                .teamName(player.getTeam() != null ? player.getTeam().getName() : null)
-                .firstName(player.getFirstName())
-                .lastName(player.getLastName())
-                .dateOfBirth(player.getDateOfBirth())
-                .primaryPosition(player.getPrimaryPosition())
-                .secondaryPosition(player.getSecondaryPosition())
-                .strongFoot(player.getStrongFoot())
-                .jerseyNumber(player.getJerseyNumber())
-                .publicProfileEnabled(player.isPublicProfileEnabled())
-                .profileImageUrl(player.getProfileImageUrl())
-                .active(player.isActive())
-                .createdAt(player.getCreatedAt())
-                .updatedAt(player.getUpdatedAt())
-                .build();
     }
 }

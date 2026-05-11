@@ -27,4 +27,7 @@ public class PlayerMatchStatsResponse {
     private BigDecimal xa;
     private BigDecimal xt;
     private BigDecimal dangerPrevented;
+
+    private Instant createdAt;
+    private Instant updatedAt;
 }

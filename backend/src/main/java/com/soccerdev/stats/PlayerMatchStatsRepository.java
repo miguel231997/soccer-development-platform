@@ -11,18 +11,30 @@ import java.util.Optional;
 @Repository
 public interface PlayerMatchStatsRepository extends JpaRepository<PlayerMatchStats, Long> {
 
-    List<PlayerMatchStats> findByMatchId(Long matchId);
+    @Query("""
+            SELECT s FROM PlayerMatchStats s
+            JOIN FETCH s.match
+            JOIN FETCH s.player
+            WHERE s.match.id = :matchId
+            """)
+    List<PlayerMatchStats> findByMatchId(@Param("matchId") Long matchId);
 
-    List<PlayerMatchStats> findByPlayerId(Long playerId);
+    @Query("""
+            SELECT s FROM PlayerMatchStats s
+            JOIN FETCH s.match
+            JOIN FETCH s.player
+            WHERE s.player.id = :playerId
+            """)
+    List<PlayerMatchStats> findByPlayerId(@Param("playerId") Long playerId);
 
     Optional<PlayerMatchStats> findByMatchIdAndPlayerId(Long matchId, Long playerId);
 
     @Query("""
             SELECT s FROM PlayerMatchStats s
             JOIN FETCH s.player p
-            JOIN FETCH p.team t
+            JOIN FETCH s.match m
+            JOIN FETCH m.team t
             JOIN FETCH t.club c
-            JOIN s.match m
             LEFT JOIN m.seasonPhase msp
             LEFT JOIN m.competition mc
             WHERE p.publicProfileEnabled = true

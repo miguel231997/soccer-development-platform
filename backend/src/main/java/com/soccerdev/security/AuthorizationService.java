@@ -1,6 +1,5 @@
 package com.soccerdev.security;
 
-import com.soccerdev.club.Club;
 import com.soccerdev.evaluation.PlayerMatchEvaluation;
 import com.soccerdev.evaluation.PlayerMatchEvaluationRepository;
 import com.soccerdev.match.Match;
@@ -11,6 +10,7 @@ import com.soccerdev.player.PlayerRepository;
 import com.soccerdev.report.DevelopmentReport;
 import com.soccerdev.report.DevelopmentReportRepository;
 import com.soccerdev.team.CoachTeamAssignmentRepository;
+import com.soccerdev.team.PlayerTeamAssignmentRepository;
 import com.soccerdev.team.Team;
 import com.soccerdev.team.TeamRepository;
 import com.soccerdev.user.User;
@@ -18,6 +18,8 @@ import com.soccerdev.user.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -31,40 +33,38 @@ public class AuthorizationService {
     private final DevelopmentReportRepository reportRepository;
     private final CoachTeamAssignmentRepository coachTeamAssignmentRepository;
     private final ParentPlayerRelationshipRepository parentPlayerRelationshipRepository;
+    private final PlayerTeamAssignmentRepository playerTeamAssignmentRepository;
 
     // ── Club ─────────────────────────────────────────────────────────────────
 
     public boolean canViewClub(User user, Long clubId) {
         if (isAdmin(user)) return true;
         return switch (user.getRole()) {
-            case DIRECTOR -> user.getClub() != null && user.getClub().getId().equals(clubId);
+            case DIRECTOR -> isDirectorOf(user, clubId);
             case COACH    -> coachTeamAssignmentRepository.existsByCoachUserIdAndTeamClubId(user.getId(), clubId);
-            case PARENT   -> parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerTeamClubId(user.getId(), clubId);
-            default       -> false;
+            case PARENT   -> {
+                Set<Long> playerIds = parentPlayerRelationshipRepository.findPlayerIdsByParentUserId(user.getId());
+                yield !playerIds.isEmpty() &&
+                        playerTeamAssignmentRepository.existsByPlayerIdInAndTeamClubIdAndActiveTrue(playerIds, clubId);
+            }
+            default -> false;
         };
     }
 
     public boolean canEditClub(User user, Long clubId) {
         if (isAdmin(user)) return true;
-        if (user.getRole() == UserRole.DIRECTOR) {
-            return user.getClub() != null && user.getClub().getId().equals(clubId);
-        }
-        return false;
+        return user.getRole() == UserRole.DIRECTOR && isDirectorOf(user, clubId);
     }
 
     // ── Player ───────────────────────────────────────────────────────────────
 
     public boolean canViewPlayer(User user, Long playerId) {
         if (isAdmin(user)) return true;
-        if (user.getRole() == UserRole.PARENT) {
-            return parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(user.getId(), playerId);
-        }
-        if (user.getRole() == UserRole.PLAYER) return false;
-        Player player = playerRepository.findById(playerId).orElse(null);
-        if (player == null) return false;
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, clubOf(player));
-            case COACH    -> isAssignedToTeam(user, player.getTeam());
+            case PARENT   -> parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(user.getId(), playerId);
+            case DIRECTOR -> user.getClub() != null &&
+                    playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(playerId, user.getClub().getId());
+            case COACH    -> playerTeamAssignmentRepository.existsByPlayerIdAndCoachUserId(playerId, user.getId());
             default       -> false;
         };
     }
@@ -72,11 +72,10 @@ public class AuthorizationService {
     public boolean canEditPlayer(User user, Long playerId) {
         if (isAdmin(user)) return true;
         if (user.getRole() == UserRole.PARENT || user.getRole() == UserRole.PLAYER) return false;
-        Player player = playerRepository.findById(playerId).orElse(null);
-        if (player == null) return false;
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, clubOf(player));
-            case COACH    -> isAssignedToTeam(user, player.getTeam());
+            case DIRECTOR -> user.getClub() != null &&
+                    playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(playerId, user.getClub().getId());
+            case COACH    -> playerTeamAssignmentRepository.existsByPlayerIdAndCoachUserId(playerId, user.getId());
             default       -> false;
         };
     }
@@ -88,10 +87,14 @@ public class AuthorizationService {
         Team team = teamRepository.findById(teamId).orElse(null);
         if (team == null) return false;
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, team.getClub());
+            case DIRECTOR -> isDirectorOf(user, team.getClub().getId());
             case COACH    -> coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(user.getId(), teamId);
-            case PARENT   -> parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerTeamId(user.getId(), teamId);
-            default       -> false;
+            case PARENT   -> {
+                Set<Long> playerIds = parentPlayerRelationshipRepository.findPlayerIdsByParentUserId(user.getId());
+                yield !playerIds.isEmpty() &&
+                        playerTeamAssignmentRepository.existsByPlayerIdInAndTeamIdAndActiveTrue(playerIds, teamId);
+            }
+            default -> false;
         };
     }
 
@@ -101,7 +104,7 @@ public class AuthorizationService {
         Team team = teamRepository.findById(teamId).orElse(null);
         if (team == null) return false;
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, team.getClub());
+            case DIRECTOR -> isDirectorOf(user, team.getClub().getId());
             case COACH    -> coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(user.getId(), teamId);
             default       -> false;
         };
@@ -115,10 +118,14 @@ public class AuthorizationService {
         if (match == null) return false;
         Long matchTeamId = match.getTeam().getId();
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, match.getTeam().getClub());
+            case DIRECTOR -> isDirectorOf(user, match.getTeam().getClub().getId());
             case COACH    -> coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(user.getId(), matchTeamId);
-            case PARENT   -> parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerTeamId(user.getId(), matchTeamId);
-            default       -> false;
+            case PARENT   -> {
+                Set<Long> playerIds = parentPlayerRelationshipRepository.findPlayerIdsByParentUserId(user.getId());
+                yield !playerIds.isEmpty() &&
+                        playerTeamAssignmentRepository.existsByPlayerIdInAndTeamIdAndActiveTrue(playerIds, matchTeamId);
+            }
+            default -> false;
         };
     }
 
@@ -129,7 +136,7 @@ public class AuthorizationService {
         if (match == null) return false;
         Long matchTeamId = match.getTeam().getId();
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, match.getTeam().getClub());
+            case DIRECTOR -> isDirectorOf(user, match.getTeam().getClub().getId());
             case COACH    -> coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(user.getId(), matchTeamId);
             default       -> false;
         };
@@ -141,13 +148,14 @@ public class AuthorizationService {
         if (isAdmin(user)) return true;
         PlayerMatchEvaluation eval = evaluationRepository.findById(evaluationId).orElse(null);
         if (eval == null) return false;
+        Long playerId = eval.getPlayer().getId();
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, clubOf(eval.getPlayer()));
+            case DIRECTOR -> user.getClub() != null &&
+                    playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(playerId, user.getClub().getId());
             case COACH    -> user.getId().equals(eval.getCoachUser().getId())
                     || coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(
                             user.getId(), eval.getMatch().getTeam().getId());
-            case PARENT   -> parentPlayerRelationshipRepository
-                    .existsByParentUserIdAndPlayerId(user.getId(), eval.getPlayer().getId());
+            case PARENT   -> parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(user.getId(), playerId);
             default       -> false;
         };
     }
@@ -158,7 +166,9 @@ public class AuthorizationService {
         PlayerMatchEvaluation eval = evaluationRepository.findById(evaluationId).orElse(null);
         if (eval == null) return false;
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, clubOf(eval.getPlayer()));
+            case DIRECTOR -> user.getClub() != null &&
+                    playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(
+                            eval.getPlayer().getId(), user.getClub().getId());
             case COACH    -> user.getId().equals(eval.getCoachUser().getId());
             default       -> false;
         };
@@ -170,12 +180,13 @@ public class AuthorizationService {
         if (isAdmin(user)) return true;
         DevelopmentReport report = reportRepository.findById(reportId).orElse(null);
         if (report == null) return false;
+        Long playerId = report.getPlayer().getId();
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, clubOf(report.getPlayer()));
-            case COACH    -> isAssignedToTeam(user, report.getPlayer().getTeam());
+            case DIRECTOR -> user.getClub() != null &&
+                    playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(playerId, user.getClub().getId());
+            case COACH    -> playerTeamAssignmentRepository.existsByPlayerIdAndCoachUserId(playerId, user.getId());
             case PARENT   -> report.isApprovedForParent()
-                    && parentPlayerRelationshipRepository
-                            .existsByParentUserIdAndPlayerId(user.getId(), report.getPlayer().getId());
+                    && parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(user.getId(), playerId);
             default       -> false;
         };
     }
@@ -186,7 +197,9 @@ public class AuthorizationService {
         DevelopmentReport report = reportRepository.findById(reportId).orElse(null);
         if (report == null) return false;
         return switch (user.getRole()) {
-            case DIRECTOR -> isDirectorClub(user, clubOf(report.getPlayer()));
+            case DIRECTOR -> user.getClub() != null &&
+                    playerTeamAssignmentRepository.existsByPlayerIdAndTeamClubIdAndActiveTrue(
+                            report.getPlayer().getId(), user.getClub().getId());
             case COACH    -> user.getId().equals(report.getGeneratedByUser().getId());
             default       -> false;
         };
@@ -198,20 +211,17 @@ public class AuthorizationService {
         return user.getRole() == UserRole.ADMIN;
     }
 
-    private boolean isDirectorClub(User director, Club club) {
-        return director.getClub() != null
-                && club != null
-                && director.getClub().getId().equals(club.getId());
+    private boolean isDirectorOf(User director, Long clubId) {
+        return director.getClub() != null && director.getClub().getId().equals(clubId);
     }
 
-    private boolean isAssignedToTeam(User user, Team team) {
-        return team != null
-                && coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(user.getId(), team.getId());
-    }
-
-    /** Returns the Club of a player's team, or null if the player has no team. */
-    private Club clubOf(Player player) {
-        if (player == null || player.getTeam() == null) return null;
-        return player.getTeam().getClub();
+    /** Returns true if the user can review registration requests for the given team. */
+    public boolean canReviewForTeam(User user, Long teamId, Long teamClubId) {
+        if (isAdmin(user)) return true;
+        return switch (user.getRole()) {
+            case DIRECTOR -> isDirectorOf(user, teamClubId);
+            case COACH    -> coachTeamAssignmentRepository.existsByCoachUserIdAndTeamId(user.getId(), teamId);
+            default       -> false;
+        };
     }
 }

@@ -1,6 +1,6 @@
 package com.soccerdev.match;
 
-import com.soccerdev.common.BaseIdEntity;
+import com.soccerdev.common.BaseEntity;
 import com.soccerdev.competition.Competition;
 import com.soccerdev.season.Season;
 import com.soccerdev.season.SeasonPhase;
@@ -23,7 +23,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Match extends BaseIdEntity {
+public class Match extends BaseEntity {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

@@ -6,6 +6,7 @@ import com.soccerdev.player.ParentPlayerRelationshipRepository;
 import com.soccerdev.player.Player;
 import com.soccerdev.player.PlayerRepository;
 import com.soccerdev.security.AuthorizationService;
+import com.soccerdev.team.PlayerTeamAssignmentRepository;
 import com.soccerdev.user.User;
 import com.soccerdev.user.UserRole;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,6 +27,7 @@ public class PlayerMatchStatsService {
     private final PlayerRepository playerRepository;
     private final ParentPlayerRelationshipRepository parentPlayerRelationshipRepository;
     private final AuthorizationService authorizationService;
+    private final PlayerTeamAssignmentRepository playerTeamAssignmentRepository;
 
     public List<PlayerMatchStatsResponse> getByMatch(User user, Long matchId) {
         if (!matchRepository.existsById(matchId)) {
@@ -36,9 +38,9 @@ public class PlayerMatchStatsService {
         }
         List<PlayerMatchStats> stats = statsRepository.findByMatchId(matchId);
         if (user.getRole() == UserRole.PARENT) {
+            var linkedIds = parentPlayerRelationshipRepository.findPlayerIdsByParentUserId(user.getId());
             stats = stats.stream()
-                    .filter(s -> parentPlayerRelationshipRepository
-                            .existsByParentUserIdAndPlayerId(user.getId(), s.getPlayer().getId()))
+                    .filter(s -> linkedIds.contains(s.getPlayer().getId()))
                     .toList();
         }
         return stats.stream().map(this::toResponse).toList();
@@ -67,7 +69,11 @@ public class PlayerMatchStatsService {
             throw new AccessDeniedException("Access denied");
         }
 
-        if (player.getTeam() == null || !player.getTeam().getId().equals(match.getTeam().getId())) {
+        if (match.isFinalized()) {
+            throw new IllegalArgumentException("Cannot update stats for a finalized match");
+        }
+
+        if (!playerTeamAssignmentRepository.existsByPlayerIdAndTeamIdAndActiveTrue(player.getId(), match.getTeam().getId())) {
             throw new IllegalArgumentException("Player does not belong to the match team");
         }
 
@@ -114,6 +120,8 @@ public class PlayerMatchStatsService {
                 .xa(stats.getXa())
                 .xt(stats.getXt())
                 .dangerPrevented(stats.getDangerPrevented())
+                .createdAt(stats.getCreatedAt())
+                .updatedAt(stats.getUpdatedAt())
                 .build();
     }
 }

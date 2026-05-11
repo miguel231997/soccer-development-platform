@@ -79,6 +79,9 @@ public class MatchService {
         if (!authorizationService.canEditMatch(user, id)) {
             throw new AccessDeniedException("Access denied");
         }
+        if (match.isFinalized()) {
+            throw new IllegalArgumentException("Cannot modify a finalized match");
+        }
         return toResponse(matchRepository.save(buildMatch(match, request)));
     }
 
@@ -150,7 +153,9 @@ public class MatchService {
                 .homeAway(match.getHomeAway())
                 .homeScore(match.getHomeScore())
                 .awayScore(match.getAwayScore())
-                .finalized(match.isFinalized());
+                .finalized(match.isFinalized())
+                .createdAt(match.getCreatedAt())
+                .updatedAt(match.getUpdatedAt());
 
         if (match.getSeasonPhase() != null) {
             builder.seasonPhaseId(match.getSeasonPhase().getId())
