@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ import java.util.List;
 public class PlayerController {
 
     private final PlayerService playerService;
+    private final PlayerImageService playerImageService;
     private final CurrentUserService currentUserService;
 
     @GetMapping
@@ -61,5 +63,14 @@ public class PlayerController {
         User user = currentUserService.getUser(userDetails);
         playerService.delete(user, id);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).message("Player deactivated").build());
+    }
+
+    @PostMapping("/{playerId}/profile-image")
+    public ResponseEntity<ApiResponse<PlayerResponse>> uploadProfileImage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long playerId,
+            @RequestParam("file") MultipartFile file) {
+        User user = currentUserService.getUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.ok(playerImageService.uploadProfileImage(user, playerId, file)));
     }
 }

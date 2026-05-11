@@ -26,6 +26,16 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+
 server:
   port: 8080
   servlet:
