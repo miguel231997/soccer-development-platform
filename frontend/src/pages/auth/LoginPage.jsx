@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [form, setForm] = useState({ username: '', password: '' })
+  const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -16,12 +16,14 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      const user = await login(form.username, form.password)
-      if (user?.roles?.includes('ROLE_ADMIN')) navigate('/admin')
-      else if (user?.roles?.includes('ROLE_PARENT')) navigate('/parent')
+      // login() now sends { email, password } matching LoginRequest on the backend
+      const user = await login(form.email, form.password)
+      // user.role is the raw enum name from AuthResponse, e.g. 'ADMIN'
+      if (user?.role === 'ADMIN')  navigate('/admin')
+      else if (user?.role === 'PARENT') navigate('/parent')
       else navigate('/dashboard')
     } catch {
-      setError('Invalid username or password.')
+      setError('Invalid email or password.')
     } finally {
       setLoading(false)
     }
@@ -33,12 +35,14 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
         {error && <p className="text-red-600 text-sm">{error}</p>}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input
-            name="username"
-            value={form.username}
+            type="email"
+            name="email"
+            value={form.email}
             onChange={handleChange}
             required
+            autoComplete="email"
             className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
@@ -50,6 +54,7 @@ export default function LoginPage() {
             value={form.password}
             onChange={handleChange}
             required
+            autoComplete="current-password"
             className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
@@ -58,7 +63,7 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full bg-green-700 text-white py-2 rounded hover:bg-green-600 disabled:opacity-50"
         >
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? 'Signing in…' : 'Sign In'}
         </button>
         <p className="text-sm text-center text-gray-500">
           No account?{' '}

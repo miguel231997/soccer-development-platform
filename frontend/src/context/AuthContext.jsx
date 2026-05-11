@@ -11,25 +11,38 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('token')
     const savedUser = localStorage.getItem('user')
     if (token && savedUser) {
-      setUser(JSON.parse(savedUser))
+      try {
+        setUser(JSON.parse(savedUser))
+      } catch {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
     }
     setLoading(false)
   }, [])
 
-  const login = async (username, password) => {
-    const { data } = await api.post('/api/auth/login', { username, password })
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    setUser(data.user)
-    return data.user
+  // Backend LoginRequest field is "email", not "username".
+  // Backend wraps every response in ApiResponse<T>, so the payload is at data.data.
+  // AuthResponse shape: { token, id, email, firstName, lastName, role }
+  const login = async (email, password) => {
+    const { data } = await api.post('/api/auth/login', { email, password })
+    const authResponse = data.data          // unwrap ApiResponse
+    const { token, ...userFields } = authResponse
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(userFields))
+    setUser(userFields)
+    return userFields
   }
 
+  // RegisterRequest: { email, password, firstName, lastName, registrationCode }
   const register = async (payload) => {
     const { data } = await api.post('/api/auth/register', payload)
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    setUser(data.user)
-    return data.user
+    const authResponse = data.data
+    const { token, ...userFields } = authResponse
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(userFields))
+    setUser(userFields)
+    return userFields
   }
 
   const logout = () => {
@@ -38,7 +51,12 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
-  const hasRole = (role) => user?.roles?.includes(role)
+  // user.role from AuthResponse is the enum name, e.g. "ADMIN".
+  // Callers pass Spring Security style role strings, e.g. "ROLE_ADMIN".
+  const hasRole = (role) => {
+    if (!user?.role) return false
+    return `ROLE_${user.role}` === role
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, hasRole }}>

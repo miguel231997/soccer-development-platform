@@ -52,7 +52,7 @@ export default function Navbar() {
             )}
 
             <span className="text-green-300">|</span>
-            <span className="text-green-200 text-xs">{user.username}</span>
+            <span className="text-green-200 text-xs">{user.firstName || user.email}</span>
             <button onClick={handleLogout} className="hover:text-green-200">
               Logout
             </button>
