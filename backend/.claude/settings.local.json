@@ -16,7 +16,12 @@
       "Bash(curl -s -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"coach@soccerdev.com\",\"password\":\"password123\"}')",
       "Bash(mvn spring-boot:run)",
       "Bash(echo \"PID: $!\")",
-      "Bash(kill 31491)"
+      "Bash(kill 31491)",
+      "Bash(xargs ls -la)",
+      "Bash(lsof -ti:8080)",
+      "Bash(curl -s -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@soccerdev.com\",\"password\":\"password123\"}')",
+      "Bash(curl -s -X POST http://localhost:8080/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"testadmin@test.com\",\"password\":\"password123\",\"firstName\":\"Test\",\"lastName\":\"Admin\",\"role\":\"ADMIN\"}')",
+      "Bash(curl -s http://localhost:8080/api/matches -H 'Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0YWRtaW5AdGVzdC5jb20iLCJpYXQiOjE3Nzg0Njg3MjMsImV4cCI6MTc3ODU1NTEyM30.fefoQ3vihUAIcRzlchAuACOo-0FcopSBm-JSRL1ZlIwG5K6l1WK6tl4Slm1YfvcH')"
     ]
   }
 }
