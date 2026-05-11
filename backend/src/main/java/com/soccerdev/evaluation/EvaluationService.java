@@ -169,9 +169,12 @@ public class EvaluationService {
     }
 
     private ParentEvaluationDto toParentDto(PlayerMatchEvaluation eval) {
+        var team = eval.getMatch().getTeam();
         return ParentEvaluationDto.builder()
                 .id(eval.getId())
                 .matchId(eval.getMatch().getId())
+                .teamId(team != null ? team.getId() : null)
+                .teamName(team != null ? team.getName() : null)
                 .opponent(eval.getMatch().getOpponent())
                 .matchDateTime(eval.getMatch().getMatchDateTime())
                 .playerId(eval.getPlayer().getId())

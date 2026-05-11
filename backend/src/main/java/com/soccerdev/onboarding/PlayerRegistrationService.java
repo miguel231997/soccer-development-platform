@@ -136,6 +136,7 @@ public class PlayerRegistrationService {
                     .strongFoot(req.getStrongFoot())
                     .jerseyNumber(req.getJerseyNumber())
                     .active(true)
+                    .publicProfileEnabled(true)
                     .build();
             player = playerRepository.save(player);
 

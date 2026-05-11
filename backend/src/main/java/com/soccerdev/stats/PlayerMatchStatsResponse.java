@@ -12,6 +12,8 @@ public class PlayerMatchStatsResponse {
 
     private Long id;
     private Long matchId;
+    private Long teamId;
+    private String teamName;
     private String opponent;
     private Instant matchDateTime;
     private Long playerId;

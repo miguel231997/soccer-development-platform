@@ -37,8 +37,7 @@ public interface PlayerMatchStatsRepository extends JpaRepository<PlayerMatchSta
             JOIN FETCH t.club c
             LEFT JOIN m.seasonPhase msp
             LEFT JOIN m.competition mc
-            WHERE p.publicProfileEnabled = true
-              AND p.active = true
+            WHERE p.active = true
               AND (:seasonId IS NULL OR m.season.id = :seasonId)
               AND (:seasonPhaseId IS NULL OR msp.id = :seasonPhaseId)
               AND (:competitionId IS NULL OR mc.id = :competitionId)

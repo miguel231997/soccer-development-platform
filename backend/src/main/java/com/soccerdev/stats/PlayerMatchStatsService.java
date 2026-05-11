@@ -102,9 +102,12 @@ public class PlayerMatchStatsService {
     }
 
     private PlayerMatchStatsResponse toResponse(PlayerMatchStats stats) {
+        var team = stats.getMatch().getTeam();
         return PlayerMatchStatsResponse.builder()
                 .id(stats.getId())
                 .matchId(stats.getMatch().getId())
+                .teamId(team != null ? team.getId() : null)
+                .teamName(team != null ? team.getName() : null)
                 .opponent(stats.getMatch().getOpponent())
                 .matchDateTime(stats.getMatch().getMatchDateTime())
                 .playerId(stats.getPlayer().getId())
