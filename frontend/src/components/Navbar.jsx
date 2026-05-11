@@ -10,7 +10,8 @@ export default function Navbar() {
     navigate('/')
   }
 
-  const isCoach = user && (hasRole('ROLE_COACH') || hasRole('ROLE_ADMIN') || hasRole('ROLE_DIRECTOR'))
+  const isCoach  = user && (hasRole('ROLE_COACH') || hasRole('ROLE_ADMIN') || hasRole('ROLE_DIRECTOR'))
+  const isParent = user && hasRole('ROLE_PARENT') && !isCoach
 
   return (
     <nav className="bg-green-800 text-white px-6 py-3 flex items-center justify-between">
@@ -30,17 +31,26 @@ export default function Navbar() {
           </>
         ) : (
           <>
-            <Link to="/dashboard" className="hover:text-green-200">Dashboard</Link>
+            {/* Coach / Admin / Director nav */}
             {isCoach && (
               <>
-                <Link to="/teams" className="hover:text-green-200">Teams</Link>
-                <Link to="/matches" className="hover:text-green-200">Matches</Link>
-                <Link to="/players" className="hover:text-green-200">Players</Link>
+                <Link to="/dashboard" className="hover:text-green-200">Dashboard</Link>
+                <Link to="/teams"     className="hover:text-green-200">Teams</Link>
+                <Link to="/matches"   className="hover:text-green-200">Matches</Link>
+                <Link to="/players"   className="hover:text-green-200">Players</Link>
               </>
             )}
+
+            {/* Admin-only */}
             {hasRole('ROLE_ADMIN') && (
               <Link to="/admin" className="hover:text-green-200">Admin</Link>
             )}
+
+            {/* Parent nav — no links to coach/admin sections */}
+            {isParent && (
+              <Link to="/parent" className="hover:text-green-200">My Children</Link>
+            )}
+
             <span className="text-green-300">|</span>
             <span className="text-green-200 text-xs">{user.username}</span>
             <button onClick={handleLogout} className="hover:text-green-200">
