@@ -9,7 +9,6 @@ import {
   submitPlayerRegistration,
   joinTeamWithCode,
 } from '../../api/parent'
-import { listTeams } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
@@ -411,20 +410,20 @@ function RegisterChildForm({ onSubmitted }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [form, setForm] = useState({
-    teamId: '', firstName: '', lastName: '', dateOfBirth: '',
+    registrationCode: '',
+    firstName: '', lastName: '', dateOfBirth: '',
     primaryPosition: '', secondaryPosition: '', strongFoot: 'RIGHT', jerseyNumber: '',
   })
-
-  const teamsFetcher = useCallback(() => listTeams(), [])
-  const { data: teams } = useFetch(teamsFetcher)
 
   const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }))
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(''); setSuccess(''); setSaving(true)
     try {
+      // Code identifies the team and joins the parent to it in one step
+      const { teamId } = await joinTeamWithCode(form.registrationCode.trim())
       await submitPlayerRegistration({
-        teamId: Number(form.teamId),
+        teamId,
         firstName: form.firstName,
         lastName: form.lastName,
         dateOfBirth: form.dateOfBirth,
@@ -433,12 +432,12 @@ function RegisterChildForm({ onSubmitted }) {
         strongFoot: form.strongFoot || null,
         jerseyNumber: form.jerseyNumber ? Number(form.jerseyNumber) : null,
       })
-      setSuccess(`Registration request for ${form.firstName} submitted! The coach will review it shortly.`)
-      setForm({ teamId: '', firstName: '', lastName: '', dateOfBirth: '', primaryPosition: '', secondaryPosition: '', strongFoot: 'RIGHT', jerseyNumber: '' })
+      setSuccess(`Registration request for ${form.firstName} ${form.lastName} submitted! The coach will review it shortly.`)
+      setForm({ registrationCode: '', firstName: '', lastName: '', dateOfBirth: '', primaryPosition: '', secondaryPosition: '', strongFoot: 'RIGHT', jerseyNumber: '' })
       setOpen(false)
       onSubmitted()
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to submit request.')
+      setError(err?.response?.data?.message || 'Failed to submit — check the registration code and try again.')
     } finally { setSaving(false) }
   }
 
@@ -446,7 +445,7 @@ function RegisterChildForm({ onSubmitted }) {
     <section className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-700">Register a Child</h2>
-        <button onClick={() => setOpen((o) => !o)}
+        <button onClick={() => { setOpen((o) => !o); setError('') }}
           className="text-sm bg-green-700 text-white px-4 py-2 rounded hover:bg-green-600">
           {open ? 'Cancel' : '+ Register Child'}
         </button>
@@ -457,19 +456,27 @@ function RegisterChildForm({ onSubmitted }) {
       {open && (
         <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
           <p className="text-sm text-gray-500">
-            Fill in your child's details. The coach will review and approve the request,
-            creating your child's player profile and linking them to you.
+            Enter the team registration code your club provided, then fill in your child's details.
+            The coach will review and approve the request to create your child's player profile.
           </p>
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Team code */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Team *</label>
-              <select value={form.teamId} onChange={set('teamId')} required
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                <option value="">Select team…</option>
-                {(teams ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Team registration code *</label>
+              <input
+                type="text"
+                value={form.registrationCode}
+                onChange={(e) => setForm((p) => ({ ...p, registrationCode: e.target.value.toUpperCase() }))}
+                required
+                placeholder="e.g. SLSA-PARENT-2025"
+                className="w-full border rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              <p className="text-xs text-gray-400 mt-1">Ask your club administrator for this code.</p>
             </div>
+
+            {/* Name */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">First name *</label>
@@ -482,6 +489,8 @@ function RegisterChildForm({ onSubmitted }) {
                   className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
             </div>
+
+            {/* DOB + Jersey */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Date of birth *</label>
@@ -494,6 +503,8 @@ function RegisterChildForm({ onSubmitted }) {
                   className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
             </div>
+
+            {/* Position + foot */}
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Primary position *</label>
@@ -521,6 +532,7 @@ function RegisterChildForm({ onSubmitted }) {
                 </select>
               </div>
             </div>
+
             <div className="flex gap-3">
               <button type="submit" disabled={saving}
                 className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50">
@@ -539,6 +551,9 @@ function RegisterChildForm({ onSubmitted }) {
 }
 
 // ─── Join another team form ───────────────────────────────────────────────────
+// For parents whose child is already registered and plays on a second team.
+// Entering the code joins the parent to that team so they can then register
+// the child there (or track an already-enrolled child).
 
 function JoinTeamForm({ onJoined }) {
   const [open, setOpen] = useState(false)
@@ -550,11 +565,11 @@ function JoinTeamForm({ onJoined }) {
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(''); setSuccess(''); setSaving(true)
     try {
-      await joinTeamWithCode(code.trim())
-      setSuccess('Successfully joined the team! You can now register children for this team.')
+      const { teamName } = await joinTeamWithCode(code.trim())
+      setSuccess(`Joined ${teamName}. You can now register a child for that team.`)
       setCode(''); setOpen(false); onJoined()
     } catch (err) {
-      setError(err?.response?.data?.message || err?.data?.message || 'Invalid or expired code.')
+      setError(err?.response?.data?.message || 'Invalid or expired code.')
     } finally { setSaving(false) }
   }
 
@@ -563,9 +578,9 @@ function JoinTeamForm({ onJoined }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-700">Join Another Team</h2>
-          <p className="text-xs text-gray-400">Have a child on a second team? Enter that team's parent code.</p>
+          <p className="text-xs text-gray-400">Child on a second team? Enter that team's parent code first.</p>
         </div>
-        <button onClick={() => setOpen((o) => !o)}
+        <button onClick={() => { setOpen((o) => !o); setError('') }}
           className="text-sm border border-green-700 text-green-700 px-4 py-2 rounded hover:bg-green-50">
           {open ? 'Cancel' : 'Enter Code'}
         </button>
@@ -576,18 +591,18 @@ function JoinTeamForm({ onJoined }) {
       {open && (
         <div className="bg-white border border-gray-200 rounded-lg p-5">
           <p className="text-sm text-gray-500 mb-4">
-            Ask the other team's administrator for a parent registration code.
-            You won't create a new account — this just adds you to the team so you can register your child there.
+            Get a parent registration code from the second team's administrator.
+            This won't create a new account — it just links you to that team so you can register your child there.
           </p>
           {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
           <form onSubmit={handleSubmit} className="flex gap-3">
             <input
               type="text"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="e.g. SLSA-PARENT-2025"
               required
-              className="flex-1 border rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-500 uppercase"
+              className="flex-1 border rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
             />
             <button type="submit" disabled={saving || !code.trim()}
               className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50">

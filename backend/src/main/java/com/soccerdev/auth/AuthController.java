@@ -42,11 +42,11 @@ public class AuthController {
     }
 
     @PostMapping("/join-team")
-    public ResponseEntity<ApiResponse<Void>> joinTeam(
+    public ResponseEntity<ApiResponse<JoinTeamResponse>> joinTeam(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody @Valid JoinTeamRequest request) {
         User user = currentUserService.getUser(userDetails);
-        authService.joinTeam(user, request.getRegistrationCode());
-        return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).message("Joined team successfully").build());
+        JoinTeamResponse response = authService.joinTeam(user, request.getRegistrationCode());
+        return ResponseEntity.ok(ApiResponse.ok("Joined team successfully", response));
     }
 }

@@ -104,7 +104,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void joinTeam(User user, String registrationCode) {
+    public JoinTeamResponse joinTeam(User user, String registrationCode) {
         RegistrationCode code = registrationCodeRepository.findByCode(registrationCode)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid registration code"));
 
@@ -118,7 +118,10 @@ public class AuthService {
             throw new IllegalArgumentException("This code is for a " + code.getRole() + " account");
 
         if (teamMembershipRepository.existsByUserIdAndTeamId(user.getId(), code.getTeam().getId())) {
-            return;
+            return JoinTeamResponse.builder()
+                    .teamId(code.getTeam().getId())
+                    .teamName(code.getTeam().getName())
+                    .build();
         }
 
         teamMembershipRepository.save(TeamMembership.builder()
@@ -136,6 +139,11 @@ public class AuthService {
 
         code.setUsesCount(code.getUsesCount() + 1);
         registrationCodeRepository.save(code);
+
+        return JoinTeamResponse.builder()
+                .teamId(code.getTeam().getId())
+                .teamName(code.getTeam().getName())
+                .build();
     }
 
     @Transactional(readOnly = true)

@@ -12,4 +12,4 @@ export const listMyRegistrationRequests = () =>
 export const submitPlayerRegistration = (data) =>
   api.post('/api/player-registration-requests', data).then((r) => r.data.data)
 export const joinTeamWithCode = (registrationCode) =>
-  api.post('/api/auth/join-team', { registrationCode }).then((r) => r.data)
+  api.post('/api/auth/join-team', { registrationCode }).then((r) => r.data.data)
