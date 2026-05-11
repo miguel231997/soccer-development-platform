@@ -20,6 +20,7 @@ import MatchListPage from './pages/private/MatchListPage'
 import MatchDetailPage from './pages/private/MatchDetailPage'
 import MatchStatsEntryPage from './pages/private/MatchStatsEntryPage'
 import PlayerEvaluationPage from './pages/private/PlayerEvaluationPage'
+import PlayersPage from './pages/private/PlayersPage'
 import DevelopmentReportPage from './pages/private/DevelopmentReportPage'
 import ParentDashboardPage from './pages/private/ParentDashboardPage'
 import AdminDashboardPage from './pages/private/AdminDashboardPage'
@@ -43,12 +44,13 @@ export default function App() {
             {/* Private — any authenticated user */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/teams" element={<ProtectedRoute><TeamsPage /></ProtectedRoute>} />
+            <Route path="/players" element={<ProtectedRoute><PlayersPage /></ProtectedRoute>} />
             <Route path="/teams/:teamId" element={<ProtectedRoute><TeamDetailPage /></ProtectedRoute>} />
             <Route path="/players/:playerId" element={<ProtectedRoute><PlayerDetailPage /></ProtectedRoute>} />
             <Route path="/matches" element={<ProtectedRoute><MatchListPage /></ProtectedRoute>} />
             <Route path="/matches/:matchId" element={<ProtectedRoute><MatchDetailPage /></ProtectedRoute>} />
             <Route path="/matches/:matchId/stats" element={<ProtectedRoute><MatchStatsEntryPage /></ProtectedRoute>} />
-            <Route path="/players/:playerId/evaluation" element={<ProtectedRoute><PlayerEvaluationPage /></ProtectedRoute>} />
+            <Route path="/matches/:matchId/players/:playerId/evaluation" element={<ProtectedRoute><PlayerEvaluationPage /></ProtectedRoute>} />
             <Route path="/players/:playerId/report" element={<ProtectedRoute><DevelopmentReportPage /></ProtectedRoute>} />
 
             {/* Role-restricted */}

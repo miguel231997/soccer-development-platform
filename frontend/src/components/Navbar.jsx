@@ -10,6 +10,8 @@ export default function Navbar() {
     navigate('/')
   }
 
+  const isCoach = user && (hasRole('ROLE_COACH') || hasRole('ROLE_ADMIN') || hasRole('ROLE_DIRECTOR'))
+
   return (
     <nav className="bg-green-800 text-white px-6 py-3 flex items-center justify-between">
       <Link to="/" className="text-xl font-bold tracking-tight">
@@ -29,11 +31,18 @@ export default function Navbar() {
         ) : (
           <>
             <Link to="/dashboard" className="hover:text-green-200">Dashboard</Link>
+            {isCoach && (
+              <>
+                <Link to="/teams" className="hover:text-green-200">Teams</Link>
+                <Link to="/matches" className="hover:text-green-200">Matches</Link>
+                <Link to="/players" className="hover:text-green-200">Players</Link>
+              </>
+            )}
             {hasRole('ROLE_ADMIN') && (
               <Link to="/admin" className="hover:text-green-200">Admin</Link>
             )}
             <span className="text-green-300">|</span>
-            <span className="text-green-200">{user.username}</span>
+            <span className="text-green-200 text-xs">{user.username}</span>
             <button onClick={handleLogout} className="hover:text-green-200">
               Logout
             </button>

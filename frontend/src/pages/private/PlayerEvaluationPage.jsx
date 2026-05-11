@@ -1,11 +1,260 @@
-import { useParams } from 'react-router-dom'
+import { useCallback, useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import {
+  getMatch, getPlayer, getMatchEvaluations, createEvaluation, updateEvaluation,
+} from '../../api/coach'
+import { useFetch } from '../../hooks/useFetch'
+import Spinner from '../../components/Spinner'
+import ErrorAlert from '../../components/ErrorAlert'
+
+const POSITIONS = [
+  'GK','CB','LB','RB','LWB','RWB',
+  'CDM','CM','CAM','LM','RM',
+  'LW','RW','CF','ST',
+]
+
+const RATING_FIELDS = [
+  { key: 'overallRating',        label: 'Overall',          group: 'main' },
+  { key: 'technicalRating',      label: 'Technical',        group: 'detail' },
+  { key: 'tacticalRating',       label: 'Tactical',         group: 'detail' },
+  { key: 'physicalRating',       label: 'Physical',         group: 'detail' },
+  { key: 'mentalityRating',      label: 'Mentality',        group: 'detail' },
+  { key: 'attackingRating',      label: 'Attacking',        group: 'detail' },
+  { key: 'defendingRating',      label: 'Defending',        group: 'detail' },
+  { key: 'decisionMakingRating', label: 'Decision Making',  group: 'detail' },
+  { key: 'workRateRating',       label: 'Work Rate',        group: 'detail' },
+]
+
+function emptyForm() {
+  return {
+    positionPlayed: '',
+    overallRating: 5,
+    technicalRating: 5, tacticalRating: 5, physicalRating: 5,
+    mentalityRating: 5, attackingRating: 5, defendingRating: 5,
+    decisionMakingRating: 5, workRateRating: 5,
+    parentVisibleNotes: '',
+    coachOnlyNotes: '',
+  }
+}
+
+function fromExisting(ev) {
+  if (!ev) return emptyForm()
+  return {
+    positionPlayed: ev.positionPlayed ?? '',
+    overallRating: ev.overallRating ?? 5,
+    technicalRating: ev.technicalRating ?? 5,
+    tacticalRating: ev.tacticalRating ?? 5,
+    physicalRating: ev.physicalRating ?? 5,
+    mentalityRating: ev.mentalityRating ?? 5,
+    attackingRating: ev.attackingRating ?? 5,
+    defendingRating: ev.defendingRating ?? 5,
+    decisionMakingRating: ev.decisionMakingRating ?? 5,
+    workRateRating: ev.workRateRating ?? 5,
+    parentVisibleNotes: ev.parentVisibleNotes ?? '',
+    coachOnlyNotes: ev.coachOnlyNotes ?? '',
+  }
+}
 
 export default function PlayerEvaluationPage() {
-  const { playerId } = useParams()
+  const { matchId, playerId } = useParams()
+
+  const fetcher = useCallback(
+    () => Promise.all([getMatch(matchId), getPlayer(playerId), getMatchEvaluations(matchId)])
+         .then(([match, player, evals]) => {
+           const existing = (evals ?? []).find((e) => e.playerId === Number(playerId)) ?? null
+           return { match, player, existing }
+         }),
+    [matchId, playerId],
+  )
+
+  const { data, loading, error } = useFetch(fetcher, [matchId, playerId])
+
+  if (loading) return <Spinner label="Loading evaluation…" />
+  if (error)   return <ErrorAlert message={error} />
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">Player Evaluation</h1>
-      <p className="text-gray-500">Player ID: {playerId}</p>
+    <EvaluationForm
+      matchId={matchId}
+      playerId={playerId}
+      match={data.match}
+      player={data.player}
+      existing={data.existing}
+    />
+  )
+}
+
+function EvaluationForm({ matchId, playerId, match, player, existing }) {
+  const [form, setForm] = useState(() => fromExisting(existing))
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleChange = (e) => {
+    setSaved(false)
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+  }
+
+  const handleRating = (key, val) => {
+    setSaved(false)
+    setForm((f) => ({ ...f, [key]: Number(val) }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaved(false)
+    setError(null)
+
+    const payload = {
+      positionPlayed: form.positionPlayed || null,
+      parentVisibleNotes: form.parentVisibleNotes || null,
+      coachOnlyNotes: form.coachOnlyNotes || null,
+      ...Object.fromEntries(
+        RATING_FIELDS.map(({ key }) => [key, Number(form[key])]),
+      ),
+    }
+
+    try {
+      if (existing) {
+        await updateEvaluation(existing.id, payload)
+      } else {
+        await createEvaluation(matchId, playerId, payload)
+      }
+      setSaved(true)
+    } catch (e) {
+      setError(e?.response?.data?.message || 'Save failed.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const date = match.matchDateTime
+    ? new Date(match.matchDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+    : null
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      {/* Back / context */}
+      <div>
+        <Link to={`/matches/${matchId}`} className="text-sm text-gray-400 hover:text-green-700">← Match</Link>
+        <h1 className="text-xl font-bold text-gray-800 mt-1">
+          {existing ? 'Edit' : 'New'} Evaluation
+        </h1>
+        <p className="text-sm text-gray-500 mt-0.5">
+          {player.firstName} {player.lastName} · {match.teamName} vs {match.opponent}
+          {date && ` · ${date}`}
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Position played */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-700">Position played</span>
+            <select
+              name="positionPlayed"
+              value={form.positionPlayed}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 max-w-xs"
+            >
+              <option value="">— select —</option>
+              {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </label>
+        </div>
+
+        {/* Overall rating */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Overall Rating</h2>
+          <RatingSlider
+            label="Overall"
+            fieldKey="overallRating"
+            value={form.overallRating}
+            onChange={handleRating}
+            accent
+          />
+        </div>
+
+        {/* Detailed ratings */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Detailed Ratings</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {RATING_FIELDS.filter((f) => f.group === 'detail').map(({ key, label }) => (
+              <RatingSlider key={key} label={label} fieldKey={key} value={form[key]} onChange={handleRating} />
+            ))}
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-700">Notes</h2>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-600">Parent-visible notes</span>
+            <span className="text-xs text-gray-400">Visible to the player's parents.</span>
+            <textarea
+              name="parentVisibleNotes"
+              value={form.parentVisibleNotes}
+              onChange={handleChange}
+              rows={3}
+              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              placeholder="Positive feedback, areas the parent can support at home…"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-gray-600">Coach-only notes</span>
+            <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded inline-block w-fit">Not visible to parents</span>
+            <textarea
+              name="coachOnlyNotes"
+              value={form.coachOnlyNotes}
+              onChange={handleChange}
+              rows={3}
+              className="border border-yellow-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none bg-yellow-50/30"
+              placeholder="Internal coaching analysis, tactical notes…"
+            />
+          </label>
+        </div>
+
+        {/* Submit */}
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="bg-green-700 text-white px-6 py-2 rounded hover:bg-green-600 disabled:opacity-50 font-medium"
+          >
+            {saving ? 'Saving…' : existing ? 'Update Evaluation' : 'Save Evaluation'}
+          </button>
+          {saved && <span className="text-sm text-green-600 font-medium">Saved successfully.</span>}
+          {error && <span className="text-sm text-red-600">{error}</span>}
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function RatingSlider({ label, fieldKey, value, onChange, accent }) {
+  const ratingVal = Number(value)
+  const color = ratingVal >= 8 ? 'text-green-600' : ratingVal >= 5 ? 'text-blue-600' : 'text-red-500'
+
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between items-center">
+        <span className={`text-sm font-medium ${accent ? 'text-gray-800' : 'text-gray-600'}`}>{label}</span>
+        <span className={`text-lg font-bold ${color}`}>{ratingVal}</span>
+      </div>
+      <input
+        type="range"
+        min={1}
+        max={10}
+        step={1}
+        value={ratingVal}
+        onChange={(e) => onChange(fieldKey, e.target.value)}
+        className="w-full accent-green-600"
+      />
+      <div className="flex justify-between text-xs text-gray-300">
+        <span>1</span><span>5</span><span>10</span>
+      </div>
     </div>
   )
 }
