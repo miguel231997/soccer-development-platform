@@ -10,8 +10,6 @@ import com.soccerdev.team.CoachTeamAssignmentRepository;
 import com.soccerdev.team.PlayerTeamAssignment;
 import com.soccerdev.team.PlayerTeamAssignmentRepository;
 import com.soccerdev.team.Team;
-import com.soccerdev.team.TeamMembershipRepository;
-import com.soccerdev.team.TeamRepository;
 import com.soccerdev.user.User;
 import com.soccerdev.user.UserRole;
 import jakarta.persistence.EntityNotFoundException;
@@ -30,13 +28,12 @@ import java.util.List;
 public class PlayerRegistrationService {
 
     private final PlayerRegistrationRepository playerRegistrationRepository;
-    private final TeamRepository teamRepository;
-    private final TeamMembershipRepository teamMembershipRepository;
     private final PlayerRepository playerRepository;
     private final ParentPlayerRelationshipRepository parentPlayerRelationshipRepository;
     private final PlayerTeamAssignmentRepository playerTeamAssignmentRepository;
     private final CoachTeamAssignmentRepository coachTeamAssignmentRepository;
     private final AuthorizationService authorizationService;
+    private final TeamInviteCodeService teamInviteCodeService;
 
     @Transactional
     public PlayerRegistrationResponse create(User parent, PlayerRegistrationInput input) {
@@ -44,22 +41,42 @@ public class PlayerRegistrationService {
             throw new AccessDeniedException("Only PARENT users can submit player registration requests");
         }
 
-        Team team = teamRepository.findById(input.getTeamId())
-                .orElseThrow(() -> new EntityNotFoundException("Team not found with id: " + input.getTeamId()));
+        // Validate and consume the team invite code
+        Team team = teamInviteCodeService.resolveAndConsume(input.getTeamInviteCode());
 
-        if (!teamMembershipRepository.existsByUserIdAndTeamId(parent.getId(), team.getId())) {
-            throw new AccessDeniedException("You are not a member of this team");
+        Player existingPlayer = null;
+        if (input.getExistingPlayerId() != null) {
+            existingPlayer = playerRepository.findById(input.getExistingPlayerId())
+                    .orElseThrow(() -> new EntityNotFoundException("Player not found: " + input.getExistingPlayerId()));
+            // Verify the parent actually owns this player
+            if (!parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(parent.getId(), existingPlayer.getId())) {
+                throw new AccessDeniedException("This player is not linked to your account");
+            }
+        } else {
+            // New child: require name/dob/position
+            if (input.getFirstName() == null || input.getFirstName().isBlank())
+                throw new IllegalArgumentException("firstName is required");
+            if (input.getLastName() == null || input.getLastName().isBlank())
+                throw new IllegalArgumentException("lastName is required");
+            if (input.getDateOfBirth() == null)
+                throw new IllegalArgumentException("dateOfBirth is required");
+            if (input.getPrimaryPosition() == null)
+                throw new IllegalArgumentException("primaryPosition is required");
         }
+
+        String firstName = existingPlayer != null ? existingPlayer.getFirstName() : input.getFirstName();
+        String lastName  = existingPlayer != null ? existingPlayer.getLastName()  : input.getLastName();
 
         PlayerRegistrationRequest request = PlayerRegistrationRequest.builder()
                 .parentUser(parent)
                 .team(team)
-                .firstName(input.getFirstName())
-                .lastName(input.getLastName())
-                .dateOfBirth(input.getDateOfBirth())
-                .primaryPosition(input.getPrimaryPosition())
-                .secondaryPosition(input.getSecondaryPosition())
-                .strongFoot(input.getStrongFoot())
+                .existingPlayer(existingPlayer)
+                .firstName(firstName)
+                .lastName(lastName)
+                .dateOfBirth(existingPlayer != null ? existingPlayer.getDateOfBirth() : input.getDateOfBirth())
+                .primaryPosition(existingPlayer != null ? existingPlayer.getPrimaryPosition() : input.getPrimaryPosition())
+                .secondaryPosition(existingPlayer != null ? existingPlayer.getSecondaryPosition() : input.getSecondaryPosition())
+                .strongFoot(existingPlayer != null ? existingPlayer.getStrongFoot() : input.getStrongFoot())
                 .jerseyNumber(input.getJerseyNumber())
                 .status(RegistrationStatus.PENDING)
                 .build();
@@ -97,28 +114,35 @@ public class PlayerRegistrationService {
     public PlayerRegistrationResponse approve(User reviewer, Long id) {
         PlayerRegistrationRequest req = loadForReview(reviewer, id);
 
-        Player player = Player.builder()
-                .firstName(req.getFirstName())
-                .lastName(req.getLastName())
-                .dateOfBirth(req.getDateOfBirth())
-                .primaryPosition(req.getPrimaryPosition())
-                .secondaryPosition(req.getSecondaryPosition())
-                .strongFoot(req.getStrongFoot())
-                .jerseyNumber(req.getJerseyNumber())
-                .active(true)
-                .build();
-        player = playerRepository.save(player);
+        Player player;
+        if (req.getExistingPlayer() != null) {
+            // Child is already registered — just add a new team assignment
+            player = req.getExistingPlayer();
+        } else {
+            // New child: create the player record and parent relationship
+            player = Player.builder()
+                    .firstName(req.getFirstName())
+                    .lastName(req.getLastName())
+                    .dateOfBirth(req.getDateOfBirth())
+                    .primaryPosition(req.getPrimaryPosition())
+                    .secondaryPosition(req.getSecondaryPosition())
+                    .strongFoot(req.getStrongFoot())
+                    .jerseyNumber(req.getJerseyNumber())
+                    .active(true)
+                    .build();
+            player = playerRepository.save(player);
+
+            parentPlayerRelationshipRepository.save(ParentPlayerRelationship.builder()
+                    .parentUser(req.getParentUser())
+                    .player(player)
+                    .relationshipType(RelationshipType.PARENT)
+                    .build());
+        }
 
         playerTeamAssignmentRepository.save(PlayerTeamAssignment.builder()
                 .player(player)
                 .team(req.getTeam())
                 .active(true)
-                .build());
-
-        parentPlayerRelationshipRepository.save(ParentPlayerRelationship.builder()
-                .parentUser(req.getParentUser())
-                .player(player)
-                .relationshipType(RelationshipType.PARENT)
                 .build());
 
         req.setStatus(RegistrationStatus.APPROVED);
@@ -167,6 +191,7 @@ public class PlayerRegistrationService {
                 .parentUserName(parent.getFirstName() + " " + parent.getLastName())
                 .teamId(req.getTeam().getId())
                 .teamName(req.getTeam().getName())
+                .existingPlayerId(req.getExistingPlayer() != null ? req.getExistingPlayer().getId() : null)
                 .firstName(req.getFirstName())
                 .lastName(req.getLastName())
                 .dateOfBirth(req.getDateOfBirth())

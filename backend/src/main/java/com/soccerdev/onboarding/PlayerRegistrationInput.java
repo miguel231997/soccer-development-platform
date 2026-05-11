@@ -12,23 +12,18 @@ import java.time.LocalDate;
 @Setter
 public class PlayerRegistrationInput {
 
-    @NotNull
-    private Long teamId;
-
     @NotBlank
+    private String teamInviteCode;
+
+    /** If set, the request is for an already-approved player joining a new team (no new player record created on approval). */
+    private Long existingPlayerId;
+
+    // Required when existingPlayerId is null (new child):
     private String firstName;
-
-    @NotBlank
     private String lastName;
-
-    @NotNull
     private LocalDate dateOfBirth;
-
-    @NotNull
     private Position primaryPosition;
-
     private Position secondaryPosition;
-
     private StrongFoot strongFoot;
 
     @Min(1) @Max(99)

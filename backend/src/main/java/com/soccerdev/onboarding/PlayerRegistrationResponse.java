@@ -17,6 +17,7 @@ public class PlayerRegistrationResponse {
     private String parentUserName;
     private Long teamId;
     private String teamName;
+    private Long existingPlayerId;
     private String firstName;
     private String lastName;
     private LocalDate dateOfBirth;

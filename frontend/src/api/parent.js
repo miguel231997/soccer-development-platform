@@ -9,7 +9,11 @@ export const getChildReports = (playerId) =>
   api.get(`/api/players/${playerId}/reports`).then((r) => r.data.data)
 export const listMyRegistrationRequests = () =>
   api.get('/api/player-registration-requests/my').then((r) => r.data.data)
+
+/** Look up a team invite code without consuming it (shows team name before submitting). */
+export const lookupTeamInviteCode = (code) =>
+  api.get(`/api/team-invite-codes/lookup/${code}`).then((r) => r.data.data)
+
+/** Register a child (or add an existing child to another team) using a team invite code. */
 export const submitPlayerRegistration = (data) =>
   api.post('/api/player-registration-requests', data).then((r) => r.data.data)
-export const joinTeamWithCode = (registrationCode) =>
-  api.post('/api/auth/join-team', { registrationCode }).then((r) => r.data.data)

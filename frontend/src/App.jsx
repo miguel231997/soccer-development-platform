@@ -23,6 +23,9 @@ import PlayerEvaluationPage from './pages/private/PlayerEvaluationPage'
 import PlayersPage from './pages/private/PlayersPage'
 import DevelopmentReportPage from './pages/private/DevelopmentReportPage'
 import ParentDashboardPage from './pages/private/ParentDashboardPage'
+import ChildrenListPage from './pages/private/ChildrenListPage'
+import RegisterChildPage from './pages/private/RegisterChildPage'
+import ChildDetailPage from './pages/private/ChildDetailPage'
 import AdminDashboardPage from './pages/private/AdminDashboardPage'
 
 export default function App() {
@@ -59,6 +62,30 @@ export default function App() {
               element={
                 <RoleBasedRoute roles={['ROLE_PARENT', 'ROLE_ADMIN']}>
                   <ParentDashboardPage />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/parent/children"
+              element={
+                <RoleBasedRoute roles={['ROLE_PARENT', 'ROLE_ADMIN']}>
+                  <ChildrenListPage />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/parent/children/register"
+              element={
+                <RoleBasedRoute roles={['ROLE_PARENT', 'ROLE_ADMIN']}>
+                  <RegisterChildPage />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/parent/children/:id"
+              element={
+                <RoleBasedRoute roles={['ROLE_PARENT', 'ROLE_ADMIN']}>
+                  <ChildDetailPage />
                 </RoleBasedRoute>
               }
             />

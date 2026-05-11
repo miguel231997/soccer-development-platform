@@ -8,13 +8,21 @@ export const createClub = (data) => api.post('/api/clubs', data).then((r) => r.d
 export const listAllTeams = () => api.get('/api/teams').then((r) => r.data.data)
 export const createTeam = (data) => api.post('/api/teams', data).then((r) => r.data.data)
 
-// Registration codes
+// Registration codes (for coach/parent account creation)
 export const listRegistrationCodes = () =>
   api.get('/api/admin/registration-codes').then((r) => r.data.data)
 export const createRegistrationCode = (data) =>
   api.post('/api/admin/registration-codes', data).then((r) => r.data.data)
 export const disableRegistrationCode = (id) =>
   api.put(`/api/admin/registration-codes/${id}/disable`).then((r) => r.data.data)
+
+// Team invite codes (for parents to link children to teams)
+export const listTeamInviteCodes = () =>
+  api.get('/api/admin/team-invite-codes').then((r) => r.data.data)
+export const createTeamInviteCode = (data) =>
+  api.post('/api/admin/team-invite-codes', data).then((r) => r.data.data)
+export const disableTeamInviteCode = (id) =>
+  api.put(`/api/admin/team-invite-codes/${id}/disable`).then((r) => r.data.data)
 
 // Player registration requests (also used by coaches)
 export const listRegistrationRequests = () =>

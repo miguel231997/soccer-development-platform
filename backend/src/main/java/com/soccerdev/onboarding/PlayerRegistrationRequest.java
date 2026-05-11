@@ -1,6 +1,7 @@
 package com.soccerdev.onboarding;
 
 import com.soccerdev.common.BaseEntity;
+import com.soccerdev.player.Player;
 import com.soccerdev.player.Position;
 import com.soccerdev.player.StrongFoot;
 import com.soccerdev.team.Team;
@@ -69,6 +70,11 @@ public class PlayerRegistrationRequest extends BaseEntity {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private RegistrationStatus status = RegistrationStatus.PENDING;
+
+    /** Set when a child who already has a player profile is joining an additional team. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "existing_player_id")
+    private Player existingPlayer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by_user_id")
