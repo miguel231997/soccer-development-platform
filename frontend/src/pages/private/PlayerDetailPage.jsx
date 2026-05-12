@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getPlayer, getPlayerStats, getPlayerEvaluations } from '../../api/coach'
+import { getPlayer, getPlayerStats, getPlayerEvaluations, uploadPlayerImage } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
@@ -33,6 +33,10 @@ const RATING_KEYS = [
 export default function PlayerDetailPage() {
   const { playerId } = useParams()
   const [tab, setTab] = useState('info')
+  const [imageUrl, setImageUrl] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadErr, setUploadErr] = useState('')
+  const fileInputRef = useRef(null)
 
   const playerFetcher = useCallback(() => getPlayer(playerId), [playerId])
   const statsFetcher  = useCallback(() => getPlayerStats(playerId), [playerId])
@@ -41,6 +45,18 @@ export default function PlayerDetailPage() {
   const { data: player, loading: pLoading, error: pError } = useFetch(playerFetcher, [playerId])
   const { data: stats,  loading: sLoading } = useFetch(statsFetcher,  [playerId])
   const { data: evals,  loading: eLoading } = useFetch(evalsFetcher,  [playerId])
+
+  const handleImagePick = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadErr(''); setUploading(true)
+    try {
+      const updated = await uploadPlayerImage(playerId, file)
+      setImageUrl(updated.profileImageUrl)
+    } catch (err) {
+      setUploadErr(err?.response?.data?.message || 'Upload failed.')
+    } finally { setUploading(false) }
+  }
 
   if (pLoading) return <Spinner label="Loading player…" />
   if (pError)   return <ErrorAlert message={pError} />
@@ -60,10 +76,22 @@ export default function PlayerDetailPage() {
           </Link>
         )}
         <div className="flex items-start gap-4 mt-2">
-          <div className="w-16 h-16 rounded-full shrink-0 bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold overflow-hidden">
-            {player.profileImageUrl
-              ? <img src={player.profileImageUrl} alt="" className="w-full h-full object-cover" />
-              : `${player.firstName?.[0]}${player.lastName?.[0]}`}
+          <div className="relative shrink-0 group">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold overflow-hidden">
+              {(imageUrl ?? player.profileImageUrl)
+                ? <img src={imageUrl ?? player.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                : `${player.firstName?.[0]}${player.lastName?.[0]}`}
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute inset-0 rounded-full bg-black/40 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition disabled:cursor-wait"
+            >
+              {uploading ? '…' : 'Upload'}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+              className="hidden" onChange={handleImagePick} />
+            {uploadErr && <p className="absolute top-full mt-1 text-xs text-red-600 whitespace-nowrap">{uploadErr}</p>}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-800">

@@ -60,6 +60,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/competitions", "/api/competitions/**").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex.authenticationEntryPoint(authEntryPoint))

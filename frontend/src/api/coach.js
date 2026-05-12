@@ -16,11 +16,19 @@ export const finalizeMatch = (matchId) => api.post(`/api/matches/${matchId}/fina
 // Seasons & competitions (for match creation dropdowns)
 export const listSeasons = () => api.get('/api/seasons').then((r) => r.data.data)
 export const listSeasonPhases = (seasonId) => api.get(`/api/seasons/${seasonId}/phases`).then((r) => r.data.data)
-export const listCompetitions = () => api.get('/api/competitions').then((r) => r.data.data)
+export const listCompetitions = (state) =>
+  api.get('/api/competitions', { params: state ? { state } : {} }).then((r) => r.data.data)
 
 // Players
 export const listPlayers = () => api.get('/api/players').then((r) => r.data.data)
 export const getPlayer = (playerId) => api.get(`/api/players/${playerId}`).then((r) => r.data.data)
+export const uploadPlayerImage = (playerId, file) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  return api.post(`/api/players/${playerId}/profile-image`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then((r) => r.data.data)
+}
 
 // Match stats
 export const getMatchStats = (matchId) => api.get(`/api/matches/${matchId}/stats`).then((r) => r.data.data)

@@ -22,8 +22,9 @@ public class CompetitionController {
     private final CurrentUserService currentUserService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CompetitionResponse>>> list() {
-        return ResponseEntity.ok(ApiResponse.ok(competitionService.list()));
+    public ResponseEntity<ApiResponse<List<CompetitionResponse>>> list(
+            @RequestParam(required = false) String state) {
+        return ResponseEntity.ok(ApiResponse.ok(competitionService.list(state)));
     }
 
     @PostMapping

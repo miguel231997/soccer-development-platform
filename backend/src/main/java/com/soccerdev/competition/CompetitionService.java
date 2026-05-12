@@ -17,10 +17,11 @@ public class CompetitionService {
 
     private final CompetitionRepository competitionRepository;
 
-    public List<CompetitionResponse> list() {
-        return competitionRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+    public List<CompetitionResponse> list(String state) {
+        List<Competition> competitions = (state != null && !state.isBlank())
+                ? competitionRepository.findByState(state.toUpperCase().trim())
+                : competitionRepository.findAllOrdered();
+        return competitions.stream().map(this::toResponse).toList();
     }
 
     @Transactional
@@ -54,6 +55,12 @@ public class CompetitionService {
                 .id(competition.getId())
                 .name(competition.getName())
                 .type(competition.getType())
+                .region(competition.getRegion())
+                .level(competition.getLevel())
+                .location(competition.getLocation())
+                .compSeason(competition.getCompSeason())
+                .preset(competition.isPreset())
+                .states(competition.getStates())
                 .build();
     }
 }

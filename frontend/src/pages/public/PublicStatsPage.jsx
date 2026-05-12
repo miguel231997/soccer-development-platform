@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { getLeaderboard } from '../../api/public'
+import { getLeaderboard, getCompetitions } from '../../api/public'
 import { useFetch } from '../../hooks/useFetch'
 
 const STAT_OPTIONS = [
@@ -45,12 +45,20 @@ function statValue(entry, stat) {
   }
 }
 
+const STATES = [
+  { code: 'NJ', label: 'New Jersey' },
+  { code: 'NY', label: 'New York' },
+  { code: 'PA', label: 'Pennsylvania' },
+  { code: 'CT', label: 'Connecticut' },
+  { code: 'VA', label: 'Virginia' },
+  { code: 'FL', label: 'Florida' },
+]
+
 const INIT = {
   stat: 'GOALS',
   ageGroup: '',
   position: '',
-  seasonId: '',
-  teamId: '',
+  competitionState: '',
   competitionId: '',
   minAppearances: '1',
 }
@@ -59,13 +67,17 @@ export default function PublicStatsPage() {
   const [filters, setFilters] = useState(INIT)
   const [committed, setCommitted] = useState(INIT)
 
+  const compFetcher = useCallback(
+    () => getCompetitions(filters.competitionState || undefined),
+    [filters.competitionState],
+  )
+  const { data: competitions } = useFetch(compFetcher, [filters.competitionState])
+
   const fetcher = useCallback(
     () => {
       const params = { stat: committed.stat, minAppearances: committed.minAppearances || 1 }
       if (committed.ageGroup) params.ageGroup = committed.ageGroup
       if (committed.position) params.position = committed.position
-      if (committed.seasonId) params.seasonId = committed.seasonId
-      if (committed.teamId) params.teamId = committed.teamId
       if (committed.competitionId) params.competitionId = committed.competitionId
       return getLeaderboard(params)
     },
@@ -76,7 +88,14 @@ export default function PublicStatsPage() {
 
   const statLabel = STAT_OPTIONS.find((o) => o.value === committed.stat)?.label ?? committed.stat
 
-  const handleField = (e) => setFilters((f) => ({ ...f, [e.target.name]: e.target.value }))
+  const handleField = (e) => {
+    const { name, value } = e.target
+    setFilters((f) => {
+      const next = { ...f, [name]: value }
+      if (name === 'competitionState') next.competitionId = ''
+      return next
+    })
+  }
   const handleApply = (e) => { e.preventDefault(); setCommitted(filters) }
   const handleReset = () => { setFilters(INIT); setCommitted(INIT) }
 
@@ -111,14 +130,19 @@ export default function PublicStatsPage() {
         <FilterInput label="Min appearances" name="minAppearances" type="number" min="1"
           value={filters.minAppearances} onChange={handleField} />
 
-        <FilterInput label="Season ID" name="seasonId" type="number" placeholder="optional"
-          value={filters.seasonId} onChange={handleField} />
+        <FilterSelect label="State" name="competitionState" value={filters.competitionState} onChange={handleField}>
+          <option value="">All states</option>
+          {STATES.map((s) => <option key={s.code} value={s.code}>{s.label}</option>)}
+        </FilterSelect>
 
-        <FilterInput label="Team ID" name="teamId" type="number" placeholder="optional"
-          value={filters.teamId} onChange={handleField} />
-
-        <FilterInput label="Competition ID" name="competitionId" type="number" placeholder="optional"
-          value={filters.competitionId} onChange={handleField} />
+        <FilterSelect label="Competition" name="competitionId" value={filters.competitionId} onChange={handleField}>
+          <option value="">All competitions</option>
+          {(competitions ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </FilterSelect>
 
         <div className="flex items-end gap-2 col-span-2 sm:col-span-1">
           <button

@@ -27,17 +27,18 @@ const EMPTY_FORM = {
 
 function NewMatchModal({ onClose, onCreated }) {
   const [form, setForm] = useState(EMPTY_FORM)
+  const [competitionState, setCompetitionState] = useState('')
   const [phases, setPhases] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const teamsFetcher = useCallback(() => listTeams(), [])
   const seasonsFetcher = useCallback(() => listSeasons(), [])
-  const competitionsFetcher = useCallback(() => listCompetitions(), [])
+  const competitionsFetcher = useCallback(() => listCompetitions(competitionState || undefined), [competitionState])
 
   const { data: teams } = useFetch(teamsFetcher)
   const { data: seasons } = useFetch(seasonsFetcher)
-  const { data: competitions } = useFetch(competitionsFetcher)
+  const { data: competitions } = useFetch(competitionsFetcher, [competitionState])
 
   useEffect(() => {
     if (!form.seasonId) { setPhases([]); return }
@@ -142,13 +143,33 @@ function NewMatchModal({ onClose, onCreated }) {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Competition</label>
-            <select value={form.competitionId} onChange={set('competitionId')}
-              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-              <option value="">None</option>
-              {(competitions ?? []).map((c) => <option key={c.id} value={c.id}>{c.name} ({c.type})</option>)}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+              <select value={competitionState}
+                onChange={(e) => { setCompetitionState(e.target.value); set('competitionId')({ target: { value: '' } }) }}
+                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">All states</option>
+                <option value="NJ">New Jersey</option>
+                <option value="NY">New York</option>
+                <option value="PA">Pennsylvania</option>
+                <option value="CT">Connecticut</option>
+                <option value="VA">Virginia</option>
+                <option value="FL">Florida</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Competition</label>
+              <select value={form.competitionId} onChange={set('competitionId')}
+                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">None</option>
+                {(competitions ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}{c.compSeason ? ` (${c.compSeason})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
