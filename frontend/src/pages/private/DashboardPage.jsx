@@ -187,7 +187,7 @@ function JoinTeamInline({ onJoined }) {
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="Coach registration code"
+                placeholder="Team code"
                 required
                 autoFocus
                 className="border rounded px-3 py-1.5 text-sm font-mono w-52 focus:outline-none focus:ring-2 focus:ring-green-500"

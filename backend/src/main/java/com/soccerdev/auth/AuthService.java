@@ -2,6 +2,8 @@ package com.soccerdev.auth;
 
 import com.soccerdev.onboarding.RegistrationCode;
 import com.soccerdev.onboarding.RegistrationCodeRepository;
+import com.soccerdev.onboarding.TeamInviteCode;
+import com.soccerdev.onboarding.TeamInviteCodeRepository;
 import com.soccerdev.security.JwtService;
 import com.soccerdev.team.CoachTeamAssignment;
 import com.soccerdev.team.CoachTeamAssignmentRepository;
@@ -32,6 +34,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final RegistrationCodeRepository registrationCodeRepository;
+    private final TeamInviteCodeRepository teamInviteCodeRepository;
     private final CoachTeamAssignmentRepository coachTeamAssignmentRepository;
     private final TeamMembershipRepository teamMembershipRepository;
 
@@ -104,10 +107,20 @@ public class AuthService {
     }
 
     @Transactional
-    public JoinTeamResponse joinTeam(User user, String registrationCode) {
-        RegistrationCode code = registrationCodeRepository.findByCode(registrationCode)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid registration code"));
+    public JoinTeamResponse joinTeam(User user, String codeStr) {
+        // Try registration code first, then fall back to team invite code
+        var regCode = registrationCodeRepository.findByCode(codeStr);
+        if (regCode.isPresent()) {
+            return joinWithRegistrationCode(user, regCode.get());
+        }
+        var inviteCode = teamInviteCodeRepository.findByCodeWithTeam(codeStr);
+        if (inviteCode.isPresent()) {
+            return joinWithTeamInviteCode(user, inviteCode.get());
+        }
+        throw new IllegalArgumentException("Invalid code — check the code and try again");
+    }
 
+    private JoinTeamResponse joinWithRegistrationCode(User user, RegistrationCode code) {
         if (!code.isActive())
             throw new IllegalArgumentException("Registration code is no longer active");
         if (code.getExpiresAt() != null && code.getExpiresAt().isBefore(Instant.now()))
@@ -125,20 +138,47 @@ public class AuthService {
         }
 
         teamMembershipRepository.save(TeamMembership.builder()
-                .user(user)
-                .team(code.getTeam())
-                .role(user.getRole())
-                .build());
+                .user(user).team(code.getTeam()).role(user.getRole()).build());
 
         if (user.getRole() == UserRole.COACH) {
             coachTeamAssignmentRepository.save(CoachTeamAssignment.builder()
-                    .coachUser(user)
-                    .team(code.getTeam())
-                    .build());
+                    .coachUser(user).team(code.getTeam()).build());
         }
 
         code.setUsesCount(code.getUsesCount() + 1);
         registrationCodeRepository.save(code);
+
+        return JoinTeamResponse.builder()
+                .teamId(code.getTeam().getId())
+                .teamName(code.getTeam().getName())
+                .build();
+    }
+
+    private JoinTeamResponse joinWithTeamInviteCode(User user, TeamInviteCode code) {
+        if (!code.isActive())
+            throw new IllegalArgumentException("This team code is no longer active");
+        if (code.getExpiresAt() != null && code.getExpiresAt().isBefore(Instant.now()))
+            throw new IllegalArgumentException("This team code has expired");
+        if (code.getMaxUses() != null && code.getUsesCount() >= code.getMaxUses())
+            throw new IllegalArgumentException("This team code has reached its maximum uses");
+
+        if (teamMembershipRepository.existsByUserIdAndTeamId(user.getId(), code.getTeam().getId())) {
+            return JoinTeamResponse.builder()
+                    .teamId(code.getTeam().getId())
+                    .teamName(code.getTeam().getName())
+                    .build();
+        }
+
+        teamMembershipRepository.save(TeamMembership.builder()
+                .user(user).team(code.getTeam()).role(user.getRole()).build());
+
+        if (user.getRole() == UserRole.COACH) {
+            coachTeamAssignmentRepository.save(CoachTeamAssignment.builder()
+                    .coachUser(user).team(code.getTeam()).build());
+        }
+
+        code.setUsesCount(code.getUsesCount() + 1);
+        teamInviteCodeRepository.save(code);
 
         return JoinTeamResponse.builder()
                 .teamId(code.getTeam().getId())
