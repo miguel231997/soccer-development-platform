@@ -20,6 +20,16 @@ public interface RegistrationCodeRepository extends JpaRepository<RegistrationCo
             SELECT rc FROM RegistrationCode rc
             JOIN FETCH rc.team t
             JOIN FETCH rc.createdByUser
+            WHERE rc.team.id = :teamId AND rc.role = :role AND rc.active = true
+            """)
+    Optional<RegistrationCode> findActiveByTeamIdAndRole(
+            @Param("teamId") Long teamId,
+            @Param("role") com.soccerdev.user.UserRole role);
+
+    @Query("""
+            SELECT rc FROM RegistrationCode rc
+            JOIN FETCH rc.team t
+            JOIN FETCH rc.createdByUser
             ORDER BY rc.createdAt DESC
             """)
     List<RegistrationCode> findAllWithAssociations();

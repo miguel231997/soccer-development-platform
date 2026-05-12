@@ -2,6 +2,8 @@ import api from './client'
 
 // Teams
 export const listTeams = () => api.get('/api/teams').then((r) => r.data.data)
+export const joinTeamWithCode = (registrationCode) =>
+  api.post('/api/auth/join-team', { registrationCode }).then((r) => r.data.data)
 export const getTeam = (teamId) => api.get(`/api/teams/${teamId}`).then((r) => r.data.data)
 
 // Matches

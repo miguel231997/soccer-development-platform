@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useFetch } from '../../hooks/useFetch'
-import { listTeams, listMatches } from '../../api/coach'
+import { listTeams, listMatches, joinTeamWithCode } from '../../api/coach'
 import { listRegistrationRequests, approveRegistrationRequest, rejectRegistrationRequest } from '../../api/admin'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
@@ -29,8 +29,9 @@ function StatusBadge({ status }) {
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const [teamsKey, setTeamsKey] = useState(0)
 
-  const teamsFetcher = useCallback(() => listTeams(), [])
+  const teamsFetcher = useCallback(() => listTeams(), [teamsKey])
   const matchesFetcher = useCallback(() => listMatches(), [])
 
   const { data: teams, loading: teamsLoading, error: teamsError } = useFetch(teamsFetcher)
@@ -69,7 +70,12 @@ export default function DashboardPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-gray-700">My Teams</h2>
-          <Link to="/teams" className="text-sm text-green-700 hover:underline">View all →</Link>
+          <div className="flex items-center gap-3">
+            {user?.role === 'COACH' && (
+              <JoinTeamInline onJoined={() => setTeamsKey((k) => k + 1)} />
+            )}
+            <Link to="/teams" className="text-sm text-green-700 hover:underline">View all →</Link>
+          </div>
         </div>
         {teamsLoading && <Spinner label="Loading teams…" />}
         {teamsError && <ErrorAlert message={teamsError} />}
@@ -138,6 +144,64 @@ export default function DashboardPage() {
       </div>
 
       <PendingRegistrationRequests />
+    </div>
+  )
+}
+
+function JoinTeamInline({ onJoined }) {
+  const [open, setOpen] = useState(false)
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError(''); setSuccess(''); setLoading(true)
+    try {
+      const result = await joinTeamWithCode(code.trim())
+      setSuccess(`Joined ${result.teamName}`)
+      setCode(''); setOpen(false)
+      onJoined()
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Invalid or expired code.')
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div className="relative">
+      {success && (
+        <span className="text-xs text-green-700 mr-2">{success}</span>
+      )}
+      {!open ? (
+        <button onClick={() => { setOpen(true); setSuccess('') }}
+          className="text-sm border border-green-700 text-green-700 px-3 py-1.5 rounded hover:bg-green-50">
+          + Join a Team
+        </button>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+          <div>
+            {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="Coach registration code"
+                required
+                autoFocus
+                className="border rounded px-3 py-1.5 text-sm font-mono w-52 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              <button type="submit" disabled={loading || !code.trim()}
+                className="text-sm bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600 disabled:opacity-50">
+                {loading ? '…' : 'Join'}
+              </button>
+              <button type="button" onClick={() => { setOpen(false); setError('') }}
+                className="text-sm text-gray-500 hover:text-gray-700">×</button>
+            </div>
+          </div>
+        </form>
+      )}
     </div>
   )
 }
