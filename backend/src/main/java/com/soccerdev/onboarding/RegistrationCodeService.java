@@ -33,10 +33,11 @@ public class RegistrationCodeService {
         Team team = teamRepository.findById(input.getTeamId())
                 .orElseThrow(() -> new EntityNotFoundException("Team not found with id: " + input.getTeamId()));
 
-        // Return the existing active code rather than creating duplicates
         var existing = registrationCodeRepository.findActiveByTeamIdAndRole(team.getId(), input.getRole());
-        if (existing.isPresent()) {
-            return toResponse(existing.get());
+        if (!existing.isEmpty()) {
+            String roleName = input.getRole().name().charAt(0) + input.getRole().name().substring(1).toLowerCase();
+            throw new IllegalArgumentException(
+                    "An active " + roleName + " registration code already exists for this team: " + existing.get(0).getCode());
         }
 
         String code = generateUniqueCode();

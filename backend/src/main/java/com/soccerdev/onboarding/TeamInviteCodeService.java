@@ -32,10 +32,10 @@ public class TeamInviteCodeService {
         Team team = teamRepository.findById(input.getTeamId())
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
-        // Return existing active code for this team rather than creating duplicates
         var existing = teamInviteCodeRepository.findActiveByTeamId(team.getId());
-        if (existing.isPresent()) {
-            return toResponse(existing.get());
+        if (!existing.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "An active team code already exists for this team: " + existing.get(0).getCode());
         }
 
         byte[] bytes = new byte[4];
