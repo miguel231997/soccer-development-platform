@@ -235,7 +235,10 @@ function RegistrationCodesTab() {
         role: form.role,
         maxUses: form.maxUses ? Number(form.maxUses) : undefined,
       })
-      setLocalCodes((p) => [created, ...p])
+      setLocalCodes((p) => {
+        const alreadyExists = [...(codes ?? []), ...p].some((c) => c.id === created.id)
+        return alreadyExists ? p : [created, ...p]
+      })
     } catch (err) {
       setFormErr(err?.response?.data?.message || 'Failed to create code.')
     } finally { setSaving(false) }
@@ -362,7 +365,11 @@ function TeamCodesTab() {
         teamId: Number(teamId),
         maxUses: maxUses ? Number(maxUses) : null,
       })
-      setLocalCodes([created, ...allCodes])
+      setLocalCodes((prev) => {
+        const current = prev ?? codes ?? []
+        if (current.some((c) => c.id === created.id)) return current
+        return [created, ...current]
+      })
       setTeamId('')
       setMaxUses('20')
     } catch (err) {
