@@ -140,6 +140,7 @@ public class PublicStatsService {
         return PlayerLeaderboardEntry.builder()
                 .playerId(p.getId())
                 .playerName(p.getFirstName() + " " + p.getLastName())
+                .profileImageUrl(p.getProfileImageUrl())
                 .position(p.getPrimaryPosition())
                 .teamId(t != null ? t.getId() : null)
                 .teamName(t != null ? t.getName() : null)

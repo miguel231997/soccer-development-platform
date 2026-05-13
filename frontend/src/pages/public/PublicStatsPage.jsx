@@ -192,9 +192,14 @@ export default function PublicStatsPage() {
                       <td className="px-4 py-3">
                         <Link
                           to={`/players/${entry.playerId}/profile`}
-                          className="font-medium text-green-700 hover:underline"
+                          className="flex items-center gap-2.5 hover:opacity-80 transition"
                         >
-                          {entry.playerName}
+                          <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center text-gray-400 shrink-0">
+                            {entry.profileImageUrl
+                              ? <img src={entry.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                              : <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>}
+                          </div>
+                          <span className="font-medium text-green-700">{entry.playerName}</span>
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-600">

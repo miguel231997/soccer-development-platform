@@ -96,22 +96,25 @@ export default function ChildDetailPage() {
 
       {/* Profile card */}
       <div className="bg-white border border-gray-200 rounded-lg p-5 flex gap-5 items-start">
-        <div className="relative shrink-0 group">
-          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold overflow-hidden">
+        <div className="relative shrink-0">
+          <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center text-gray-400">
             {(imageUrl ?? child?.profileImageUrl)
               ? <img src={imageUrl ?? child.profileImageUrl} alt="" className="w-full h-full object-cover" />
-              : `${child?.firstName?.[0]}${child?.lastName?.[0]}`}
+              : <PersonIcon />}
           </div>
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="absolute inset-0 rounded-full bg-black/40 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition disabled:cursor-wait"
+            title="Change photo"
+            className="absolute bottom-0 right-0 w-6 h-6 bg-green-700 rounded-full flex items-center justify-center shadow hover:bg-green-600 transition disabled:opacity-50"
           >
-            {uploading ? '…' : 'Upload'}
+            {uploading
+              ? <span className="text-white text-xs leading-none">…</span>
+              : <CameraIcon />}
           </button>
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
             className="hidden" onChange={handleImagePick} />
-          {uploadErr && <p className="absolute top-full mt-1 text-xs text-red-600 whitespace-nowrap">{uploadErr}</p>}
+          {uploadErr && <p className="absolute top-full left-0 mt-1 text-xs text-red-600 whitespace-nowrap">{uploadErr}</p>}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -489,4 +492,20 @@ function Pair({ label, value }) {
 
 function Empty({ children }) {
   return <div className="text-center py-10 text-gray-400 text-sm">{children}</div>
+}
+
+function PersonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
+      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+    </svg>
+  )
+}
+
+function CameraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="white" className="w-3.5 h-3.5">
+      <path d="M12 15.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zM19.2 3.2H16l-1.44-2.16A1.2 1.2 0 0 0 13.56 0h-3.12a1.2 1.2 0 0 0-1 .56L8 3.2H4.8A2.4 2.4 0 0 0 2.4 5.6v12A2.4 2.4 0 0 0 4.8 20h14.4a2.4 2.4 0 0 0 2.4-2.4V5.6a2.4 2.4 0 0 0-2.4-2.4z"/>
+    </svg>
+  )
 }

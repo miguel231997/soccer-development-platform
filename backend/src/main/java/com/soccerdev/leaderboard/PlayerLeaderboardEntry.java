@@ -13,6 +13,7 @@ public class PlayerLeaderboardEntry {
 
     private Long playerId;
     private String playerName;
+    private String profileImageUrl;
     private Position position;
     private Long teamId;
     private String teamName;

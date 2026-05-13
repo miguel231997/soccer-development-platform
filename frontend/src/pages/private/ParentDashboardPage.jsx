@@ -34,13 +34,13 @@ export default function ParentDashboardPage() {
               : `${children.length} child${children.length !== 1 ? 'ren' : ''} registered`
           }
           badge={pendingCount > 0 ? `${pendingCount} pending` : null}
-          icon="👦"
+          icon={<UsersIcon />}
         />
         <NavCard
           onClick={() => navigate('/parent/children/register')}
           title="Register a Child"
           subtitle="Add a child to a team using a team invite code"
-          icon="+"
+          icon={<AddPersonIcon />}
           accent
         />
       </div>
@@ -96,7 +96,7 @@ function NavCard({ onClick, title, subtitle, badge, icon, accent }) {
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-2xl">{icon}</span>
+        <div className={accent ? 'text-green-700' : 'text-gray-500'}>{icon}</div>
         {badge && (
           <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-medium">
             {badge}
@@ -106,5 +106,21 @@ function NavCard({ onClick, title, subtitle, badge, icon, accent }) {
       <p className={`font-semibold ${accent ? 'text-green-800' : 'text-gray-800'}`}>{title}</p>
       <p className="text-xs text-gray-500">{subtitle}</p>
     </button>
+  )
+}
+
+function UsersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
+      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+    </svg>
+  )
+}
+
+function AddPersonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
+      <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+    </svg>
   )
 }
