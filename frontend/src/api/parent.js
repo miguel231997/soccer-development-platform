@@ -21,7 +21,5 @@ export const submitPlayerRegistration = (data) =>
 export const uploadChildImage = (playerId, file) => {
   const fd = new FormData()
   fd.append('file', file)
-  return api.post(`/api/players/${playerId}/profile-image`, fd, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }).then((r) => r.data.data)
+  return api.post(`/api/players/${playerId}/profile-image`, fd).then((r) => r.data.data)
 }
