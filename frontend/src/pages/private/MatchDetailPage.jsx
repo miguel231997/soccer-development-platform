@@ -4,11 +4,14 @@ import {
   getMatch, listPlayers, getMatchStats, getMatchEvaluations, finalizeMatch,
 } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
+import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 
 export default function MatchDetailPage() {
   const { matchId } = useParams()
+  const { hasRole } = useAuth()
+  const isParent = hasRole('ROLE_PARENT') && !hasRole('ROLE_COACH') && !hasRole('ROLE_ADMIN') && !hasRole('ROLE_DIRECTOR')
   const [finalizing, setFinalizing] = useState(false)
   const [finalizeError, setFinalizeError] = useState(null)
 
@@ -104,14 +107,18 @@ export default function MatchDetailPage() {
             >
               Enter Stats
             </Link>
-            {finalizeError && <span className="text-sm text-red-600">{finalizeError}</span>}
-            <button
-              onClick={handleFinalize}
-              disabled={finalizing}
-              className="text-sm border border-gray-300 text-gray-600 px-4 py-2 rounded hover:bg-gray-50 disabled:opacity-50"
-            >
-              {finalizing ? 'Finalizing…' : 'Finalize Match'}
-            </button>
+            {!isParent && (
+              <>
+                {finalizeError && <span className="text-sm text-red-600">{finalizeError}</span>}
+                <button
+                  onClick={handleFinalize}
+                  disabled={finalizing}
+                  className="text-sm border border-gray-300 text-gray-600 px-4 py-2 rounded hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {finalizing ? 'Finalizing…' : 'Finalize Match'}
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -133,7 +140,7 @@ export default function MatchDetailPage() {
                   <th className="px-4 py-2 text-left font-medium">Player</th>
                   <th className="px-4 py-2 text-left font-medium">Pos</th>
                   <th className="px-4 py-2 text-center font-medium">Stats</th>
-                  <th className="px-4 py-2 text-center font-medium">Eval</th>
+                  {!isParent && <th className="px-4 py-2 text-center font-medium">Eval</th>}
                   <th className="px-4 py-2 text-right font-medium">Actions</th>
                 </tr>
               </thead>
@@ -152,9 +159,11 @@ export default function MatchDetailPage() {
                       <td className="px-4 py-3 text-center">
                         <StatusDot done={hasStat} />
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <StatusDot done={hasEval} />
-                      </td>
+                      {!isParent && (
+                        <td className="px-4 py-3 text-center">
+                          <StatusDot done={hasEval} />
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-right">
                         <div className="flex gap-2 justify-end flex-wrap">
                           {!match.finalized && (
@@ -165,7 +174,7 @@ export default function MatchDetailPage() {
                               Stats
                             </Link>
                           )}
-                          {!match.finalized && (
+                          {!isParent && !match.finalized && (
                             <Link
                               to={`/matches/${matchId}/players/${p.id}/evaluation`}
                               className="text-xs text-blue-700 border border-blue-300 px-2 py-1 rounded hover:bg-blue-50"
@@ -173,7 +182,7 @@ export default function MatchDetailPage() {
                               {hasEval ? 'Edit Eval' : 'Evaluate'}
                             </Link>
                           )}
-                          {match.finalized && hasEval && (
+                          {!isParent && match.finalized && hasEval && (
                             <Link
                               to={`/matches/${matchId}/players/${p.id}/evaluation`}
                               className="text-xs text-gray-600 border border-gray-300 px-2 py-1 rounded"

@@ -48,7 +48,10 @@ export default function Navbar() {
 
             {/* Parent nav — no links to coach/admin sections */}
             {isParent && (
-              <Link to="/parent" className="hover:text-green-200">My Children</Link>
+              <>
+                <Link to="/parent"   className="hover:text-green-200">My Children</Link>
+                <Link to="/matches"  className="hover:text-green-200">Matches</Link>
+              </>
             )}
 
             <span className="text-green-300">|</span>

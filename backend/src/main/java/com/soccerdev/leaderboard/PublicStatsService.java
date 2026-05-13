@@ -4,6 +4,8 @@ import com.soccerdev.club.Club;
 import com.soccerdev.player.Player;
 import com.soccerdev.player.PlayerRepository;
 import com.soccerdev.player.Position;
+import com.soccerdev.seasonstats.PlayerSeasonStats;
+import com.soccerdev.seasonstats.PlayerSeasonStatsRepository;
 import com.soccerdev.stats.PlayerMatchStats;
 import com.soccerdev.stats.PlayerMatchStatsRepository;
 import com.soccerdev.team.AgeGroup;
@@ -15,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,6 +34,7 @@ public class PublicStatsService {
     private final PlayerMatchStatsRepository statsRepository;
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
+    private final PlayerSeasonStatsRepository seasonStatsRepository;
 
     public List<PlayerLeaderboardEntry> getLeaderboard(
             Long seasonId, Long seasonPhaseId, Long competitionId,
@@ -37,10 +42,69 @@ public class PublicStatsService {
             AgeGroup ageGroup, Position position,
             LeaderboardStat stat, int minAppearances) {
 
+        // Build base entries from per-match stats
         List<PlayerMatchStats> raw = statsRepository.findPublicStats(
                 seasonId, seasonPhaseId, competitionId, teamId, clubId);
+        List<PlayerLeaderboardEntry> matchEntries = aggregate(raw, ageGroup, position, 0, stat);
 
-        return aggregate(raw, ageGroup, position, minAppearances, stat);
+        // Mutable map: playerId -> entry
+        Map<Long, PlayerLeaderboardEntry> byPlayer = new LinkedHashMap<>();
+        matchEntries.forEach(e -> byPlayer.put(e.getPlayerId(), e));
+
+        // Fetch all public player season stats and keep latest per player
+        List<PlayerSeasonStats> allSS = seasonStatsRepository.findAllPublicPlayerStats();
+        Map<Long, PlayerSeasonStats> latestSS = allSS.stream().collect(Collectors.toMap(
+                s -> s.getPlayer().getId(),
+                s -> s,
+                (a, b) -> (a.getCreatedAt() != null && b.getCreatedAt() != null
+                        && a.getCreatedAt().isAfter(b.getCreatedAt())) ? a : b
+        ));
+
+        // Optional filters on season stats
+        if (teamId != null) latestSS.entrySet().removeIf(e -> !teamId.equals(e.getValue().getTeam().getId()));
+        if (clubId != null) latestSS.entrySet().removeIf(e -> e.getValue().getTeam().getClub() == null
+                || !clubId.equals(e.getValue().getTeam().getClub().getId()));
+        if (ageGroup != null) latestSS.entrySet().removeIf(e -> e.getValue().getTeam().getAgeGroup() != ageGroup);
+        if (position != null) latestSS.entrySet().removeIf(e -> e.getValue().getPlayer().getPrimaryPosition() != position);
+
+        // Merge: season stats override goals/assists/shots/SoT; add players missing from match entries
+        for (Map.Entry<Long, PlayerSeasonStats> e : latestSS.entrySet()) {
+            Long pid = e.getKey();
+            PlayerSeasonStats ss = e.getValue();
+            PlayerLeaderboardEntry existing = byPlayer.get(pid);
+            Team t = ss.getTeam();
+            Club c = t.getClub();
+            Player p = ss.getPlayer();
+
+            byPlayer.put(pid, PlayerLeaderboardEntry.builder()
+                    .playerId(pid)
+                    .playerName(p.getFirstName() + " " + p.getLastName())
+                    .profileImageUrl(p.getProfileImageUrl())
+                    .position(p.getPrimaryPosition())
+                    .teamId(t.getId())
+                    .teamName(t.getName())
+                    .ageGroup(t.getAgeGroup())
+                    .clubId(c != null ? c.getId() : null)
+                    .clubName(c != null ? c.getName() : null)
+                    .appearances(existing != null ? existing.getAppearances() : 1)
+                    .minutesPlayed(existing != null ? existing.getMinutesPlayed() : 0)
+                    .goals(ss.getGoals())
+                    .assists(ss.getAssists())
+                    .shots(ss.getShots())
+                    .shotsOnTarget(ss.getShotsOnTarget())
+                    .saves(existing != null ? existing.getSaves() : 0)
+                    .cleanSheets(existing != null ? existing.getCleanSheets() : 0)
+                    .xg(existing != null ? existing.getXg() : null)
+                    .xa(existing != null ? existing.getXa() : null)
+                    .xt(existing != null ? existing.getXt() : null)
+                    .dangerPrevented(existing != null ? existing.getDangerPrevented() : null)
+                    .build());
+        }
+
+        return byPlayer.values().stream()
+                .filter(e -> e.getAppearances() >= Math.max(minAppearances, 0))
+                .sorted(comparatorFor(stat))
+                .toList();
     }
 
     public PublicPlayerProfile getPublicPlayerProfile(Long playerId) {

@@ -16,4 +16,7 @@ public interface PlayerSeasonStatsRepository extends JpaRepository<PlayerSeasonS
 
     @Query("SELECT s FROM PlayerSeasonStats s WHERE s.team.id = :teamId AND s.season IS NULL")
     List<PlayerSeasonStats> findByTeamAndNoSeason(@Param("teamId") Long teamId);
+
+    @Query("SELECT s FROM PlayerSeasonStats s JOIN FETCH s.player p JOIN FETCH s.team t LEFT JOIN FETCH t.club LEFT JOIN FETCH s.season WHERE p.publicProfileEnabled = true AND p.active = true")
+    List<PlayerSeasonStats> findAllPublicPlayerStats();
 }

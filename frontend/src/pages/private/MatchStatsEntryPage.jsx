@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getMatch, listPlayers, getMatchStats, upsertStats } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
+import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 
@@ -60,6 +61,8 @@ function toPayload(form) {
 
 export default function MatchStatsEntryPage() {
   const { matchId } = useParams()
+  const { hasRole } = useAuth()
+  const isParent = hasRole('ROLE_PARENT') && !hasRole('ROLE_COACH') && !hasRole('ROLE_ADMIN') && !hasRole('ROLE_DIRECTOR')
 
   const fetcher = useCallback(
     () => Promise.all([getMatch(matchId), listPlayers(), getMatchStats(matchId)])
@@ -88,7 +91,9 @@ export default function MatchStatsEntryPage() {
         </h1>
         {match.finalized && (
           <div className="mt-2 text-sm bg-gray-100 text-gray-600 rounded px-3 py-2 inline-block">
-            Match is finalized. Stats are locked.
+            {isParent
+              ? 'This match has been finalized. Stats can no longer be edited.'
+              : 'Match is finalized. Stats are locked.'}
           </div>
         )}
       </div>

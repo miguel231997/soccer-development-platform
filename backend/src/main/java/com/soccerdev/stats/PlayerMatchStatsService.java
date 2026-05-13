@@ -65,8 +65,17 @@ public class PlayerMatchStatsService {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new EntityNotFoundException("Player not found with id: " + playerId));
 
-        if (!authorizationService.canEditMatch(user, matchId)) {
-            throw new AccessDeniedException("Access denied");
+        if (user.getRole() == UserRole.PARENT) {
+            if (!parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(user.getId(), playerId)) {
+                throw new AccessDeniedException("Access denied");
+            }
+            if (!authorizationService.canViewMatch(user, matchId)) {
+                throw new AccessDeniedException("Access denied");
+            }
+        } else {
+            if (!authorizationService.canEditMatch(user, matchId)) {
+                throw new AccessDeniedException("Access denied");
+            }
         }
 
         if (match.isFinalized()) {
