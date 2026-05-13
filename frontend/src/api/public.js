@@ -9,5 +9,8 @@ export const getPublicPlayer = (playerId) =>
 export const getPublicTeamStats = (teamId) =>
   api.get(`/api/public/teams/${teamId}/stats`).then((r) => r.data.data)
 
+export const getPublicPlayerSeasonStats = (playerId) =>
+  api.get(`/api/public/players/${playerId}/season-stats`).then((r) => r.data.data)
+
 export const getCompetitions = (state) =>
   api.get('/api/competitions', { params: state ? { state } : {} }).then((r) => r.data.data)

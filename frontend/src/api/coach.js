@@ -37,6 +37,9 @@ export const upsertStats = (matchId, playerId, data) =>
 // Evaluations
 export const getMatchEvaluations = (matchId) =>
   api.get(`/api/matches/${matchId}/evaluations`).then((r) => r.data.data)
+export const getPlayerSeasonStats = (playerId) =>
+  api.get(`/api/players/${playerId}/season-stats`).then((r) => r.data.data)
+
 export const getPlayerEvaluations = (playerId) =>
   api.get(`/api/players/${playerId}/evaluations`).then((r) => r.data.data)
 export const createEvaluation = (matchId, playerId, data) =>

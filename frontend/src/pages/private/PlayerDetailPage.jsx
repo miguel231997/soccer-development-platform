@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getPlayer, getPlayerStats, getPlayerEvaluations, uploadPlayerImage } from '../../api/coach'
+import { getPlayer, getPlayerStats, getPlayerEvaluations, getPlayerSeasonStats, uploadPlayerImage } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
+import PlayerSeasonStatsTab from '../../components/PlayerSeasonStatsTab'
 
 const STAT_COLS = [
   { key: 'opponent',       label: 'Match' },
@@ -38,13 +39,15 @@ export default function PlayerDetailPage() {
   const [uploadErr, setUploadErr] = useState('')
   const photoInputId = `photo-${playerId}`
 
-  const playerFetcher = useCallback(() => getPlayer(playerId), [playerId])
-  const statsFetcher  = useCallback(() => getPlayerStats(playerId), [playerId])
-  const evalsFetcher  = useCallback(() => getPlayerEvaluations(playerId), [playerId])
+  const playerFetcher      = useCallback(() => getPlayer(playerId), [playerId])
+  const statsFetcher       = useCallback(() => getPlayerStats(playerId), [playerId])
+  const evalsFetcher       = useCallback(() => getPlayerEvaluations(playerId), [playerId])
+  const seasonStatsFetcher = useCallback(() => getPlayerSeasonStats(playerId), [playerId])
 
-  const { data: player, loading: pLoading, error: pError } = useFetch(playerFetcher, [playerId])
-  const { data: stats,  loading: sLoading } = useFetch(statsFetcher,  [playerId])
-  const { data: evals,  loading: eLoading } = useFetch(evalsFetcher,  [playerId])
+  const { data: player,      loading: pLoading,  error: pError } = useFetch(playerFetcher, [playerId])
+  const { data: stats,       loading: sLoading }                 = useFetch(statsFetcher,  [playerId])
+  const { data: evals,       loading: eLoading }                 = useFetch(evalsFetcher,  [playerId])
+  const { data: seasonStats, loading: ssLoading, error: ssError } = useFetch(seasonStatsFetcher, [playerId])
 
   const handleImagePick = async (e) => {
     const file = e.target.files?.[0]
@@ -118,17 +121,22 @@ export default function PlayerDetailPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-200">
-        {['info', 'stats', 'evaluations'].map((t) => (
+        {[
+          { id: 'info',        label: 'Info' },
+          { id: 'matches',     label: `Matches (${(stats ?? []).length})` },
+          { id: 'stats',       label: 'Stats' },
+          { id: 'evaluations', label: `Evaluations (${(evals ?? []).length})` },
+        ].map(({ id: t, label }) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px capitalize transition ${
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
               tab === t
                 ? 'border-green-600 text-green-700'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            {t === 'stats' ? `Stats (${(stats ?? []).length})` : t === 'evaluations' ? `Evaluations (${(evals ?? []).length})` : t}
+            {label}
           </button>
         ))}
       </div>
@@ -152,8 +160,13 @@ export default function PlayerDetailPage() {
         </div>
       )}
 
-      {/* Stats tab */}
+      {/* Season stats tab */}
       {tab === 'stats' && (
+        <PlayerSeasonStatsTab data={seasonStats} loading={ssLoading} error={ssError} />
+      )}
+
+      {/* Matches tab */}
+      {tab === 'matches' && (
         <>
           {sLoading && <Spinner label="Loading stats…" />}
           {!sLoading && (stats ?? []).length === 0 && (

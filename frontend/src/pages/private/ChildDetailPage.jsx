@@ -5,6 +5,7 @@ import {
   getChildStats,
   getChildEvaluations,
   getChildReports,
+  getChildSeasonStats,
   lookupTeamInviteCode,
   submitPlayerRegistration,
   uploadChildImage,
@@ -12,6 +13,7 @@ import {
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
+import PlayerSeasonStatsTab from '../../components/PlayerSeasonStatsTab'
 
 const RATINGS = [
   { key: 'technicalRating',      label: 'Technical' },
@@ -45,7 +47,7 @@ const STAT_COLS = [
 export default function ChildDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [tab, setTab] = useState('stats')
+  const [tab, setTab] = useState('matches')
   const [selectedTeamId, setSelectedTeamId] = useState(null)
   const [joinOpen, setJoinOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState(null)
@@ -66,15 +68,17 @@ export default function ChildDetailPage() {
     } finally { setUploading(false) }
   }
 
-  const childFetcher   = useCallback(() => getChild(id),            [id])
-  const statsFetcher   = useCallback(() => getChildStats(id),       [id])
-  const evalsFetcher   = useCallback(() => getChildEvaluations(id), [id])
-  const reportsFetcher = useCallback(() => getChildReports(id),     [id])
+  const childFetcher      = useCallback(() => getChild(id),            [id])
+  const statsFetcher      = useCallback(() => getChildStats(id),       [id])
+  const evalsFetcher      = useCallback(() => getChildEvaluations(id), [id])
+  const reportsFetcher    = useCallback(() => getChildReports(id),     [id])
+  const seasonStatsFetcher = useCallback(() => getChildSeasonStats(id), [id])
 
-  const { data: child,   loading: cLoading,  error: cError }  = useFetch(childFetcher)
-  const { data: stats,   loading: sLoading,  error: sError }  = useFetch(statsFetcher)
-  const { data: evals,   loading: eLoading,  error: eError }  = useFetch(evalsFetcher)
-  const { data: reports, loading: rLoading,  error: rError }  = useFetch(reportsFetcher)
+  const { data: child,       loading: cLoading,  error: cError }  = useFetch(childFetcher)
+  const { data: stats,       loading: sLoading,  error: sError }  = useFetch(statsFetcher)
+  const { data: evals,       loading: eLoading,  error: eError }  = useFetch(evalsFetcher)
+  const { data: reports,     loading: rLoading,  error: rError }  = useFetch(reportsFetcher)
+  const { data: seasonStats, loading: ssLoading, error: ssError } = useFetch(seasonStatsFetcher)
 
   const teams = child?.teams ?? []
   const activeTeamId = selectedTeamId ?? teams[0]?.teamId ?? null
@@ -180,7 +184,8 @@ export default function ChildDetailPage() {
       {/* Content tabs */}
       <div className="flex gap-1 border-b border-gray-200">
         {[
-          { id: 'stats',   label: `Stats (${statsForTeam.length})` },
+          { id: 'matches', label: `Matches (${statsForTeam.length})` },
+          { id: 'stats',   label: 'Stats' },
           { id: 'evals',   label: `Evaluations (${evalsForTeam.length})` },
           { id: 'reports', label: `Reports (${(reports ?? []).filter((r) => r.approvedForParent).length})` },
         ].map(({ id: tabId, label }) => (
@@ -195,8 +200,11 @@ export default function ChildDetailPage() {
         ))}
       </div>
 
-      {tab === 'stats' && (
+      {tab === 'matches' && (
         <StatsTab stats={statsForTeam} loading={sLoading} error={sError} />
+      )}
+      {tab === 'stats' && (
+        <PlayerSeasonStatsTab data={seasonStats} loading={ssLoading} error={ssError} />
       )}
       {tab === 'evals' && (
         <EvalsTab evals={evalsForTeam} loading={eLoading} error={eError} />

@@ -18,6 +18,9 @@ export const lookupTeamInviteCode = (code) =>
 export const submitPlayerRegistration = (data) =>
   api.post('/api/player-registration-requests', data).then((r) => r.data.data)
 
+export const getChildSeasonStats = (playerId) =>
+  api.get(`/api/players/${playerId}/season-stats`).then((r) => r.data.data)
+
 export const uploadChildImage = (playerId, file) => {
   const fd = new FormData()
   fd.append('file', file)

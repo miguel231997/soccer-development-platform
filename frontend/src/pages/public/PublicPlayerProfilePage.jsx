@@ -1,7 +1,8 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getPublicPlayer } from '../../api/public'
+import { getPublicPlayer, getPublicPlayerSeasonStats } from '../../api/public'
 import { useFetch } from '../../hooks/useFetch'
+import PlayerSeasonStatsTab from '../../components/PlayerSeasonStatsTab'
 
 const STAT_ROWS = [
   { key: 'appearances',     label: 'Appearances' },
@@ -20,9 +21,12 @@ const STAT_ROWS = [
 
 export default function PublicPlayerProfilePage() {
   const { playerId } = useParams()
+  const [tab, setTab] = useState('overview')
 
-  const fetcher = useCallback(() => getPublicPlayer(playerId), [playerId])
-  const { data: player, loading, error } = useFetch(fetcher, [playerId])
+  const fetcher       = useCallback(() => getPublicPlayer(playerId), [playerId])
+  const statsFetcher  = useCallback(() => getPublicPlayerSeasonStats(playerId), [playerId])
+  const { data: player,      loading,    error }      = useFetch(fetcher,      [playerId])
+  const { data: seasonStats, loading: sLoading, error: sError } = useFetch(statsFetcher, [playerId])
 
   if (loading) return <PageSpinner />
   if (error)   return <ErrorBanner message={error} />
@@ -86,29 +90,52 @@ export default function PublicPlayerProfilePage() {
         </div>
       </div>
 
-      {/* Career stats */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-700">Career Statistics</h2>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y divide-gray-100">
-          {STAT_ROWS.map(({ key, label, decimal }) => {
-            const raw = player[key]
-            if (raw == null) return null
-            const display = decimal ? Number(raw).toFixed(2) : raw
-            return (
-              <div key={key} className="px-4 py-3 text-center">
-                <p className="text-2xl font-bold text-green-800">{display}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{label}</p>
-              </div>
-            )
-          })}
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-gray-200">
+        {[
+          { id: 'overview', label: 'Overview' },
+          { id: 'stats',    label: 'Stats' },
+        ].map(({ id: t, label }) => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+              tab === t
+                ? 'border-green-600 text-green-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}>
+            {label}
+          </button>
+        ))}
       </div>
 
-      <p className="text-xs text-gray-400 text-center">
-        Public profile — no private evaluations or coach notes are shown.
-      </p>
+      {tab === 'overview' && (
+        <>
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-700">Career Statistics</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y divide-gray-100">
+              {STAT_ROWS.map(({ key, label, decimal }) => {
+                const raw = player[key]
+                if (raw == null) return null
+                const display = decimal ? Number(raw).toFixed(2) : raw
+                return (
+                  <div key={key} className="px-4 py-3 text-center">
+                    <p className="text-2xl font-bold text-green-800">{display}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 text-center">
+            Public profile — no private evaluations or coach notes are shown.
+          </p>
+        </>
+      )}
+
+      {tab === 'stats' && (
+        <PlayerSeasonStatsTab data={seasonStats} loading={sLoading} error={sError} />
+      )}
     </div>
   )
 }
