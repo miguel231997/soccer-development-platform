@@ -17,3 +17,11 @@ export const lookupTeamInviteCode = (code) =>
 /** Register a child (or add an existing child to another team) using a team invite code. */
 export const submitPlayerRegistration = (data) =>
   api.post('/api/player-registration-requests', data).then((r) => r.data.data)
+
+export const uploadChildImage = (playerId, file) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  return api.post(`/api/players/${playerId}/profile-image`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then((r) => r.data.data)
+}

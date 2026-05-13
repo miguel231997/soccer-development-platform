@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   getChild,
@@ -7,6 +7,7 @@ import {
   getChildReports,
   lookupTeamInviteCode,
   submitPlayerRegistration,
+  uploadChildImage,
 } from '../../api/parent'
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
@@ -47,6 +48,22 @@ export default function ChildDetailPage() {
   const [tab, setTab] = useState('stats')
   const [selectedTeamId, setSelectedTeamId] = useState(null)
   const [joinOpen, setJoinOpen] = useState(false)
+  const [imageUrl, setImageUrl] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadErr, setUploadErr] = useState('')
+  const fileInputRef = useRef(null)
+
+  const handleImagePick = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadErr(''); setUploading(true)
+    try {
+      const updated = await uploadChildImage(id, file)
+      setImageUrl(updated.profileImageUrl)
+    } catch (err) {
+      setUploadErr(err?.response?.data?.message || 'Upload failed.')
+    } finally { setUploading(false) }
+  }
 
   const childFetcher   = useCallback(() => getChild(id),            [id])
   const statsFetcher   = useCallback(() => getChildStats(id),       [id])
@@ -79,10 +96,22 @@ export default function ChildDetailPage() {
 
       {/* Profile card */}
       <div className="bg-white border border-gray-200 rounded-lg p-5 flex gap-5 items-start">
-        <div className="w-16 h-16 rounded-full shrink-0 bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold overflow-hidden">
-          {child?.profileImageUrl
-            ? <img src={child.profileImageUrl} alt="" className="w-full h-full object-cover" />
-            : `${child?.firstName?.[0]}${child?.lastName?.[0]}`}
+        <div className="relative shrink-0 group">
+          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xl font-bold overflow-hidden">
+            {(imageUrl ?? child?.profileImageUrl)
+              ? <img src={imageUrl ?? child.profileImageUrl} alt="" className="w-full h-full object-cover" />
+              : `${child?.firstName?.[0]}${child?.lastName?.[0]}`}
+          </div>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="absolute inset-0 rounded-full bg-black/40 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition disabled:cursor-wait"
+          >
+            {uploading ? '…' : 'Upload'}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+            className="hidden" onChange={handleImagePick} />
+          {uploadErr && <p className="absolute top-full mt-1 text-xs text-red-600 whitespace-nowrap">{uploadErr}</p>}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
