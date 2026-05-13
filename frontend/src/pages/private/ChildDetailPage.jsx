@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   getChild,
@@ -51,11 +51,12 @@ export default function ChildDetailPage() {
   const [imageUrl, setImageUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [uploadErr, setUploadErr] = useState('')
-  const fileInputRef = useRef(null)
+  const photoInputId = `photo-${id}`
 
   const handleImagePick = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    e.target.value = ''
     setUploadErr(''); setUploading(true)
     try {
       const updated = await uploadChildImage(id, file)
@@ -102,18 +103,17 @@ export default function ChildDetailPage() {
               ? <img src={imageUrl ?? child.profileImageUrl} alt="" className="w-full h-full object-cover" />
               : <PersonIcon />}
           </div>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+          <label
+            htmlFor={photoInputId}
             title="Change photo"
-            className="absolute bottom-0 right-0 w-6 h-6 bg-green-700 rounded-full flex items-center justify-center shadow hover:bg-green-600 transition disabled:opacity-50"
+            className={`absolute bottom-0 right-0 w-6 h-6 bg-green-700 rounded-full flex items-center justify-center shadow hover:bg-green-600 transition ${uploading ? 'opacity-50 cursor-wait pointer-events-none' : 'cursor-pointer'}`}
           >
             {uploading
               ? <span className="text-white text-xs leading-none">…</span>
               : <CameraIcon />}
-          </button>
-          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
-            className="hidden" onChange={handleImagePick} />
+          </label>
+          <input id={photoInputId} type="file" accept="image/jpeg,image/png,image/webp"
+            className="hidden" disabled={uploading} onChange={handleImagePick} />
           {uploadErr && <p className="absolute top-full left-0 mt-1 text-xs text-red-600 whitespace-nowrap">{uploadErr}</p>}
         </div>
         <div className="flex-1 min-w-0">
