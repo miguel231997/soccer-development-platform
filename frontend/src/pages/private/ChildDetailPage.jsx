@@ -97,24 +97,26 @@ export default function ChildDetailPage() {
 
       {/* Profile card */}
       <div className="bg-white border border-gray-200 rounded-lg p-5 flex gap-5 items-start">
-        <div className="relative shrink-0">
-          <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center text-gray-400">
-            {(imageUrl ?? child?.profileImageUrl)
-              ? <img src={imageUrl ?? child.profileImageUrl} alt="" className="w-full h-full object-cover" />
-              : <PersonIcon />}
-          </div>
+        <div className="shrink-0">
           <label
             htmlFor={photoInputId}
             title="Change photo"
-            className={`absolute bottom-0 right-0 w-6 h-6 bg-green-700 rounded-full flex items-center justify-center shadow hover:bg-green-600 transition ${uploading ? 'opacity-50 cursor-wait pointer-events-none' : 'cursor-pointer'}`}
+            className={`relative block ${uploading ? 'cursor-wait' : 'cursor-pointer'}`}
           >
-            {uploading
-              ? <span className="text-white text-xs leading-none">…</span>
-              : <CameraIcon />}
+            <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center text-gray-400">
+              {(imageUrl ?? child?.profileImageUrl)
+                ? <img src={imageUrl ?? child.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                : <PersonIcon />}
+            </div>
+            <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-700 rounded-full flex items-center justify-center shadow hover:bg-green-600 transition">
+              {uploading
+                ? <span className="text-white text-xs leading-none">…</span>
+                : <CameraIcon />}
+            </div>
+            <input id={photoInputId} type="file" accept="image/jpeg,image/png,image/webp"
+              className="sr-only" disabled={uploading} onChange={handleImagePick} />
           </label>
-          <input id={photoInputId} type="file" accept="image/jpeg,image/png,image/webp"
-            className="hidden" disabled={uploading} onChange={handleImagePick} />
-          {uploadErr && <p className="absolute top-full left-0 mt-1 text-xs text-red-600 whitespace-nowrap">{uploadErr}</p>}
+          {uploadErr && <p className="mt-1 text-xs text-red-600 whitespace-nowrap">{uploadErr}</p>}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
