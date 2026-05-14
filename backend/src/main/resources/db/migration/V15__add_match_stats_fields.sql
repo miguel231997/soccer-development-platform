@@ -1,0 +1,17 @@
+ALTER TABLE player_match_stats
+  ADD COLUMN successful_passes   INT NOT NULL DEFAULT 0,
+  ADD COLUMN accurate_long_balls INT NOT NULL DEFAULT 0,
+  ADD COLUMN chances_created     INT NOT NULL DEFAULT 0,
+  ADD COLUMN successful_crosses  INT NOT NULL DEFAULT 0,
+  ADD COLUMN successful_dribbles INT NOT NULL DEFAULT 0,
+  ADD COLUMN duels_won           INT NOT NULL DEFAULT 0,
+  ADD COLUMN dispossessed        INT NOT NULL DEFAULT 0,
+  ADD COLUMN fouls_won           INT NOT NULL DEFAULT 0,
+  ADD COLUMN tackles             INT NOT NULL DEFAULT 0,
+  ADD COLUMN interceptions       INT NOT NULL DEFAULT 0,
+  ADD COLUMN fouls_committed     INT NOT NULL DEFAULT 0,
+  ADD COLUMN blocked_shots       INT NOT NULL DEFAULT 0,
+  ADD COLUMN clearances          INT NOT NULL DEFAULT 0,
+  ADD COLUMN goals_conceded      INT NOT NULL DEFAULT 0,
+  ADD COLUMN yellow_cards        INT NOT NULL DEFAULT 0,
+  ADD COLUMN red_cards           INT NOT NULL DEFAULT 0;

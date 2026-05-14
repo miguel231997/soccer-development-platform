@@ -34,6 +34,15 @@ public interface PlayerMatchStatsRepository extends JpaRepository<PlayerMatchSta
             JOIN FETCH s.player p
             JOIN FETCH s.match m
             JOIN FETCH m.team t
+            WHERE t.id = :teamId AND p.active = true
+            """)
+    List<PlayerMatchStats> findByTeamId(@Param("teamId") Long teamId);
+
+    @Query("""
+            SELECT s FROM PlayerMatchStats s
+            JOIN FETCH s.player p
+            JOIN FETCH s.match m
+            JOIN FETCH m.team t
             JOIN FETCH t.club c
             LEFT JOIN m.seasonPhase msp
             LEFT JOIN m.competition mc

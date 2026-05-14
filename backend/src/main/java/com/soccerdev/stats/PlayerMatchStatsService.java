@@ -108,6 +108,22 @@ public class PlayerMatchStatsService {
         stats.setXa(req.getXa());
         stats.setXt(req.getXt());
         stats.setDangerPrevented(req.getDangerPrevented());
+        stats.setSuccessfulPasses(req.getSuccessfulPasses() != null ? req.getSuccessfulPasses() : 0);
+        stats.setAccurateLongBalls(req.getAccurateLongBalls() != null ? req.getAccurateLongBalls() : 0);
+        stats.setChancesCreated(req.getChancesCreated() != null ? req.getChancesCreated() : 0);
+        stats.setSuccessfulCrosses(req.getSuccessfulCrosses() != null ? req.getSuccessfulCrosses() : 0);
+        stats.setSuccessfulDribbles(req.getSuccessfulDribbles() != null ? req.getSuccessfulDribbles() : 0);
+        stats.setDuelsWon(req.getDuelsWon() != null ? req.getDuelsWon() : 0);
+        stats.setDispossessed(req.getDispossessed() != null ? req.getDispossessed() : 0);
+        stats.setFoulsWon(req.getFoulsWon() != null ? req.getFoulsWon() : 0);
+        stats.setTackles(req.getTackles() != null ? req.getTackles() : 0);
+        stats.setInterceptions(req.getInterceptions() != null ? req.getInterceptions() : 0);
+        stats.setFoulsCommitted(req.getFoulsCommitted() != null ? req.getFoulsCommitted() : 0);
+        stats.setBlockedShots(req.getBlockedShots() != null ? req.getBlockedShots() : 0);
+        stats.setClearances(req.getClearances() != null ? req.getClearances() : 0);
+        stats.setGoalsConceded(req.getGoalsConceded() != null ? req.getGoalsConceded() : 0);
+        stats.setYellowCards(req.getYellowCards() != null ? req.getYellowCards() : 0);
+        stats.setRedCards(req.getRedCards() != null ? req.getRedCards() : 0);
     }
 
     private PlayerMatchStatsResponse toResponse(PlayerMatchStats stats) {
@@ -132,6 +148,22 @@ public class PlayerMatchStatsService {
                 .xa(stats.getXa())
                 .xt(stats.getXt())
                 .dangerPrevented(stats.getDangerPrevented())
+                .successfulPasses(stats.getSuccessfulPasses())
+                .accurateLongBalls(stats.getAccurateLongBalls())
+                .chancesCreated(stats.getChancesCreated())
+                .successfulCrosses(stats.getSuccessfulCrosses())
+                .successfulDribbles(stats.getSuccessfulDribbles())
+                .duelsWon(stats.getDuelsWon())
+                .dispossessed(stats.getDispossessed())
+                .foulsWon(stats.getFoulsWon())
+                .tackles(stats.getTackles())
+                .interceptions(stats.getInterceptions())
+                .foulsCommitted(stats.getFoulsCommitted())
+                .blockedShots(stats.getBlockedShots())
+                .clearances(stats.getClearances())
+                .goalsConceded(stats.getGoalsConceded())
+                .yellowCards(stats.getYellowCards())
+                .redCards(stats.getRedCards())
                 .createdAt(stats.getCreatedAt())
                 .updatedAt(stats.getUpdatedAt())
                 .build();

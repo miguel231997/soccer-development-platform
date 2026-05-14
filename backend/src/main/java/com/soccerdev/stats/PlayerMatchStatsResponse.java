@@ -30,6 +30,23 @@ public class PlayerMatchStatsResponse {
     private BigDecimal xt;
     private BigDecimal dangerPrevented;
 
+    private int successfulPasses;
+    private int accurateLongBalls;
+    private int chancesCreated;
+    private int successfulCrosses;
+    private int successfulDribbles;
+    private int duelsWon;
+    private int dispossessed;
+    private int foulsWon;
+    private int tackles;
+    private int interceptions;
+    private int foulsCommitted;
+    private int blockedShots;
+    private int clearances;
+    private int goalsConceded;
+    private int yellowCards;
+    private int redCards;
+
     private Instant createdAt;
     private Instant updatedAt;
 }

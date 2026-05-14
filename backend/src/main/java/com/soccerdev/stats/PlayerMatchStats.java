@@ -73,4 +73,68 @@ public class PlayerMatchStats extends BaseEntity {
 
     @Column(name = "danger_prevented", precision = 5, scale = 2)
     private BigDecimal dangerPrevented;
+
+    @Column(name = "successful_passes", nullable = false)
+    @Builder.Default
+    private int successfulPasses = 0;
+
+    @Column(name = "accurate_long_balls", nullable = false)
+    @Builder.Default
+    private int accurateLongBalls = 0;
+
+    @Column(name = "chances_created", nullable = false)
+    @Builder.Default
+    private int chancesCreated = 0;
+
+    @Column(name = "successful_crosses", nullable = false)
+    @Builder.Default
+    private int successfulCrosses = 0;
+
+    @Column(name = "successful_dribbles", nullable = false)
+    @Builder.Default
+    private int successfulDribbles = 0;
+
+    @Column(name = "duels_won", nullable = false)
+    @Builder.Default
+    private int duelsWon = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int dispossessed = 0;
+
+    @Column(name = "fouls_won", nullable = false)
+    @Builder.Default
+    private int foulsWon = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int tackles = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int interceptions = 0;
+
+    @Column(name = "fouls_committed", nullable = false)
+    @Builder.Default
+    private int foulsCommitted = 0;
+
+    @Column(name = "blocked_shots", nullable = false)
+    @Builder.Default
+    private int blockedShots = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int clearances = 0;
+
+    @Column(name = "goals_conceded", nullable = false)
+    @Builder.Default
+    private int goalsConceded = 0;
+
+    @Column(name = "yellow_cards", nullable = false)
+    @Builder.Default
+    private int yellowCards = 0;
+
+    @Column(name = "red_cards", nullable = false)
+    @Builder.Default
+    private int redCards = 0;
 }

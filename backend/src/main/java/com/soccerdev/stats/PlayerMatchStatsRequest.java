@@ -42,4 +42,21 @@ public class PlayerMatchStatsRequest {
 
     @DecimalMin("0.00")
     private BigDecimal dangerPrevented;
+
+    @Min(0) private Integer successfulPasses;
+    @Min(0) private Integer accurateLongBalls;
+    @Min(0) private Integer chancesCreated;
+    @Min(0) private Integer successfulCrosses;
+    @Min(0) private Integer successfulDribbles;
+    @Min(0) private Integer duelsWon;
+    @Min(0) private Integer dispossessed;
+    @Min(0) private Integer foulsWon;
+    @Min(0) private Integer tackles;
+    @Min(0) private Integer interceptions;
+    @Min(0) private Integer foulsCommitted;
+    @Min(0) private Integer blockedShots;
+    @Min(0) private Integer clearances;
+    @Min(0) private Integer goalsConceded;
+    @Min(0) private Integer yellowCards;
+    @Min(0) private Integer redCards;
 }

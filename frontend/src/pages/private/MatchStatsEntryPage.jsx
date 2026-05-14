@@ -6,56 +6,96 @@ import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 
-const INT_FIELDS = [
-  { key: 'minutesPlayed', label: 'Min',   width: 'w-14' },
-  { key: 'goals',         label: 'G',     width: 'w-12' },
-  { key: 'assists',       label: 'A',     width: 'w-12' },
-  { key: 'shots',         label: 'Shots', width: 'w-12' },
-  { key: 'shotsOnTarget', label: 'SoT',   width: 'w-12' },
-  { key: 'saves',         label: 'Saves', width: 'w-12' },
+const SECTIONS = [
+  {
+    label: 'General',
+    fields: [
+      { key: 'minutesPlayed', label: 'Min',   width: 'w-14', type: 'int' },
+      { key: 'saves',         label: 'Saves', width: 'w-14', type: 'int' },
+      { key: 'cleanSheet',    label: 'CS',                   type: 'bool' },
+    ],
+  },
+  {
+    label: 'Shooting',
+    fields: [
+      { key: 'goals',         label: 'Goals',   width: 'w-14', type: 'int' },
+      { key: 'shots',         label: 'Shots',   width: 'w-14', type: 'int' },
+      { key: 'shotsOnTarget', label: 'SoT',     width: 'w-14', type: 'int' },
+    ],
+  },
+  {
+    label: 'Passing',
+    fields: [
+      { key: 'assists',          label: 'Assists',       width: 'w-14', type: 'int' },
+      { key: 'successfulPasses', label: 'Passes',        width: 'w-14', type: 'int' },
+      { key: 'accurateLongBalls',label: 'Long balls',    width: 'w-14', type: 'int' },
+      { key: 'chancesCreated',   label: 'Chances',       width: 'w-14', type: 'int' },
+      { key: 'successfulCrosses',label: 'Crosses',       width: 'w-14', type: 'int' },
+    ],
+  },
+  {
+    label: 'Possession',
+    fields: [
+      { key: 'successfulDribbles', label: 'Dribbles',    width: 'w-14', type: 'int' },
+      { key: 'duelsWon',           label: 'Duels won',   width: 'w-14', type: 'int' },
+      { key: 'dispossessed',       label: 'Dispossessed',width: 'w-14', type: 'int' },
+      { key: 'foulsWon',           label: 'Fouls won',   width: 'w-14', type: 'int' },
+    ],
+  },
+  {
+    label: 'Defending',
+    fields: [
+      { key: 'tackles',       label: 'Tackles',       width: 'w-14', type: 'int' },
+      { key: 'interceptions', label: 'Interceptions', width: 'w-14', type: 'int' },
+      { key: 'foulsCommitted',label: 'Fouls',         width: 'w-14', type: 'int' },
+      { key: 'blockedShots',  label: 'Blk shots',     width: 'w-14', type: 'int' },
+      { key: 'clearances',    label: 'Clearances',    width: 'w-14', type: 'int' },
+      { key: 'goalsConceded', label: 'Goals conceded',width: 'w-14', type: 'int' },
+    ],
+  },
+  {
+    label: 'Discipline',
+    fields: [
+      { key: 'yellowCards', label: 'Yellow', width: 'w-14', type: 'int' },
+      { key: 'redCards',    label: 'Red',    width: 'w-14', type: 'int' },
+    ],
+  },
+  {
+    label: 'Advanced',
+    fields: [
+      { key: 'xg',              label: 'xG', width: 'w-16', type: 'dec' },
+      { key: 'xa',              label: 'xA', width: 'w-16', type: 'dec' },
+      { key: 'xt',              label: 'xT', width: 'w-16', type: 'dec' },
+      { key: 'dangerPrevented', label: 'DP', width: 'w-16', type: 'dec' },
+    ],
+  },
 ]
 
-const DEC_FIELDS = [
-  { key: 'xg',              label: 'xG', width: 'w-14' },
-  { key: 'xa',              label: 'xA', width: 'w-14' },
-  { key: 'xt',              label: 'xT', width: 'w-14' },
-  { key: 'dangerPrevented', label: 'DP', width: 'w-14' },
-]
+const ALL_KEYS = SECTIONS.flatMap((s) => s.fields.map((f) => f.key))
 
 function emptyRow() {
-  return {
-    minutesPlayed: '', goals: '', assists: '', shots: '',
-    shotsOnTarget: '', saves: '', cleanSheet: false,
-    xg: '', xa: '', xt: '', dangerPrevented: '',
-  }
+  return Object.fromEntries(ALL_KEYS.map((k) => [k, k === 'cleanSheet' ? false : '']))
 }
 
 function fromExisting(s) {
   if (!s) return emptyRow()
-  return {
-    minutesPlayed: s.minutesPlayed ?? '',
-    goals: s.goals ?? '',
-    assists: s.assists ?? '',
-    shots: s.shots ?? '',
-    shotsOnTarget: s.shotsOnTarget ?? '',
-    saves: s.saves ?? '',
-    cleanSheet: s.cleanSheet ?? false,
-    xg: s.xg ?? '',
-    xa: s.xa ?? '',
-    xt: s.xt ?? '',
-    dangerPrevented: s.dangerPrevented ?? '',
-  }
+  return Object.fromEntries(ALL_KEYS.map((k) => {
+    if (k === 'cleanSheet') return [k, s.cleanSheet ?? false]
+    return [k, s[k] ?? '']
+  }))
 }
 
 function toPayload(form) {
   const payload = {}
-  INT_FIELDS.forEach(({ key }) => {
-    if (form[key] !== '') payload[key] = Number(form[key])
+  ALL_KEYS.forEach((key) => {
+    const field = SECTIONS.flatMap((s) => s.fields).find((f) => f.key === key)
+    if (!field) return
+    if (field.type === 'bool') {
+      payload[key] = form[key]
+    } else if (form[key] !== '') {
+      payload[key] = Number(form[key])
+    }
   })
-  DEC_FIELDS.forEach(({ key }) => {
-    if (form[key] !== '') payload[key] = form[key]
-  })
-  payload.cleanSheet = form.cleanSheet
   return payload
 }
 
@@ -145,7 +185,8 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
 
   return (
     <div className={`bg-white border rounded-lg p-4 ${saved ? 'border-green-300' : 'border-gray-200'}`}>
-      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+      {/* Player header */}
+      <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
           <Link to={`/players/${player.id}`} className="font-medium text-gray-800 hover:text-green-700">
             {player.firstName} {player.lastName}
@@ -175,51 +216,45 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 items-end">
-        {/* Integer fields */}
-        {INT_FIELDS.map(({ key, label, width }) => (
-          <label key={key} className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-500">{label}</span>
-            <input
-              type="number"
-              name={key}
-              min="0"
-              value={form[key]}
-              onChange={handleChange}
-              disabled={finalized}
-              className={`${width} border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-50 disabled:text-gray-400`}
-            />
-          </label>
-        ))}
-
-        {/* Clean sheet */}
-        <label className="flex flex-col gap-1 items-center">
-          <span className="text-xs font-medium text-gray-500">CS</span>
-          <input
-            type="checkbox"
-            name="cleanSheet"
-            checked={form.cleanSheet}
-            onChange={handleChange}
-            disabled={finalized}
-            className="w-5 h-5 accent-green-600 mt-1"
-          />
-        </label>
-
-        {/* Decimal fields */}
-        {DEC_FIELDS.map(({ key, label, width }) => (
-          <label key={key} className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-500">{label}</span>
-            <input
-              type="number"
-              name={key}
-              min="0"
-              step="0.01"
-              value={form[key]}
-              onChange={handleChange}
-              disabled={finalized}
-              className={`${width} border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-50 disabled:text-gray-400`}
-            />
-          </label>
+      {/* Sections */}
+      <div className="space-y-4">
+        {SECTIONS.map((section) => (
+          <div key={section.label}>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+              {section.label}
+            </p>
+            <div className="flex flex-wrap gap-3 items-end">
+              {section.fields.map(({ key, label, width, type }) => (
+                type === 'bool' ? (
+                  <label key={key} className="flex flex-col gap-1 items-center">
+                    <span className="text-xs font-medium text-gray-500">{label}</span>
+                    <input
+                      type="checkbox"
+                      name={key}
+                      checked={form[key]}
+                      onChange={handleChange}
+                      disabled={finalized}
+                      className="w-5 h-5 accent-green-600 mt-1"
+                    />
+                  </label>
+                ) : (
+                  <label key={key} className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-gray-500">{label}</span>
+                    <input
+                      type="number"
+                      name={key}
+                      min="0"
+                      step={type === 'dec' ? '0.01' : '1'}
+                      value={form[key]}
+                      onChange={handleChange}
+                      disabled={finalized}
+                      className={`${width} border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-50 disabled:text-gray-400`}
+                    />
+                  </label>
+                )
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     </div>
