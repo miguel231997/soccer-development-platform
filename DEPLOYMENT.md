@@ -20,16 +20,16 @@ Set these in the backend service's **Variables** tab:
 
 | Variable | Description | Where to get it |
 |---|---|---|
-| `DATABASE_URL` | PostgreSQL connection URL | Copy Railway's `DATABASE_URL` (format: `postgresql://user:pass@host:port/db`) |
-| `DATABASE_USERNAME` | Database user | Copy Railway's `PGUSER` |
-| `DATABASE_PASSWORD` | Database password | Copy Railway's `PGPASSWORD` |
+| `DATABASE_URL` | PostgreSQL connection URL | Auto-injected by Railway's PostgreSQL service |
+| `PGUSER` | Database user | Auto-injected by Railway's PostgreSQL service |
+| `PGPASSWORD` | Database password | Auto-injected by Railway's PostgreSQL service |
 | `JWT_SECRET` | Base64-encoded secret, min 32 bytes | Generate: `openssl rand -base64 32` |
 | `FRONTEND_URL` | Frontend origin for CORS | Your deployed frontend URL (e.g. `https://pitchiq.up.railway.app`) |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | Cloudinary dashboard |
 | `CLOUDINARY_API_KEY` | Cloudinary API key | Cloudinary dashboard |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret | Cloudinary dashboard |
 
-> **Note:** Railway's PostgreSQL service exposes `DATABASE_URL` in `postgresql://` format. The production config prepends `jdbc:` automatically, making it a valid JDBC URL. `DATABASE_USERNAME` and `DATABASE_PASSWORD` must still be set separately (use `PGUSER` / `PGPASSWORD` from Railway's PostgreSQL service).
+> **Note:** When you link a Railway PostgreSQL service to your backend service, Railway auto-injects `DATABASE_URL`, `PGUSER`, `PGPASSWORD`, `PGHOST`, `PGPORT`, and `PGDATABASE`. You only need to manually set `JWT_SECRET`, `FRONTEND_URL`, and the three Cloudinary vars. The production config prepends `jdbc:` to `DATABASE_URL` automatically.
 
 ### 3. Root directory
 
