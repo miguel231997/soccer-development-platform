@@ -14,6 +14,7 @@ import {
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
+import FormError from '../../components/FormError'
 import PlayerSeasonStatsTab from '../../components/PlayerSeasonStatsTab'
 
 const RATINGS = [
@@ -134,7 +135,7 @@ export default function ChildDetailPage() {
             <input id={photoInputId} type="file" accept="image/jpeg,image/png,image/webp"
               className="sr-only" disabled={uploading} onChange={handleImagePick} />
           </label>
-          {uploadErr && <p className="mt-1 text-xs text-red-600 whitespace-nowrap">{uploadErr}</p>}
+          {uploadErr && <p className="mt-1 text-xs text-red-500">{uploadErr}</p>}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -303,7 +304,7 @@ function JoinAnotherTeamForm({ playerId, playerName, onClose, onSuccess }) {
             <p className="text-sm text-gray-500">
               Enter the team code provided by the new team's administrator.
             </p>
-            {codeError && <p className="text-red-600 text-sm">{codeError}</p>}
+            <FormError message={codeError} />
             <form onSubmit={handleCodeLookup} className="flex gap-2">
               <input
                 type="text"
@@ -332,7 +333,7 @@ function JoinAnotherTeamForm({ playerId, playerName, onClose, onSuccess }) {
                 onChange={(e) => setJerseyNumber(e.target.value)}
                 className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
-            {submitError && <p className="text-red-600 text-sm">{submitError}</p>}
+            <FormError message={submitError} />
             <p className="text-xs text-gray-400">
               A registration request will be sent to the coach for review.
             </p>

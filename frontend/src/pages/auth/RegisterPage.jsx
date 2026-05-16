@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import FormError from '../../components/FormError'
 
 const PASSWORD_HINT = 'Min 8 characters · uppercase · lowercase · number · special character (e.g. !@#$)'
 
@@ -52,11 +53,7 @@ export default function RegisterPage() {
         You need a registration code from your club administrator.
       </p>
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded px-3 py-2 text-red-700 text-sm">
-            {error}
-          </div>
-        )}
+        <FormError message={error} />
 
         {FIELDS.map(({ name, label, type, hint }) => (
           <div key={name}>

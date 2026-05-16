@@ -99,7 +99,7 @@ export default function PlayerDetailPage() {
               <input id={photoInputId} type="file" accept="image/jpeg,image/png,image/webp"
                 className="sr-only" disabled={uploading} onChange={handleImagePick} />
             </label>
-            {uploadErr && <p className="mt-1 text-xs text-red-600 whitespace-nowrap">{uploadErr}</p>}
+            {uploadErr && <p className="mt-1 text-xs text-red-500">{uploadErr}</p>}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-800">

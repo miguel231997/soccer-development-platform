@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { lookupTeamInviteCode, listTeamPlayers, submitPlayerRegistration } from '../../api/parent'
+import FormError from '../../components/FormError'
 
 const POSITIONS = ['GK','CB','LB','RB','LWB','RWB','CDM','CM','CAM','LM','RM','LW','RW','CF','ST']
 
@@ -99,7 +100,7 @@ export default function RegisterChildPage() {
               This code is different from the code you used to create your account.
             </p>
           </div>
-          {codeError && <p className="text-red-600 text-sm">{codeError}</p>}
+          <FormError message={codeError} />
           <form onSubmit={handleCodeLookup} className="flex gap-3">
             <input
               type="text"
@@ -129,7 +130,7 @@ export default function RegisterChildPage() {
               Otherwise, add them as a new player.
             </p>
 
-            {formError && <p className="text-red-600 text-sm">{formError}</p>}
+            <FormError message={formError} />
 
             {teamPlayers.length > 0 ? (
               <ul className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
@@ -189,7 +190,7 @@ export default function RegisterChildPage() {
               <button onClick={() => setStep('select')} className="text-sm text-gray-500 hover:text-gray-700">← Back</button>
               <h2 className="font-semibold text-gray-700">Step 3 — Child's details</h2>
             </div>
-            {formError && <p className="text-red-600 text-sm">{formError}</p>}
+            <FormError message={formError} />
 
             <form onSubmit={handleSubmitNew} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">

@@ -6,6 +6,7 @@ import { listTeams, listMatches, joinTeamWithCode, listSeasons, createSeason } f
 import { listRegistrationRequests, approveRegistrationRequest, rejectRegistrationRequest } from '../../api/admin'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
+import FormError from '../../components/FormError'
 
 function matchStatus(match) {
   const past = new Date(match.matchDateTime) < new Date()
@@ -219,7 +220,7 @@ function SeasonSetupSection() {
       </div>
 
       {msg && <p className="text-xs text-green-700 mb-2">{msg}</p>}
-      {err && <p className="text-xs text-red-600 mb-2">{err}</p>}
+      {err && <FormError message={err} />}
 
       {showForm && (
         <form onSubmit={handleCreate} className="flex items-center gap-2 mb-3">
@@ -290,7 +291,7 @@ function JoinTeamInline({ onJoined }) {
       ) : (
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <div>
-            {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
+            <FormError message={error} />
             <div className="flex gap-2">
               <input
                 type="text"

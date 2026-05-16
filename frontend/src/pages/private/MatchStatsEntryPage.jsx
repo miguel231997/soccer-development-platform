@@ -203,7 +203,7 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
         </div>
         <div className="flex items-center gap-2">
           {saved && <span className="text-xs text-green-600">Saved</span>}
-          {error && <span className="text-xs text-red-600">{error}</span>}
+          {error && <span className="text-xs text-red-500 font-medium">{error}</span>}
           {!finalized && (
             <button
               onClick={handleSave}

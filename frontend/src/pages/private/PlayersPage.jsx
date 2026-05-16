@@ -5,6 +5,7 @@ import { useFetch } from '../../hooks/useFetch'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
+import FormError from '../../components/FormError'
 
 const POSITIONS = ['GK','CB','LB','RB','LWB','RWB','CDM','CM','CAM','LM','RM','LW','RW','CF','ST']
 const STRONG_FEET = ['RIGHT','LEFT','BOTH']
@@ -52,7 +53,7 @@ function NewPlayerModal({ onClose, onCreated }) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <FormError message={error} />
 
           <div className="grid grid-cols-2 gap-4">
             <div>

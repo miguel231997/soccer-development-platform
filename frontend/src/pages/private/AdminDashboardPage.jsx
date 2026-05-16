@@ -9,6 +9,7 @@ import {
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
+import FormError from '../../components/FormError'
 
 const TABS = ['Clubs & Teams', 'Registration Codes', 'Team Codes', 'Player Requests']
 
@@ -116,7 +117,7 @@ function ClubsTeamsTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Create club */}
         <Section title="Create Club">
-          {clubErr && <p className="text-red-600 text-sm mb-3">{clubErr}</p>}
+          <FormError message={clubErr} />
           <form onSubmit={handleCreateClub} className="space-y-3">
             <Field label="Club name *">
               <Input value={clubForm.name} onChange={(e) => setClubForm((f) => ({ ...f, name: e.target.value }))} required />
@@ -135,7 +136,7 @@ function ClubsTeamsTab() {
 
         {/* Create team */}
         <Section title="Create Team">
-          {teamErr && <p className="text-red-600 text-sm mb-3">{teamErr}</p>}
+          <FormError message={teamErr} />
           <form onSubmit={handleCreateTeam} className="space-y-3">
             <Field label="Club *">
               <Select value={teamForm.clubId} onChange={(e) => setTeamForm((f) => ({ ...f, clubId: e.target.value }))} required>
@@ -269,7 +270,7 @@ function RegistrationCodesTab() {
   return (
     <div className="space-y-6">
       <Section title="Generate Registration Code">
-        {formErr && <p className="text-red-600 text-sm mb-3">{formErr}</p>}
+        <FormError message={formErr} />
         <form onSubmit={handleCreate} className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
             <Field label="Team *">
@@ -393,7 +394,7 @@ function TeamCodesTab() {
           Team codes let parents register their children to a specific team.
           They are separate from registration codes (which are for coach/parent accounts).
         </p>
-        {saveError && <p className="text-red-600 text-sm mb-3">{saveError}</p>}
+        <FormError message={saveError} />
         <form onSubmit={handleCreate} className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Team *">

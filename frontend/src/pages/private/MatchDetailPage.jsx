@@ -7,6 +7,7 @@ import { useFetch } from '../../hooks/useFetch'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
+import FormError from '../../components/FormError'
 
 export default function MatchDetailPage() {
   const { matchId } = useParams()
@@ -115,7 +116,7 @@ export default function MatchDetailPage() {
             </Link>
             {!isParent && (
               <>
-                {finalizeError && <span className="text-sm text-red-600">{finalizeError}</span>}
+                <FormError message={finalizeError} />
                 <button
                   onClick={handleFinalize}
                   disabled={finalizing}

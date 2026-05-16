@@ -237,7 +237,7 @@ function EvaluationForm({ matchId, playerId, match, player, existing }) {
             {saving ? 'Saving…' : existing ? 'Update Evaluation' : 'Save Evaluation'}
           </button>
           {saved && <span className="text-sm text-green-600 font-medium">Saved successfully.</span>}
-          {error && <span className="text-sm text-red-600">{error}</span>}
+          {error && <span className="text-sm text-red-500 font-medium">{error}</span>}
         </div>
       </form>
     </div>

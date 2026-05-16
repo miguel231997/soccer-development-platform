@@ -5,6 +5,7 @@ import { useFetch } from '../../hooks/useFetch'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
+import FormError from '../../components/FormError'
 
 const STATUS_TABS = ['All', 'Upcoming', 'Pending', 'Finalized']
 
@@ -81,7 +82,7 @@ function NewMatchModal({ onClose, onCreated }) {
             </div>
           )}
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <FormError message={error} />
 
           <div className="grid grid-cols-2 gap-4">
             <div>
