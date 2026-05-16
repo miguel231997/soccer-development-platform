@@ -9,6 +9,7 @@ import {
   lookupTeamInviteCode,
   submitPlayerRegistration,
   uploadChildImage,
+  setChildPublicProfile,
 } from '../../api/parent'
 import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
@@ -53,7 +54,18 @@ export default function ChildDetailPage() {
   const [imageUrl, setImageUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [uploadErr, setUploadErr] = useState('')
+  const [publicProfile, setPublicProfile] = useState(null)
+  const [togglingPublic, setTogglingPublic] = useState(false)
   const photoInputId = `photo-${id}`
+
+  const handleTogglePublic = async () => {
+    setTogglingPublic(true)
+    try {
+      const updated = await setChildPublicProfile(id, !isPublic)
+      setPublicProfile(updated.publicProfileEnabled)
+    } catch { /* silent */ }
+    finally { setTogglingPublic(false) }
+  }
 
   const handleImagePick = async (e) => {
     const file = e.target.files?.[0]
@@ -79,6 +91,8 @@ export default function ChildDetailPage() {
   const { data: evals,       loading: eLoading,  error: eError }  = useFetch(evalsFetcher)
   const { data: reports,     loading: rLoading,  error: rError }  = useFetch(reportsFetcher)
   const { data: seasonStats, loading: ssLoading, error: ssError } = useFetch(seasonStatsFetcher)
+
+  const isPublic = publicProfile ?? child?.publicProfileEnabled ?? false
 
   const teams = child?.teams ?? []
   const activeTeamId = selectedTeamId ?? teams[0]?.teamId ?? null
@@ -130,6 +144,18 @@ export default function ChildDetailPage() {
                 #{child.jerseyNumber}
               </span>
             )}
+            <button
+              onClick={handleTogglePublic}
+              disabled={togglingPublic || cLoading}
+              title={isPublic ? 'Public profile — click to make private' : 'Private profile — click to make public'}
+              className={`text-xs px-2 py-0.5 rounded border transition ${
+                isPublic
+                  ? 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'
+                  : 'border-gray-300 text-gray-500 bg-gray-50 hover:bg-gray-100'
+              } disabled:opacity-50`}
+            >
+              {togglingPublic ? '…' : isPublic ? 'Public' : 'Private'}
+            </button>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
             {child?.primaryPosition && <Pair label="Position" value={child.primaryPosition} />}
@@ -375,22 +401,97 @@ function StatsTab({ stats, loading, error }) {
 
 // ─── Evaluations tab ──────────────────────────────────────────────────────────
 
+const RATING_KEYS = [
+  'overallRating', 'technicalRating', 'tacticalRating', 'physicalRating',
+  'mentalityRating', 'attackingRating', 'defendingRating', 'decisionMakingRating', 'workRateRating',
+]
+
+function avgRatings(evList) {
+  const result = {}
+  RATING_KEYS.forEach((k) => {
+    const vals = evList.map((e) => e[k]).filter((v) => v != null)
+    if (vals.length > 0) result[k] = Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+  })
+  return result
+}
+
 function EvalsTab({ evals, loading, error }) {
   if (loading) return <Spinner label="Loading evaluations…" />
   if (error)   return <ErrorAlert message={error} />
   if (!evals || evals.length === 0)
     return <Empty>No evaluations available yet.</Empty>
 
+  // Group by matchId, sorted newest first
+  const groups = []
+  const seen = new Map()
   const sorted = [...evals].sort((a, b) => new Date(b.matchDateTime ?? 0) - new Date(a.matchDateTime ?? 0))
+  sorted.forEach((ev) => {
+    if (!seen.has(ev.matchId)) { seen.set(ev.matchId, []); groups.push(ev.matchId) }
+    seen.get(ev.matchId).push(ev)
+  })
 
   return (
-    <div className="space-y-4">
-      {sorted.map((ev) => <EvalCard key={ev.id} ev={ev} />)}
+    <div className="space-y-6">
+      {groups.map((matchId) => {
+        const group = seen.get(matchId)
+        const first = group[0]
+        const multi = group.length > 1
+        const avg = multi ? avgRatings(group) : null
+
+        return (
+          <div key={matchId} className="space-y-3">
+            {/* Match header */}
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-gray-700">
+                vs {first.opponent}
+                {first.matchDateTime && (
+                  <span className="ml-2 font-normal text-gray-400">
+                    {new Date(first.matchDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                )}
+              </p>
+              {multi && (
+                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                  {group.length} coach evaluations
+                </span>
+              )}
+            </div>
+
+            {/* Averaged card — only when multiple coaches */}
+            {multi && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Coach Average</p>
+                <RatingsGrid ratings={avg} />
+              </div>
+            )}
+
+            {/* Individual coach cards */}
+            {group.map((ev) => <EvalCard key={ev.id} ev={ev} showCoach={multi} />)}
+          </div>
+        )
+      })}
     </div>
   )
 }
 
-function EvalCard({ ev }) {
+function RatingsGrid({ ratings }) {
+  const entries = RATINGS.filter(({ key }) => ratings[key] != null)
+  if (entries.length === 0) return null
+  return (
+    <div className="grid grid-cols-4 sm:grid-cols-9 gap-2">
+      {entries.map(({ key, label }) => (
+        <div key={key} className="text-center">
+          <p className={`text-base font-bold ${ratingColor(Math.round(ratings[key]))}`}>
+            {Number.isInteger(ratings[key]) ? ratings[key] : ratings[key].toFixed(1)}
+          </p>
+          <p className="text-xs text-gray-400 leading-tight">{label}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function EvalCard({ ev, showCoach }) {
   const date = ev.matchDateTime
     ? new Date(ev.matchDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
     : null
@@ -400,9 +501,12 @@ function EvalCard({ ev }) {
     <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <p className="font-medium text-gray-800">vs {ev.opponent}</p>
+          {!showCoach && <p className="font-medium text-gray-800">vs {ev.opponent}</p>}
           <p className="text-xs text-gray-400 mt-0.5">
-            {date}{ev.positionPlayed && ` · played ${ev.positionPlayed}`}
+            {showCoach
+              ? <span className="font-medium text-gray-600">{ev.coachName ?? 'Coach'}</span>
+              : date}
+            {ev.positionPlayed && ` · played ${ev.positionPlayed}`}
           </p>
         </div>
         {ev.overallRating != null && (

@@ -13,7 +13,8 @@ public interface PlayerMatchStatsRepository extends JpaRepository<PlayerMatchSta
 
     @Query("""
             SELECT s FROM PlayerMatchStats s
-            JOIN FETCH s.match
+            JOIN FETCH s.match m
+            JOIN FETCH m.team
             JOIN FETCH s.player
             WHERE s.match.id = :matchId
             """)
@@ -21,7 +22,9 @@ public interface PlayerMatchStatsRepository extends JpaRepository<PlayerMatchSta
 
     @Query("""
             SELECT s FROM PlayerMatchStats s
-            JOIN FETCH s.match
+            JOIN FETCH s.match m
+            JOIN FETCH m.team
+            LEFT JOIN FETCH m.season
             JOIN FETCH s.player
             WHERE s.player.id = :playerId
             """)
@@ -34,6 +37,7 @@ public interface PlayerMatchStatsRepository extends JpaRepository<PlayerMatchSta
             JOIN FETCH s.player p
             JOIN FETCH s.match m
             JOIN FETCH m.team t
+            LEFT JOIN FETCH m.season
             WHERE t.id = :teamId AND p.active = true
             """)
     List<PlayerMatchStats> findByTeamId(@Param("teamId") Long teamId);
@@ -47,6 +51,7 @@ public interface PlayerMatchStatsRepository extends JpaRepository<PlayerMatchSta
             LEFT JOIN m.seasonPhase msp
             LEFT JOIN m.competition mc
             WHERE p.active = true
+              AND p.publicProfileEnabled = true
               AND (:seasonId IS NULL OR m.season.id = :seasonId)
               AND (:seasonPhaseId IS NULL OR msp.id = :seasonPhaseId)
               AND (:competitionId IS NULL OR mc.id = :competitionId)

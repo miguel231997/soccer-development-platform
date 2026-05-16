@@ -36,8 +36,7 @@ public class EvaluationRequest {
     @Min(1) @Max(10)
     private Integer workRateRating;
 
-    @Min(1) @Max(10)
-    private Integer overallRating;
+    // overallRating is computed server-side as the mean of the 8 detail ratings — not accepted from clients
 
     private String parentVisibleNotes;
 

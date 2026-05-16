@@ -51,21 +51,30 @@ public class PublicStatsService {
         Map<Long, PlayerLeaderboardEntry> byPlayer = new LinkedHashMap<>();
         matchEntries.forEach(e -> byPlayer.put(e.getPlayerId(), e));
 
-        // Fetch all public player season stats and keep latest per player
-        List<PlayerSeasonStats> allSS = seasonStatsRepository.findAllPublicPlayerStats();
-        Map<Long, PlayerSeasonStats> latestSS = allSS.stream().collect(Collectors.toMap(
-                s -> s.getPlayer().getId(),
-                s -> s,
-                (a, b) -> (a.getCreatedAt() != null && b.getCreatedAt() != null
-                        && a.getCreatedAt().isAfter(b.getCreatedAt())) ? a : b
-        ));
+        // Season stats have no competition or season-phase field, so skip the merge when
+        // those filters are active — otherwise unrelated players would appear in results.
+        boolean skipSeasonStats = competitionId != null || seasonPhaseId != null;
 
-        // Optional filters on season stats
-        if (teamId != null) latestSS.entrySet().removeIf(e -> !teamId.equals(e.getValue().getTeam().getId()));
-        if (clubId != null) latestSS.entrySet().removeIf(e -> e.getValue().getTeam().getClub() == null
-                || !clubId.equals(e.getValue().getTeam().getClub().getId()));
-        if (ageGroup != null) latestSS.entrySet().removeIf(e -> e.getValue().getTeam().getAgeGroup() != ageGroup);
-        if (position != null) latestSS.entrySet().removeIf(e -> e.getValue().getPlayer().getPrimaryPosition() != position);
+        // Fetch all public player season stats and keep latest per player
+        Map<Long, PlayerSeasonStats> latestSS = new LinkedHashMap<>();
+        if (!skipSeasonStats) {
+            List<PlayerSeasonStats> allSS = seasonStatsRepository.findAllPublicPlayerStats();
+            allSS.stream().collect(Collectors.toMap(
+                    s -> s.getPlayer().getId(),
+                    s -> s,
+                    (a, b) -> (a.getCreatedAt() != null && b.getCreatedAt() != null
+                            && a.getCreatedAt().isAfter(b.getCreatedAt())) ? a : b
+            )).forEach(latestSS::put);
+
+            // Optional filters on season stats
+            if (teamId != null) latestSS.entrySet().removeIf(e -> !teamId.equals(e.getValue().getTeam().getId()));
+            if (clubId != null) latestSS.entrySet().removeIf(e -> e.getValue().getTeam().getClub() == null
+                    || !clubId.equals(e.getValue().getTeam().getClub().getId()));
+            if (seasonId != null) latestSS.entrySet().removeIf(e -> e.getValue().getSeason() == null
+                    || !seasonId.equals(e.getValue().getSeason().getId()));
+            if (ageGroup != null) latestSS.entrySet().removeIf(e -> e.getValue().getTeam().getAgeGroup() != ageGroup);
+            if (position != null) latestSS.entrySet().removeIf(e -> e.getValue().getPlayer().getPrimaryPosition() != position);
+        }
 
         // Merge: season stats override goals/assists/shots/SoT; add players missing from match entries
         for (Map.Entry<Long, PlayerSeasonStats> e : latestSS.entrySet()) {
@@ -109,7 +118,7 @@ public class PublicStatsService {
 
     public PublicPlayerProfile getPublicPlayerProfile(Long playerId) {
         Player player = playerRepository.findByIdAndPublicProfileEnabledTrueAndActiveTrue(playerId)
-                .orElseThrow(() -> new EntityNotFoundException("Player not found with id: " + playerId));
+                .orElseThrow(() -> new EntityNotFoundException("This player's profile is not publicly available."));
 
         List<PlayerMatchStats> stats = statsRepository.findByPlayerId(playerId);
 

@@ -1,5 +1,7 @@
 package com.soccerdev.onboarding;
 
+import com.soccerdev.player.Player;
+import com.soccerdev.player.PlayerRepository;
 import com.soccerdev.team.Team;
 import com.soccerdev.team.TeamRepository;
 import com.soccerdev.user.User;
@@ -22,6 +24,7 @@ public class TeamInviteCodeService {
 
     private final TeamInviteCodeRepository teamInviteCodeRepository;
     private final TeamRepository teamRepository;
+    private final PlayerRepository playerRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
@@ -95,6 +98,25 @@ public class TeamInviteCodeService {
         if (!code.isActive())
             throw new IllegalArgumentException("This team invite code is no longer active");
         return toResponse(code);
+    }
+
+    /** Returns active players on the team for the given invite code (parent uses this to find their child). */
+    public List<TeamPlayerDto> lookupPlayers(String codeStr) {
+        TeamInviteCode code = teamInviteCodeRepository.findByCodeWithTeam(codeStr)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid team invite code"));
+        if (!code.isActive())
+            throw new IllegalArgumentException("This team invite code is no longer active");
+        return playerRepository.findByTeamId(code.getTeam().getId()).stream()
+                .filter(Player::isActive)
+                .map(p -> TeamPlayerDto.builder()
+                        .id(p.getId())
+                        .firstName(p.getFirstName())
+                        .lastName(p.getLastName())
+                        .primaryPosition(p.getPrimaryPosition() != null ? p.getPrimaryPosition().name() : null)
+                        .jerseyNumber(p.getJerseyNumber())
+                        .profileImageUrl(p.getProfileImageUrl())
+                        .build())
+                .toList();
     }
 
     private TeamInviteCodeResponse toResponse(TeamInviteCode c) {

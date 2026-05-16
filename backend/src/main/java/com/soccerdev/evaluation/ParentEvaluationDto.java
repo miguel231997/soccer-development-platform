@@ -18,6 +18,8 @@ public class ParentEvaluationDto implements EvaluationView {
     private Instant matchDateTime;
     private Long playerId;
     private String playerName;
+    private Long coachUserId;
+    private String coachName;
     private Position positionPlayed;
     private Integer technicalRating;
     private Integer tacticalRating;

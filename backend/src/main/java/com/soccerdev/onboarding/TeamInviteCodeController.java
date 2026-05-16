@@ -50,4 +50,10 @@ public class TeamInviteCodeController {
     public ResponseEntity<ApiResponse<TeamInviteCodeResponse>> lookup(@PathVariable String code) {
         return ResponseEntity.ok(ApiResponse.ok(teamInviteCodeService.lookup(code)));
     }
+
+    /** Parent-accessible: list active players on the team for the given invite code. */
+    @GetMapping("/api/team-invite-codes/lookup/{code}/players")
+    public ResponseEntity<ApiResponse<List<TeamPlayerDto>>> lookupPlayers(@PathVariable String code) {
+        return ResponseEntity.ok(ApiResponse.ok(teamInviteCodeService.lookupPlayers(code)));
+    }
 }

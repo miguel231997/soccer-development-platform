@@ -18,10 +18,15 @@ export const listSeasons = () => api.get('/api/seasons').then((r) => r.data.data
 export const listSeasonPhases = (seasonId) => api.get(`/api/seasons/${seasonId}/phases`).then((r) => r.data.data)
 export const listCompetitions = (state) =>
   api.get('/api/competitions', { params: state ? { state } : {} }).then((r) => r.data.data)
+export const createSeason = (data) => api.post('/api/seasons', data).then((r) => r.data.data)
+export const createSeasonPhase = (seasonId, data) =>
+  api.post(`/api/seasons/${seasonId}/phases`, data).then((r) => r.data.data)
+export const createCompetition = (data) => api.post('/api/competitions', data).then((r) => r.data.data)
 
 // Players
 export const listPlayers = () => api.get('/api/players').then((r) => r.data.data)
 export const getPlayer = (playerId) => api.get(`/api/players/${playerId}`).then((r) => r.data.data)
+export const createPlayer = (data) => api.post('/api/players', data).then((r) => r.data.data)
 export const uploadPlayerImage = (playerId, file) => {
   const fd = new FormData()
   fd.append('file', file)

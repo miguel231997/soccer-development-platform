@@ -1,11 +1,18 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { listMatches, createMatch, listTeams, listSeasons, listSeasonPhases, listCompetitions } from '../../api/coach'
+import { listMatches, createMatch, listTeams, listSeasons, listCompetitions } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
+import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 
-const FILTERS = ['All', 'Upcoming', 'Pending', 'Finalized']
+const STATUS_TABS = ['All', 'Upcoming', 'Pending', 'Finalized']
+
+const STATUS_STYLE = {
+  Upcoming:  'bg-green-50 text-green-700',
+  Pending:   'bg-yellow-50 text-yellow-700',
+  Finalized: 'bg-gray-100 text-gray-500',
+}
 
 function matchStatus(match) {
   const past = new Date(match.matchDateTime) < new Date()
@@ -14,21 +21,12 @@ function matchStatus(match) {
   return 'Upcoming'
 }
 
-const STATUS_STYLE = {
-  Upcoming:  'bg-green-50 text-green-700',
-  Pending:   'bg-yellow-50 text-yellow-700',
-  Finalized: 'bg-gray-100 text-gray-500',
-}
-
-const EMPTY_FORM = {
-  teamId: '', seasonId: '', seasonPhaseId: '', competitionId: '',
-  opponent: '', matchDateTime: '', location: '', homeAway: 'HOME',
-}
-
 function NewMatchModal({ onClose, onCreated }) {
-  const [form, setForm] = useState(EMPTY_FORM)
+  const [form, setForm] = useState({
+    teamId: '', seasonId: '', competitionId: '',
+    opponent: '', matchDateTime: '', location: '', homeAway: 'HOME',
+  })
   const [competitionState, setCompetitionState] = useState('')
-  const [phases, setPhases] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -40,11 +38,7 @@ function NewMatchModal({ onClose, onCreated }) {
   const { data: seasons } = useFetch(seasonsFetcher)
   const { data: competitions } = useFetch(competitionsFetcher, [competitionState])
 
-  useEffect(() => {
-    if (!form.seasonId) { setPhases([]); return }
-    listSeasonPhases(form.seasonId).then(setPhases).catch(() => setPhases([]))
-  }, [form.seasonId])
-
+  const noSeasons = (seasons ?? []).length === 0
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
 
   const handleSubmit = async (e) => {
@@ -55,7 +49,7 @@ function NewMatchModal({ onClose, onCreated }) {
       const payload = {
         teamId: Number(form.teamId),
         seasonId: Number(form.seasonId),
-        seasonPhaseId: form.seasonPhaseId ? Number(form.seasonPhaseId) : null,
+        seasonPhaseId: null,
         competitionId: form.competitionId ? Number(form.competitionId) : null,
         opponent: form.opponent,
         matchDateTime: new Date(form.matchDateTime).toISOString(),
@@ -80,6 +74,13 @@ function NewMatchModal({ onClose, onCreated }) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          {noSeasons && (
+            <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 text-amber-700 text-sm">
+              Please create a season before adding matches.{' '}
+              <button type="button" onClick={onClose} className="underline">Go back to dashboard.</button>
+            </div>
+          )}
+
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
           <div className="grid grid-cols-2 gap-4">
@@ -110,7 +111,7 @@ function NewMatchModal({ onClose, onCreated }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date &amp; Time *</label>
             <input type="datetime-local" value={form.matchDateTime} onChange={set('matchDateTime')} required
               className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
           </div>
@@ -122,34 +123,22 @@ function NewMatchModal({ onClose, onCreated }) {
               className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Season *</label>
-              <select value={form.seasonId} onChange={set('seasonId')} required
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                <option value="">Select season…</option>
-                {(seasons ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phase</label>
-              <select value={form.seasonPhaseId} onChange={set('seasonPhaseId')}
-                disabled={!form.seasonId || phases.length === 0}
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-50">
-                <option value="">None</option>
-                {phases.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Season *</label>
+            <select value={form.seasonId} onChange={set('seasonId')} required
+              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+              <option value="">Select season…</option>
+              {(seasons ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by state</label>
               <select value={competitionState}
                 onChange={(e) => { setCompetitionState(e.target.value); set('competitionId')({ target: { value: '' } }) }}
                 className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                <option value="">All states</option>
+                <option value="">National / All</option>
                 <option value="NJ">New Jersey</option>
                 <option value="NY">New York</option>
                 <option value="PA">Pennsylvania</option>
@@ -162,10 +151,10 @@ function NewMatchModal({ onClose, onCreated }) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Competition</label>
               <select value={form.competitionId} onChange={set('competitionId')}
                 className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                <option value="">None</option>
+                <option value="">Friendly / None</option>
                 {(competitions ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}{c.compSeason ? ` (${c.compSeason})` : ''}
+                    {c.name}{c.compSeason ? ` · ${c.compSeason}` : ''}
                   </option>
                 ))}
               </select>
@@ -177,7 +166,7 @@ function NewMatchModal({ onClose, onCreated }) {
               className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50">
               Cancel
             </button>
-            <button type="submit" disabled={saving}
+            <button type="submit" disabled={saving || noSeasons}
               className="px-4 py-2 text-sm bg-green-700 text-white rounded hover:bg-green-600 disabled:opacity-50">
               {saving ? 'Creating…' : 'Create Match'}
             </button>
@@ -189,20 +178,34 @@ function NewMatchModal({ onClose, onCreated }) {
 }
 
 export default function MatchListPage() {
-  const [filter, setFilter] = useState('All')
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [seasonFilter, setSeasonFilter] = useState('')
+  const [competitionFilter, setCompetitionFilter] = useState('')
   const [showModal, setShowModal] = useState(false)
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const canCreateMatch = user?.role !== 'PARENT'
 
   const fetcher = useCallback(() => listMatches(), [])
-  const { data: matches, loading, error, } = useFetch(fetcher)
+  const { data: matches, loading, error } = useFetch(fetcher)
   const [localMatches, setLocalMatches] = useState(null)
 
-  const allMatches = localMatches ?? matches
+  const allMatches = localMatches ?? matches ?? []
 
-  const sorted = [...(allMatches ?? [])].sort(
-    (a, b) => new Date(b.matchDateTime) - new Date(a.matchDateTime),
-  )
-  const visible = filter === 'All' ? sorted : sorted.filter((m) => matchStatus(m) === filter)
+  const uniqueSeasons = [...new Map(
+    allMatches.filter((m) => m.seasonId).map((m) => [m.seasonId, { id: m.seasonId, name: m.seasonName }])
+  ).values()]
+
+  const uniqueCompetitions = [...new Map(
+    allMatches.filter((m) => m.competitionId).map((m) => [m.competitionId, { id: m.competitionId, name: m.competitionName }])
+  ).values()]
+
+  const sorted = [...allMatches].sort((a, b) => new Date(b.matchDateTime) - new Date(a.matchDateTime))
+
+  const visible = sorted
+    .filter((m) => statusFilter === 'All' || matchStatus(m) === statusFilter)
+    .filter((m) => !seasonFilter || String(m.seasonId) === seasonFilter)
+    .filter((m) => !competitionFilter || String(m.competitionId) === competitionFilter)
 
   const handleCreated = (newMatch) => {
     setShowModal(false)
@@ -213,22 +216,24 @@ export default function MatchListPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Matches</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600"
-        >
-          + New Match
-        </button>
+        {canCreateMatch && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600"
+          >
+            + New Match
+          </button>
+        )}
       </div>
 
-      {/* Filter tabs */}
+      {/* Status tabs */}
       <div className="flex gap-1 border-b border-gray-200">
-        {FILTERS.map((f) => (
+        {STATUS_TABS.map((f) => (
           <button
             key={f}
-            onClick={() => setFilter(f)}
+            onClick={() => setStatusFilter(f)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
-              filter === f
+              statusFilter === f
                 ? 'border-green-600 text-green-700'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
@@ -237,6 +242,40 @@ export default function MatchListPage() {
           </button>
         ))}
       </div>
+
+      {/* Season + Competition filters */}
+      {(uniqueSeasons.length > 0 || uniqueCompetitions.length > 0) && (
+        <div className="flex gap-3 flex-wrap">
+          {uniqueSeasons.length > 0 && (
+            <select
+              value={seasonFilter}
+              onChange={(e) => setSeasonFilter(e.target.value)}
+              className="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">All Seasons</option>
+              {uniqueSeasons.map((s) => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
+            </select>
+          )}
+          {uniqueCompetitions.length > 0 && (
+            <select
+              value={competitionFilter}
+              onChange={(e) => setCompetitionFilter(e.target.value)}
+              className="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">All Competitions</option>
+              {uniqueCompetitions.map((c) => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+            </select>
+          )}
+          {(seasonFilter || competitionFilter) && (
+            <button
+              onClick={() => { setSeasonFilter(''); setCompetitionFilter('') }}
+              className="text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
 
       {loading && <Spinner label="Loading matches…" />}
       {error && <ErrorAlert message={error} />}
@@ -254,6 +293,12 @@ export default function MatchListPage() {
             const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
             const score = m.homeScore != null && m.awayScore != null ? `${m.homeScore}–${m.awayScore}` : null
 
+            const meta = [
+              m.seasonName,
+              m.competitionName,
+              m.location,
+            ].filter(Boolean).join(' · ')
+
             return (
               <Link
                 key={m.id}
@@ -265,9 +310,7 @@ export default function MatchListPage() {
                     {m.teamName} vs {m.opponent}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {dateStr} · {timeStr}
-                    {m.location && ` · ${m.location}`}
-                    {m.competitionName && ` · ${m.competitionName}`}
+                    {dateStr} · {timeStr}{meta ? ` · ${meta}` : ''}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0 ml-4">

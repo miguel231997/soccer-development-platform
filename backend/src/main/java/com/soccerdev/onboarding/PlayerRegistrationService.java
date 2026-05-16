@@ -48,16 +48,17 @@ public class PlayerRegistrationService {
         if (input.getExistingPlayerId() != null) {
             existingPlayer = playerRepository.findById(input.getExistingPlayerId())
                     .orElseThrow(() -> new EntityNotFoundException("Player not found: " + input.getExistingPlayerId()));
-            // Verify the parent actually owns this player
-            if (!parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(parent.getId(), existingPlayer.getId())) {
-                throw new AccessDeniedException("This player is not linked to your account");
+            // Verify the player is actually on the team specified by the invite code
+            if (!playerTeamAssignmentRepository.existsByPlayerIdAndTeamIdAndActiveTrue(existingPlayer.getId(), team.getId())) {
+                throw new IllegalArgumentException(existingPlayer.getFirstName() + " is not on this team");
             }
-            // Prevent duplicate team enrollment
-            if (playerTeamAssignmentRepository.existsByPlayerIdAndTeamIdAndActiveTrue(existingPlayer.getId(), team.getId())) {
-                throw new IllegalArgumentException(existingPlayer.getFirstName() + " is already on this team");
+            // Prevent duplicate: parent already linked to this player
+            if (parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(parent.getId(), existingPlayer.getId())) {
+                throw new IllegalArgumentException("You are already linked to " + existingPlayer.getFirstName() + " " + existingPlayer.getLastName() + ".");
             }
+            // Prevent duplicate pending request
             if (playerRegistrationRepository.existsByExistingPlayerIdAndTeamIdAndStatus(existingPlayer.getId(), team.getId(), RegistrationStatus.PENDING)) {
-                throw new IllegalArgumentException("A registration request for this team is already pending");
+                throw new IllegalArgumentException("A link request for this player is already pending approval.");
             }
         } else {
             // New child: require name/dob/position
@@ -123,8 +124,16 @@ public class PlayerRegistrationService {
 
         Player player;
         if (req.getExistingPlayer() != null) {
-            // Child is already registered — just add a new team assignment
             player = req.getExistingPlayer();
+            // Link parent to the existing player if not already linked
+            if (!parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(req.getParentUser().getId(), player.getId())) {
+                parentPlayerRelationshipRepository.save(ParentPlayerRelationship.builder()
+                        .parentUser(req.getParentUser())
+                        .player(player)
+                        .relationshipType(RelationshipType.PARENT)
+                        .build());
+            }
+            // Player is already on the team — skip adding duplicate assignment
         } else {
             // New child: create the player record and parent relationship
             player = Player.builder()
@@ -145,13 +154,13 @@ public class PlayerRegistrationService {
                     .player(player)
                     .relationshipType(RelationshipType.PARENT)
                     .build());
-        }
 
-        playerTeamAssignmentRepository.save(PlayerTeamAssignment.builder()
-                .player(player)
-                .team(req.getTeam())
-                .active(true)
-                .build());
+            playerTeamAssignmentRepository.save(PlayerTeamAssignment.builder()
+                    .player(player)
+                    .team(req.getTeam())
+                    .active(true)
+                    .build());
+        }
 
         req.setStatus(RegistrationStatus.APPROVED);
         req.setReviewedByUser(reviewer);

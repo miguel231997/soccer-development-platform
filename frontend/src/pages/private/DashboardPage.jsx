@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useFetch } from '../../hooks/useFetch'
-import { listTeams, listMatches, joinTeamWithCode } from '../../api/coach'
+import { listTeams, listMatches, joinTeamWithCode, listSeasons, createSeason } from '../../api/coach'
 import { listRegistrationRequests, approveRegistrationRequest, rejectRegistrationRequest } from '../../api/admin'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
@@ -65,6 +65,8 @@ export default function DashboardPage() {
           warn
         />
       </div>
+
+      <SeasonSetupSection />
 
       {/* Teams */}
       <section>
@@ -145,6 +147,113 @@ export default function DashboardPage() {
 
       <PendingRegistrationRequests />
     </div>
+  )
+}
+
+const SEASON_YEARS = Array.from({ length: 15 }, (_, i) => {
+  const s = 2024 + i
+  return `${s}-${s + 1}`
+})
+
+function SeasonSetupSection() {
+  const { user } = useAuth()
+  const canEdit = ['COACH', 'ADMIN', 'DIRECTOR'].includes(user?.role)
+  const [seasonsKey, setSeasonsKey] = useState(0)
+  const [showForm, setShowForm] = useState(false)
+  const seasonsFetcher = useCallback(() => listSeasons(), [seasonsKey])
+  const { data: seasons, loading: seasonsLoading } = useFetch(seasonsFetcher, [seasonsKey])
+
+  const [selectedYear, setSelectedYear] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [err, setErr] = useState('')
+
+  if (!canEdit) return null
+
+  const flash = (m, isErr = false) => {
+    if (isErr) { setErr(m); setTimeout(() => setErr(''), 4000) }
+    else { setMsg(m); setTimeout(() => setMsg(''), 3000) }
+  }
+
+  const handleCreate = async (e) => {
+    e.preventDefault()
+    if (!selectedYear) return
+    setSaving(true); setErr('')
+    const [startYear, endYear] = selectedYear.split('-').map(Number)
+    try {
+      await createSeason({
+        name: selectedYear,
+        startDate: `${startYear}-08-01`,
+        endDate: `${endYear}-07-31`,
+        active: (seasons ?? []).length === 0,
+      })
+      setSeasonsKey((k) => k + 1)
+      setSelectedYear('')
+      setShowForm(false)
+      flash(`${selectedYear} season created.`)
+    } catch (error) {
+      flash(error?.response?.data?.message || 'Failed to create season.', true)
+    } finally { setSaving(false) }
+  }
+
+  const existingNames = new Set((seasons ?? []).map((s) => s.name))
+  const available = SEASON_YEARS.filter((y) => !existingNames.has(y))
+
+  return (
+    <section className="bg-white border border-gray-200 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-700">Seasons</h2>
+          {!seasonsLoading && (seasons ?? []).length === 0 && (
+            <p className="text-xs text-amber-600 mt-0.5">No seasons yet — create one before adding matches.</p>
+          )}
+        </div>
+        {!showForm && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="text-sm bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600"
+          >
+            + New Season
+          </button>
+        )}
+      </div>
+
+      {msg && <p className="text-xs text-green-700 mb-2">{msg}</p>}
+      {err && <p className="text-xs text-red-600 mb-2">{err}</p>}
+
+      {showForm && (
+        <form onSubmit={handleCreate} className="flex items-center gap-2 mb-3">
+          <select
+            required
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 flex-1"
+          >
+            <option value="">Select season year…</option>
+            {available.map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <button type="submit" disabled={saving || !selectedYear}
+            className="text-sm bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600 disabled:opacity-50 shrink-0">
+            {saving ? '…' : 'Create'}
+          </button>
+          <button type="button" onClick={() => { setShowForm(false); setSelectedYear('') }}
+            className="text-sm text-gray-500 hover:text-gray-700">
+            Cancel
+          </button>
+        </form>
+      )}
+
+      {!seasonsLoading && (seasons ?? []).length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {(seasons ?? []).map((s) => (
+            <span key={s.id}
+              className={`text-xs px-2 py-1 rounded border ${s.active ? 'bg-green-50 border-green-300 text-green-700 font-medium' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+              {s.name}{s.active ? ' (active)' : ''}
+            </span>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 

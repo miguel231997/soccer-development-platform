@@ -30,6 +30,7 @@ public class CoachEvaluationDto implements EvaluationView {
     private Integer overallRating;
     private String parentVisibleNotes;
     private String coachOnlyNotes;
+    private boolean own;
     private Instant createdAt;
     private Instant updatedAt;
 }

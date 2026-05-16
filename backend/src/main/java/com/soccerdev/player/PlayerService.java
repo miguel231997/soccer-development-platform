@@ -102,6 +102,20 @@ public class PlayerService {
     }
 
     @Transactional
+    public PlayerResponse setPublicProfile(User user, Long id, boolean enabled) {
+        if (user.getRole() != UserRole.PARENT) {
+            throw new AccessDeniedException("Only parents can change a player's public profile visibility");
+        }
+        if (!authorizationService.canViewPlayer(user, id)) {
+            throw new AccessDeniedException("Access denied");
+        }
+        Player player = playerRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Player not found with id: " + id));
+        player.setPublicProfileEnabled(enabled);
+        return toResponse(playerRepository.save(player));
+    }
+
+    @Transactional
     public void delete(User user, Long id) {
         Player player = playerRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Player not found with id: " + id));

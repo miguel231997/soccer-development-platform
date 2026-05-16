@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { lookupTeamInviteCode, submitPlayerRegistration } from '../../api/parent'
+import { lookupTeamInviteCode, listTeamPlayers, submitPlayerRegistration } from '../../api/parent'
 
 const POSITIONS = ['GK','CB','LB','RB','LWB','RWB','CDM','CM','CAM','LM','RM','LW','RW','CF','ST']
 
 export default function RegisterChildPage() {
   const navigate = useNavigate()
-  const [step, setStep] = useState('code') // 'code' | 'details'
-  const [teamInfo, setTeamInfo] = useState(null) // { teamId, teamName, code }
+  // steps: 'code' → 'select' → 'details'
+  const [step, setStep] = useState('code')
+  const [teamInfo, setTeamInfo] = useState(null)   // { teamId, teamName, code }
+  const [teamPlayers, setTeamPlayers] = useState([])
   const [codeInput, setCodeInput] = useState('')
   const [codeError, setCodeError] = useState('')
   const [codeLoading, setCodeLoading] = useState(false)
@@ -26,9 +28,14 @@ export default function RegisterChildPage() {
     setCodeError('')
     setCodeLoading(true)
     try {
-      const info = await lookupTeamInviteCode(codeInput.trim())
-      setTeamInfo({ ...info, code: codeInput.trim() })
-      setStep('details')
+      const code = codeInput.trim()
+      const [info, players] = await Promise.all([
+        lookupTeamInviteCode(code),
+        listTeamPlayers(code),
+      ])
+      setTeamInfo({ ...info, code })
+      setTeamPlayers(players ?? [])
+      setStep('select')
     } catch (err) {
       setCodeError(err?.response?.data?.message || 'Invalid or inactive team code.')
     } finally {
@@ -36,7 +43,22 @@ export default function RegisterChildPage() {
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSelectExisting = async (player) => {
+    setFormError('')
+    setSaving(true)
+    try {
+      await submitPlayerRegistration({
+        teamInviteCode: teamInfo.code,
+        existingPlayerId: player.id,
+      })
+      navigate('/parent/children', { state: { registered: `${player.firstName} ${player.lastName}` } })
+    } catch (err) {
+      setFormError(err?.response?.data?.message || 'Failed to submit. Please try again.')
+      setSaving(false)
+    }
+  }
+
+  const handleSubmitNew = async (e) => {
     e.preventDefault()
     setFormError('')
     setSaving(true)
@@ -67,6 +89,7 @@ export default function RegisterChildPage() {
         <h1 className="text-2xl font-bold text-gray-800">Register a Child</h1>
       </div>
 
+      {/* Step 1 — Enter code */}
       {step === 'code' && (
         <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
           <div>
@@ -94,22 +117,81 @@ export default function RegisterChildPage() {
         </div>
       )}
 
-      {step === 'details' && teamInfo && (
+      {/* Step 2 — Select existing player or add new */}
+      {step === 'select' && teamInfo && (
         <div className="space-y-4">
-          <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-green-800">Team: {teamInfo.teamName}</p>
-              <p className="text-xs text-green-600">Code verified. Fill in your child's details below.</p>
-            </div>
-            <button onClick={() => { setStep('code'); setTeamInfo(null) }}
-              className="text-xs text-green-700 underline">Change</button>
-          </div>
+          <TeamBanner teamInfo={teamInfo} onReset={() => { setStep('code'); setTeamInfo(null) }} />
 
           <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-            <h2 className="font-semibold text-gray-700">Step 2 — Child's details</h2>
+            <h2 className="font-semibold text-gray-700">Step 2 — Is your child already on this team?</h2>
+            <p className="text-sm text-gray-500">
+              If a coach has already added your child, select them below to request a parent link.
+              Otherwise, add them as a new player.
+            </p>
+
             {formError && <p className="text-red-600 text-sm">{formError}</p>}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {teamPlayers.length > 0 ? (
+              <ul className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
+                {teamPlayers.map((p) => (
+                  <li key={p.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
+                    <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-400">
+                      {p.profileImageUrl
+                        ? <img src={p.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                        : <PersonIcon />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800">
+                        {p.firstName} {p.lastName}
+                        {p.jerseyNumber != null && (
+                          <span className="ml-1.5 text-xs font-mono bg-green-700 text-white px-1.5 py-0.5 rounded">
+                            #{p.jerseyNumber}
+                          </span>
+                        )}
+                      </p>
+                      {p.primaryPosition && (
+                        <p className="text-xs text-gray-400">{p.primaryPosition}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleSelectExisting(p)}
+                      disabled={saving}
+                      className="text-sm bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600 disabled:opacity-50 shrink-0"
+                    >
+                      This is my child
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500 italic">No players have been added to this team yet.</p>
+            )}
+
+            <div className="pt-2 border-t border-gray-100">
+              <button
+                onClick={() => setStep('details')}
+                className="text-sm text-green-700 hover:underline"
+              >
+                My child isn't listed — add them as a new player →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3 — New child details form */}
+      {step === 'details' && teamInfo && (
+        <div className="space-y-4">
+          <TeamBanner teamInfo={teamInfo} onReset={() => { setStep('code'); setTeamInfo(null) }} />
+
+          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setStep('select')} className="text-sm text-gray-500 hover:text-gray-700">← Back</button>
+              <h2 className="font-semibold text-gray-700">Step 3 — Child's details</h2>
+            </div>
+            {formError && <p className="text-red-600 text-sm">{formError}</p>}
+
+            <form onSubmit={handleSubmitNew} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First name *</label>
@@ -179,5 +261,25 @@ export default function RegisterChildPage() {
         </div>
       )}
     </div>
+  )
+}
+
+function TeamBanner({ teamInfo, onReset }) {
+  return (
+    <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-green-800">Team: {teamInfo.teamName}</p>
+        <p className="text-xs text-green-600">Code verified.</p>
+      </div>
+      <button onClick={onReset} className="text-xs text-green-700 underline">Change</button>
+    </div>
+  )
+}
+
+function PersonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+    </svg>
   )
 }

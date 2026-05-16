@@ -219,65 +219,108 @@ export default function PlayerDetailPage() {
             <p className="text-gray-500 text-sm">No evaluations recorded.</p>
           )}
           {!eLoading && (evals ?? []).length > 0 && (
-            <div className="space-y-3">
-              {evals.map((ev) => (
-                <div key={ev.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between flex-wrap gap-2">
-                    <div>
-                      <p className="font-medium text-gray-800">vs {ev.opponent}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {ev.matchDateTime
-                          ? new Date(ev.matchDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-                          : '—'}
-                        {ev.positionPlayed && ` · played ${ev.positionPlayed}`}
-                        {ev.coachName && ` · by ${ev.coachName}`}
-                      </p>
+            <EvaluationsTab evals={evals} playerId={playerId} />
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function EvaluationsTab({ evals, playerId }) {
+  // Group evaluations by match
+  const byMatch = {}
+  evals.forEach((ev) => {
+    if (!byMatch[ev.matchId]) byMatch[ev.matchId] = []
+    byMatch[ev.matchId].push(ev)
+  })
+
+  return (
+    <div className="space-y-4">
+      {Object.entries(byMatch).map(([matchId, matchEvals]) => {
+        const first = matchEvals[0]
+        const overallRatings = matchEvals.map((e) => e.overallRating).filter((v) => v != null)
+        const avgOverall = overallRatings.length
+          ? Math.round((overallRatings.reduce((a, b) => a + b, 0) / overallRatings.length) * 10) / 10
+          : null
+        const date = first.matchDateTime
+          ? new Date(first.matchDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+          : '—'
+
+        return (
+          <div key={matchId} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            {/* Match header with avg */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+              <div>
+                <p className="font-medium text-gray-800">vs {first.opponent}</p>
+                <p className="text-xs text-gray-400">{date}{first.positionPlayed && ` · ${first.positionPlayed}`}</p>
+              </div>
+              {avgOverall != null && (
+                <div className="text-center shrink-0">
+                  <p className="text-xl font-bold text-green-700">{avgOverall}</p>
+                  <p className="text-xs text-gray-400">{matchEvals.length > 1 ? 'Avg Overall' : 'Overall'}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Per-coach cards */}
+            <div className="divide-y divide-gray-100">
+              {matchEvals.map((ev) => (
+                <div key={ev.id} className="px-4 py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-gray-500">
+                      {ev.coachName}
+                      {ev.own && <span className="ml-1 text-green-600">(you)</span>}
+                    </span>
+                    {ev.overallRating != null && (
+                      <span className="text-sm font-bold text-gray-700">{ev.overallRating} overall</span>
+                    )}
+                  </div>
+
+                  {/* Detailed breakdown — only for own eval */}
+                  {ev.own && (
+                    <div className="flex flex-wrap gap-3 mb-2">
+                      {RATING_KEYS.filter((r) => r.key !== 'overallRating').map(({ key, label }) =>
+                        ev[key] != null ? (
+                          <div key={key} className="text-center min-w-[52px]">
+                            <p className="text-sm font-semibold text-gray-700">{ev[key]}</p>
+                            <p className="text-xs text-gray-400">{label}</p>
+                          </div>
+                        ) : null,
+                      )}
                     </div>
-                    {ev.overallRating && (
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-green-700">{ev.overallRating}</p>
-                        <p className="text-xs text-gray-400">Overall</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-3 mt-3">
-                    {RATING_KEYS.filter((r) => r.key !== 'overallRating').map(({ key, label }) =>
-                      ev[key] != null ? (
-                        <div key={key} className="text-center">
-                          <p className="text-sm font-semibold text-gray-700">{ev[key]}</p>
-                          <p className="text-xs text-gray-400">{label}</p>
-                        </div>
-                      ) : null,
-                    )}
-                  </div>
+                  )}
+
+                  {/* Notes — visible to all coaches */}
                   {ev.parentVisibleNotes && (
-                    <div className="mt-3 text-sm text-gray-600 bg-gray-50 rounded p-2">
-                      <span className="text-xs font-medium text-gray-400 block mb-1">Parent notes</span>
+                    <div className="mt-1 text-sm text-gray-600 bg-gray-50 rounded p-2">
+                      <span className="text-xs font-medium text-gray-400 block mb-0.5">Parent notes</span>
                       {ev.parentVisibleNotes}
                     </div>
                   )}
                   {ev.coachOnlyNotes && (
-                    <div className="mt-2 text-sm text-gray-600 bg-yellow-50 rounded p-2">
-                      <span className="text-xs font-medium text-yellow-600 block mb-1">Coach only</span>
+                    <div className="mt-1 text-sm text-gray-600 bg-yellow-50 rounded p-2">
+                      <span className="text-xs font-medium text-yellow-600 block mb-0.5">Coach only</span>
                       {ev.coachOnlyNotes}
                     </div>
                   )}
-                  {ev.matchId && (
-                    <div className="mt-3">
+
+                  {ev.own && (
+                    <div className="mt-2">
                       <Link
                         to={`/matches/${ev.matchId}/players/${playerId}/evaluation`}
                         className="text-xs text-green-700 hover:underline"
                       >
-                        Edit evaluation →
+                        Edit my evaluation →
                       </Link>
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          )}
-        </>
-      )}
+          </div>
+        )
+      })}
     </div>
   )
 }

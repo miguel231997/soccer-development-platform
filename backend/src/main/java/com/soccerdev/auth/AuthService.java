@@ -131,10 +131,7 @@ public class AuthService {
             throw new IllegalArgumentException("This code is for a " + code.getRole() + " account");
 
         if (teamMembershipRepository.existsByUserIdAndTeamId(user.getId(), code.getTeam().getId())) {
-            return JoinTeamResponse.builder()
-                    .teamId(code.getTeam().getId())
-                    .teamName(code.getTeam().getName())
-                    .build();
+            throw new IllegalArgumentException("You already belong to " + code.getTeam().getName() + ".");
         }
 
         teamMembershipRepository.save(TeamMembership.builder()
@@ -163,10 +160,7 @@ public class AuthService {
             throw new IllegalArgumentException("This team code has reached its maximum uses");
 
         if (teamMembershipRepository.existsByUserIdAndTeamId(user.getId(), code.getTeam().getId())) {
-            return JoinTeamResponse.builder()
-                    .teamId(code.getTeam().getId())
-                    .teamName(code.getTeam().getName())
-                    .build();
+            throw new IllegalArgumentException("You already belong to " + code.getTeam().getName() + ".");
         }
 
         teamMembershipRepository.save(TeamMembership.builder()

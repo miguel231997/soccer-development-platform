@@ -2,9 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
-// Backend RegisterRequest: { email, password, firstName, lastName, registrationCode }
-// Role is determined by the registration code — coaches and parents receive separate codes.
-// Seed codes (local dev only): SLSA-COACH-2025 / SLSA-PARENT-2025
+const PASSWORD_HINT = 'Min 8 characters · uppercase · lowercase · number · special character (e.g. !@#$)'
 
 export default function RegisterPage() {
   const { register } = useAuth()
@@ -26,19 +24,25 @@ export default function RegisterPage() {
       if (user?.role === 'PARENT') navigate('/parent')
       else navigate('/dashboard')
     } catch (err) {
-      const msg = err?.response?.data?.message
-      setError(msg || 'Registration failed. Check your registration code and try again.')
+      const body = err?.response?.data
+      // Spring @Valid returns { message: "Validation failed", data: { field: "msg" } }
+      if (body?.data && typeof body.data === 'object') {
+        const fieldErrors = Object.values(body.data)
+        setError(fieldErrors[0] || 'Validation failed. Check your inputs.')
+      } else {
+        setError(body?.message || 'Registration failed. Check your registration code and try again.')
+      }
     } finally {
       setLoading(false)
     }
   }
 
   const FIELDS = [
-    { name: 'firstName',        label: 'First name',         type: 'text' },
-    { name: 'lastName',         label: 'Last name',          type: 'text' },
-    { name: 'email',            label: 'Email',              type: 'email' },
-    { name: 'password',         label: 'Password',           type: 'password' },
-    { name: 'registrationCode', label: 'Registration code',  type: 'text' },
+    { name: 'firstName',        label: 'First name',        type: 'text' },
+    { name: 'lastName',         label: 'Last name',         type: 'text' },
+    { name: 'email',            label: 'Email',             type: 'email' },
+    { name: 'password',         label: 'Password',          type: 'password', hint: PASSWORD_HINT },
+    { name: 'registrationCode', label: 'Registration code', type: 'text' },
   ]
 
   return (
@@ -48,9 +52,13 @@ export default function RegisterPage() {
         You need a registration code from your club administrator.
       </p>
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded px-3 py-2 text-red-700 text-sm">
+            {error}
+          </div>
+        )}
 
-        {FIELDS.map(({ name, label, type }) => (
+        {FIELDS.map(({ name, label, type, hint }) => (
           <div key={name}>
             <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
             <input
@@ -62,6 +70,9 @@ export default function RegisterPage() {
               autoComplete={name === 'password' ? 'new-password' : name}
               className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />
+            {hint && (
+              <p className="mt-1 text-xs text-gray-400">{hint}</p>
+            )}
           </div>
         ))}
 

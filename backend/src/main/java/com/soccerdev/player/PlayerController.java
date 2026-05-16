@@ -65,6 +65,15 @@ public class PlayerController {
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).message("Player deactivated").build());
     }
 
+    @PatchMapping("/{id}/public-profile")
+    public ResponseEntity<ApiResponse<PlayerResponse>> setPublicProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @RequestParam boolean enabled) {
+        User user = currentUserService.getUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.ok(playerService.setPublicProfile(user, id, enabled)));
+    }
+
     @PostMapping("/{playerId}/profile-image")
     public ResponseEntity<ApiResponse<PlayerResponse>> uploadProfileImage(
             @AuthenticationPrincipal UserDetails userDetails,

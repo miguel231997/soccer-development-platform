@@ -55,7 +55,7 @@ public class EvaluationService {
                 .build();
         applyRequest(eval, request);
 
-        return toCoachDto(evaluationRepository.save(eval));
+        return toCoachDto(evaluationRepository.save(eval), true);
     }
 
     public List<EvaluationView> getByMatch(User user, Long matchId) {
@@ -75,7 +75,9 @@ public class EvaluationService {
                     .map(e -> (EvaluationView) toParentDto(e))
                     .toList();
         }
-        return evals.stream().map(e -> (EvaluationView) toCoachDto(e)).toList();
+        return evals.stream()
+                .map(e -> (EvaluationView) toCoachDto(e, e.getCoachUser().getId().equals(user.getId())))
+                .toList();
     }
 
     public List<EvaluationView> getByPlayer(User user, Long playerId) {
@@ -91,7 +93,9 @@ public class EvaluationService {
         if (user.getRole() == UserRole.PARENT) {
             return evals.stream().map(e -> (EvaluationView) toParentDto(e)).toList();
         }
-        return evals.stream().map(e -> (EvaluationView) toCoachDto(e)).toList();
+        return evals.stream()
+                .map(e -> (EvaluationView) toCoachDto(e, e.getCoachUser().getId().equals(user.getId())))
+                .toList();
     }
 
     public EvaluationView getById(User user, Long evaluationId) {
@@ -102,7 +106,7 @@ public class EvaluationService {
         if (user.getRole() == UserRole.PARENT) {
             return toParentDto(eval);
         }
-        return toCoachDto(eval);
+        return toCoachDto(eval, eval.getCoachUser().getId().equals(user.getId()));
     }
 
     @Transactional
@@ -112,7 +116,7 @@ public class EvaluationService {
             throw new AccessDeniedException("Access denied");
         }
         applyRequest(eval, request);
-        return toCoachDto(evaluationRepository.save(eval));
+        return toCoachDto(evaluationRepository.save(eval), true);
     }
 
     @Transactional
@@ -136,13 +140,24 @@ public class EvaluationService {
         eval.setDefendingRating(req.getDefendingRating());
         eval.setDecisionMakingRating(req.getDecisionMakingRating());
         eval.setWorkRateRating(req.getWorkRateRating());
-        eval.setOverallRating(req.getOverallRating());
+        // Average only the ratings that were actually provided; null means "not scored"
+        Integer[] ratings = {
+            req.getTechnicalRating(), req.getTacticalRating(),
+            req.getPhysicalRating(),  req.getMentalityRating(),
+            req.getAttackingRating(), req.getDefendingRating(),
+            req.getDecisionMakingRating(), req.getWorkRateRating()
+        };
+        int sum = 0, count = 0;
+        for (Integer r : ratings) {
+            if (r != null) { sum += r; count++; }
+        }
+        eval.setOverallRating(count > 0 ? (int) Math.round((double) sum / count) : null);
         eval.setParentVisibleNotes(req.getParentVisibleNotes());
         eval.setCoachOnlyNotes(req.getCoachOnlyNotes());
     }
 
-    private CoachEvaluationDto toCoachDto(PlayerMatchEvaluation eval) {
-        return CoachEvaluationDto.builder()
+    private CoachEvaluationDto toCoachDto(PlayerMatchEvaluation eval, boolean own) {
+        CoachEvaluationDto.CoachEvaluationDtoBuilder b = CoachEvaluationDto.builder()
                 .id(eval.getId())
                 .matchId(eval.getMatch().getId())
                 .opponent(eval.getMatch().getOpponent())
@@ -152,20 +167,27 @@ public class EvaluationService {
                 .coachUserId(eval.getCoachUser().getId())
                 .coachName(eval.getCoachUser().getFirstName() + " " + eval.getCoachUser().getLastName())
                 .positionPlayed(eval.getPositionPlayed())
-                .technicalRating(eval.getTechnicalRating())
-                .tacticalRating(eval.getTacticalRating())
-                .physicalRating(eval.getPhysicalRating())
-                .mentalityRating(eval.getMentalityRating())
-                .attackingRating(eval.getAttackingRating())
-                .defendingRating(eval.getDefendingRating())
-                .decisionMakingRating(eval.getDecisionMakingRating())
-                .workRateRating(eval.getWorkRateRating())
                 .overallRating(eval.getOverallRating())
+                // Notes are always visible to all coaches on the team
                 .parentVisibleNotes(eval.getParentVisibleNotes())
                 .coachOnlyNotes(eval.getCoachOnlyNotes())
+                .own(own)
                 .createdAt(eval.getCreatedAt())
-                .updatedAt(eval.getUpdatedAt())
-                .build();
+                .updatedAt(eval.getUpdatedAt());
+
+        if (own) {
+            // Full breakdown only for the coach's own evaluation
+            b.technicalRating(eval.getTechnicalRating())
+             .tacticalRating(eval.getTacticalRating())
+             .physicalRating(eval.getPhysicalRating())
+             .mentalityRating(eval.getMentalityRating())
+             .attackingRating(eval.getAttackingRating())
+             .defendingRating(eval.getDefendingRating())
+             .decisionMakingRating(eval.getDecisionMakingRating())
+             .workRateRating(eval.getWorkRateRating());
+        }
+
+        return b.build();
     }
 
     private ParentEvaluationDto toParentDto(PlayerMatchEvaluation eval) {
@@ -179,6 +201,8 @@ public class EvaluationService {
                 .matchDateTime(eval.getMatch().getMatchDateTime())
                 .playerId(eval.getPlayer().getId())
                 .playerName(eval.getPlayer().getFirstName() + " " + eval.getPlayer().getLastName())
+                .coachUserId(eval.getCoachUser().getId())
+                .coachName(eval.getCoachUser().getFirstName() + " " + eval.getCoachUser().getLastName())
                 .positionPlayed(eval.getPositionPlayed())
                 .technicalRating(eval.getTechnicalRating())
                 .tacticalRating(eval.getTacticalRating())

@@ -17,6 +17,7 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
             LEFT JOIN FETCH ta.team t
             LEFT JOIN FETCH t.club
             LEFT JOIN FETCH ta.season
+            WHERE p.active = true
             """)
     List<Player> findAllWithTeams();
 
@@ -26,7 +27,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
             LEFT JOIN FETCH ta.team t
             LEFT JOIN FETCH t.club
             LEFT JOIN FETCH ta.season
-            WHERE EXISTS (
+            WHERE p.active = true
+              AND EXISTS (
                 SELECT 1 FROM PlayerTeamAssignment pta2
                 WHERE pta2.player.id = p.id AND pta2.team.id = :teamId AND pta2.active = true
             )
@@ -39,7 +41,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
             LEFT JOIN FETCH ta.team t
             LEFT JOIN FETCH t.club
             LEFT JOIN FETCH ta.season
-            WHERE EXISTS (
+            WHERE p.active = true
+              AND EXISTS (
                 SELECT 1 FROM PlayerTeamAssignment pta2
                 WHERE pta2.player.id = p.id AND pta2.team.club.id = :clubId AND pta2.active = true
             )
@@ -52,7 +55,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
             LEFT JOIN FETCH ta.team t
             LEFT JOIN FETCH t.club
             LEFT JOIN FETCH ta.season
-            WHERE EXISTS (
+            WHERE p.active = true
+              AND EXISTS (
                 SELECT 1 FROM PlayerTeamAssignment pta2
                 WHERE pta2.player.id = p.id AND pta2.active = true
                 AND pta2.team.id IN (

@@ -4,6 +4,7 @@ import {
   getMatch, getPlayer, getMatchEvaluations, createEvaluation, updateEvaluation,
 } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
+import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 
@@ -25,10 +26,19 @@ const RATING_FIELDS = [
   { key: 'workRateRating',       label: 'Work Rate',        group: 'detail' },
 ]
 
+const DETAIL_KEYS = [
+  'technicalRating','tacticalRating','physicalRating','mentalityRating',
+  'attackingRating','defendingRating','decisionMakingRating','workRateRating',
+]
+
+function computeOverall(form) {
+  const vals = DETAIL_KEYS.map((k) => Number(form[k]) || 0)
+  return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+}
+
 function emptyForm() {
   return {
     positionPlayed: '',
-    overallRating: 5,
     technicalRating: 5, tacticalRating: 5, physicalRating: 5,
     mentalityRating: 5, attackingRating: 5, defendingRating: 5,
     decisionMakingRating: 5, workRateRating: 5,
@@ -41,7 +51,6 @@ function fromExisting(ev) {
   if (!ev) return emptyForm()
   return {
     positionPlayed: ev.positionPlayed ?? '',
-    overallRating: ev.overallRating ?? 5,
     technicalRating: ev.technicalRating ?? 5,
     tacticalRating: ev.tacticalRating ?? 5,
     physicalRating: ev.physicalRating ?? 5,
@@ -57,11 +66,15 @@ function fromExisting(ev) {
 
 export default function PlayerEvaluationPage() {
   const { matchId, playerId } = useParams()
+  const { user } = useAuth()
 
   const fetcher = useCallback(
     () => Promise.all([getMatch(matchId), getPlayer(playerId), getMatchEvaluations(matchId)])
          .then(([match, player, evals]) => {
-           const existing = (evals ?? []).find((e) => e.playerId === Number(playerId)) ?? null
+           // Match by both playerId AND own=true so we load only the current coach's own eval
+           const existing = (evals ?? []).find(
+             (e) => e.playerId === Number(playerId) && e.own
+           ) ?? null
            return { match, player, existing }
          }),
     [matchId, playerId],
@@ -105,12 +118,14 @@ function EvaluationForm({ matchId, playerId, match, player, existing }) {
     setSaved(false)
     setError(null)
 
+    const overall = computeOverall(form)
     const payload = {
       positionPlayed: form.positionPlayed || null,
       parentVisibleNotes: form.parentVisibleNotes || null,
       coachOnlyNotes: form.coachOnlyNotes || null,
+      overallRating: overall,
       ...Object.fromEntries(
-        RATING_FIELDS.map(({ key }) => [key, Number(form[key])]),
+        RATING_FIELDS.filter((f) => f.group === 'detail').map(({ key }) => [key, Number(form[key])]),
       ),
     }
 
@@ -163,21 +178,17 @@ function EvaluationForm({ matchId, playerId, match, player, existing }) {
           </label>
         </div>
 
-        {/* Overall rating */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Overall Rating</h2>
-          <RatingSlider
-            label="Overall"
-            fieldKey="overallRating"
-            value={form.overallRating}
-            onChange={handleRating}
-            accent
-          />
-        </div>
-
         {/* Detailed ratings */}
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Detailed Ratings</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-700">Detailed Ratings</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">Overall (auto)</span>
+              <span className={`text-2xl font-bold ${computeOverall(form) >= 8 ? 'text-green-600' : computeOverall(form) >= 5 ? 'text-blue-600' : 'text-red-500'}`}>
+                {computeOverall(form)}
+              </span>
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {RATING_FIELDS.filter((f) => f.group === 'detail').map(({ key, label }) => (
               <RatingSlider key={key} label={label} fieldKey={key} value={form[key]} onChange={handleRating} />

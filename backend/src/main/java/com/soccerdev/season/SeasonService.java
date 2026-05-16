@@ -71,7 +71,7 @@ public class SeasonService {
     }
 
     private void requireEditor(User user) {
-        if (user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.DIRECTOR) {
+        if (user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.DIRECTOR && user.getRole() != UserRole.COACH) {
             throw new AccessDeniedException("Access denied");
         }
     }

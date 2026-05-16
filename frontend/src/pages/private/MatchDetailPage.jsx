@@ -50,7 +50,13 @@ export default function MatchDetailPage() {
   )
 
   const statsByPlayer = Object.fromEntries((stats ?? []).map((s) => [s.playerId, s]))
-  const evalsByPlayer = Object.fromEntries((evals ?? []).map((e) => [e.playerId, e]))
+  // Track which players have ANY eval and which the current coach has submitted (own=true)
+  const evalsForPlayer = {}
+  ;(evals ?? []).forEach((e) => {
+    if (!evalsForPlayer[e.playerId]) evalsForPlayer[e.playerId] = { any: false, own: false }
+    evalsForPlayer[e.playerId].any = true
+    if (e.own) evalsForPlayer[e.playerId].own = true
+  })
 
   const date = new Date(match.matchDateTime)
   const dateStr = date.toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
@@ -147,7 +153,8 @@ export default function MatchDetailPage() {
               <tbody className="divide-y divide-gray-100">
                 {roster.map((p) => {
                   const hasStat = !!statsByPlayer[p.id]
-                  const hasEval = !!evalsByPlayer[p.id]
+                  const evalInfo = evalsForPlayer[p.id] ?? { any: false, own: false }
+                  const hasEval = evalInfo.own  // checkmark only when current coach submitted
                   return (
                     <tr key={p.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
@@ -179,15 +186,15 @@ export default function MatchDetailPage() {
                               to={`/matches/${matchId}/players/${p.id}/evaluation`}
                               className="text-xs text-blue-700 border border-blue-300 px-2 py-1 rounded hover:bg-blue-50"
                             >
-                              {hasEval ? 'Edit Eval' : 'Evaluate'}
+                              {evalInfo.own ? 'Edit My Eval' : 'Evaluate'}
                             </Link>
                           )}
-                          {!isParent && match.finalized && hasEval && (
+                          {!isParent && match.finalized && evalInfo.own && (
                             <Link
                               to={`/matches/${matchId}/players/${p.id}/evaluation`}
                               className="text-xs text-gray-600 border border-gray-300 px-2 py-1 rounded"
                             >
-                              View Eval
+                              View My Eval
                             </Link>
                           )}
                         </div>
