@@ -3,7 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import FormError from '../../components/FormError'
 
-const PASSWORD_HINT = 'Min 8 characters · uppercase · lowercase · number · special character (e.g. !@#$)'
+const PASSWORD_HINT = 'Min 8 chars · uppercase · lowercase · number · special (!@#$)'
+
+const inputCls = 'w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors'
 
 export default function RegisterPage() {
   const { register } = useAuth()
@@ -26,7 +28,6 @@ export default function RegisterPage() {
       else navigate('/dashboard')
     } catch (err) {
       const body = err?.response?.data
-      // Spring @Valid returns { message: "Validation failed", data: { field: "msg" } }
       if (body?.data && typeof body.data === 'object') {
         const fieldErrors = Object.values(body.data)
         setError(fieldErrors[0] || 'Validation failed. Check your inputs.')
@@ -39,54 +40,68 @@ export default function RegisterPage() {
   }
 
   const FIELDS = [
-    { name: 'firstName',        label: 'First name',        type: 'text' },
-    { name: 'lastName',         label: 'Last name',         type: 'text' },
-    { name: 'email',            label: 'Email',             type: 'email' },
-    { name: 'password',         label: 'Password',          type: 'password', hint: PASSWORD_HINT },
-    { name: 'registrationCode', label: 'Registration code', type: 'text' },
+    { name: 'firstName',        label: 'First name',        type: 'text',     placeholder: 'John' },
+    { name: 'lastName',         label: 'Last name',         type: 'text',     placeholder: 'Smith' },
+    { name: 'email',            label: 'Email',             type: 'email',    placeholder: 'you@example.com' },
+    { name: 'password',         label: 'Password',          type: 'password', placeholder: '••••••••', hint: PASSWORD_HINT },
+    { name: 'registrationCode', label: 'Registration code', type: 'text',     placeholder: 'Provided by your club' },
   ]
 
   return (
-    <div className="max-w-sm mx-auto mt-20">
-      <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">Create Account</h1>
-      <p className="text-sm text-center text-gray-500 mb-6">
-        You need a registration code from your club administrator.
-      </p>
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
-        <FormError message={error} />
-
-        {FIELDS.map(({ name, label, type, hint }) => (
-          <div key={name}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-            <input
-              type={type}
-              name={name}
-              value={form[name]}
-              onChange={handleChange}
-              required
-              autoComplete={name === 'password' ? 'new-password' : name}
-              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-            {hint && (
-              <p className="mt-1 text-xs text-gray-400">{hint}</p>
-            )}
+    <div className="min-h-screen bg-mig-bg flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm">
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2.5 mb-3">
+            <span className="text-sm font-black bg-mig-orange text-white px-2 py-1 rounded">IQ</span>
+            <span className="text-2xl font-black tracking-tight text-mig-text">PitchIQ</span>
           </div>
-        ))}
+          <p className="text-sm text-mig-muted">Create your account</p>
+          <p className="text-xs text-mig-dim mt-1">You need a registration code from your club administrator.</p>
+        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-green-700 text-white py-2 rounded hover:bg-green-600 disabled:opacity-50"
-        >
-          {loading ? 'Creating account…' : 'Register'}
-        </button>
-        <p className="text-sm text-center text-gray-500">
-          Have an account?{' '}
-          <Link to="/login" className="text-green-700 hover:underline">
-            Sign in
-          </Link>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FormError message={error} />
+
+          {FIELDS.map(({ name, label, type, placeholder, hint }) => (
+            <div key={name}>
+              <label className="block text-xs font-semibold text-mig-muted uppercase tracking-wider mb-1.5">
+                {label}
+              </label>
+              <input
+                type={type}
+                name={name}
+                value={form[name]}
+                onChange={handleChange}
+                required
+                placeholder={placeholder}
+                autoComplete={name === 'password' ? 'new-password' : name}
+                className={inputCls}
+              />
+              {hint && <p className="mt-1.5 text-xs text-mig-dim">{hint}</p>}
+            </div>
+          ))}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-mig-orange hover:bg-mig-orange-dark disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm mt-2"
+          >
+            {loading ? 'Creating account…' : 'Create Account'}
+          </button>
+
+          <p className="text-center text-xs text-mig-muted pt-1">
+            Already have an account?{' '}
+            <Link to="/login" className="text-mig-orange hover:text-mig-orange-dark font-semibold">
+              Sign in
+            </Link>
+          </p>
+        </form>
+
+        <p className="text-center text-xs text-mig-dim mt-8">
+          MIG Player IQ · by MIG Football
         </p>
-      </form>
+      </div>
     </div>
   )
 }

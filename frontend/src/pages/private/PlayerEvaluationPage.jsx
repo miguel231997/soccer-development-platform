@@ -147,15 +147,20 @@ function EvaluationForm({ matchId, playerId, match, player, existing }) {
     ? new Date(match.matchDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
     : null
 
+  const overall = computeOverall(form)
+  const overallColor = overall >= 8 ? 'text-mig-success' : overall >= 5 ? 'text-blue-400' : 'text-mig-danger'
+
+  const inputCls = "w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
+
   return (
     <div className="max-w-2xl space-y-6">
       {/* Back / context */}
       <div>
-        <Link to={`/matches/${matchId}`} className="text-sm text-gray-400 hover:text-green-700">← Match</Link>
-        <h1 className="text-xl font-bold text-gray-800 mt-1">
+        <Link to={`/matches/${matchId}`} className="text-xs text-mig-muted hover:text-mig-orange transition-colors font-medium uppercase tracking-wide">← Match</Link>
+        <h1 className="text-xl font-bold text-mig-text mt-1">
           {existing ? 'Edit' : 'New'} Evaluation
         </h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <p className="text-sm text-mig-muted mt-0.5">
           {player.firstName} {player.lastName} · {match.teamName} vs {match.opponent}
           {date && ` · ${date}`}
         </p>
@@ -163,14 +168,14 @@ function EvaluationForm({ matchId, playerId, match, player, existing }) {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Position played */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-mig-surface border border-mig-border rounded-lg p-4">
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-700">Position played</span>
+            <span className="text-sm font-medium text-mig-muted">Position played</span>
             <select
               name="positionPlayed"
               value={form.positionPlayed}
               onChange={handleChange}
-              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 max-w-xs"
+              className={`${inputCls} max-w-xs`}
             >
               <option value="">— select —</option>
               {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -179,13 +184,13 @@ function EvaluationForm({ matchId, playerId, match, player, existing }) {
         </div>
 
         {/* Detailed ratings */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-mig-surface border border-mig-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-700">Detailed Ratings</h2>
+            <h2 className="text-sm font-semibold text-mig-text">Detailed Ratings</h2>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Overall (auto)</span>
-              <span className={`text-2xl font-bold ${computeOverall(form) >= 8 ? 'text-green-600' : computeOverall(form) >= 5 ? 'text-blue-600' : 'text-red-500'}`}>
-                {computeOverall(form)}
+              <span className="text-xs text-mig-dim">Overall (auto)</span>
+              <span className={`text-2xl font-bold ${overallColor}`}>
+                {overall}
               </span>
             </div>
           </div>
@@ -197,31 +202,31 @@ function EvaluationForm({ matchId, playerId, match, player, existing }) {
         </div>
 
         {/* Notes */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
-          <h2 className="text-sm font-semibold text-gray-700">Notes</h2>
+        <div className="bg-mig-surface border border-mig-border rounded-lg p-4 space-y-4">
+          <h2 className="text-sm font-semibold text-mig-text">Notes</h2>
 
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-600">Parent-visible notes</span>
-            <span className="text-xs text-gray-400">Visible to the player's parents.</span>
+            <span className="text-sm font-medium text-mig-muted">Parent-visible notes</span>
+            <span className="text-xs text-mig-dim">Visible to the player's parents.</span>
             <textarea
               name="parentVisibleNotes"
               value={form.parentVisibleNotes}
               onChange={handleChange}
               rows={3}
-              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              className={`${inputCls} resize-none`}
               placeholder="Positive feedback, areas the parent can support at home…"
             />
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-gray-600">Coach-only notes</span>
-            <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded inline-block w-fit">Not visible to parents</span>
+            <span className="text-sm font-medium text-mig-muted">Coach-only notes</span>
+            <span className="text-xs text-mig-warning bg-mig-warning/10 border border-mig-warning/20 px-2 py-0.5 rounded inline-block w-fit">Not visible to parents</span>
             <textarea
               name="coachOnlyNotes"
               value={form.coachOnlyNotes}
               onChange={handleChange}
               rows={3}
-              className="border border-yellow-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 resize-none bg-yellow-50/30"
+              className="w-full bg-mig-warning/5 border border-mig-warning/20 text-mig-text placeholder-mig-dim rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mig-warning/30 focus:border-mig-warning/40 transition-colors resize-none"
               placeholder="Internal coaching analysis, tactical notes…"
             />
           </label>
@@ -232,12 +237,12 @@ function EvaluationForm({ matchId, playerId, match, player, existing }) {
           <button
             type="submit"
             disabled={saving}
-            className="bg-green-700 text-white px-6 py-2 rounded hover:bg-green-600 disabled:opacity-50 font-medium"
+            className="bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
           >
             {saving ? 'Saving…' : existing ? 'Update Evaluation' : 'Save Evaluation'}
           </button>
-          {saved && <span className="text-sm text-green-600 font-medium">Saved successfully.</span>}
-          {error && <span className="text-sm text-red-500 font-medium">{error}</span>}
+          {saved && <span className="text-sm text-mig-success font-medium">Saved successfully.</span>}
+          {error && <span className="text-sm text-mig-danger font-medium">{error}</span>}
         </div>
       </form>
     </div>
@@ -246,12 +251,12 @@ function EvaluationForm({ matchId, playerId, match, player, existing }) {
 
 function RatingSlider({ label, fieldKey, value, onChange, accent }) {
   const ratingVal = Number(value)
-  const color = ratingVal >= 8 ? 'text-green-600' : ratingVal >= 5 ? 'text-blue-600' : 'text-red-500'
+  const color = ratingVal >= 8 ? 'text-mig-success' : ratingVal >= 5 ? 'text-blue-400' : 'text-mig-danger'
 
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
-        <span className={`text-sm font-medium ${accent ? 'text-gray-800' : 'text-gray-600'}`}>{label}</span>
+        <span className={`text-sm font-medium ${accent ? 'text-mig-text' : 'text-mig-muted'}`}>{label}</span>
         <span className={`text-lg font-bold ${color}`}>{ratingVal}</span>
       </div>
       <input
@@ -261,9 +266,9 @@ function RatingSlider({ label, fieldKey, value, onChange, accent }) {
         step={1}
         value={ratingVal}
         onChange={(e) => onChange(fieldKey, e.target.value)}
-        className="w-full accent-green-600"
+        className="w-full accent-orange-500"
       />
-      <div className="flex justify-between text-xs text-gray-300">
+      <div className="flex justify-between text-xs text-mig-dim">
         <span>1</span><span>5</span><span>10</span>
       </div>
     </div>

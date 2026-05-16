@@ -69,35 +69,35 @@ export default function MatchDetailPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Back */}
-      <Link to="/matches" className="text-sm text-gray-400 hover:text-green-700">← Matches</Link>
+      <Link to="/matches" className="text-xs text-mig-muted hover:text-mig-orange transition-colors font-medium uppercase tracking-wide">← Matches</Link>
 
       {/* Match info card */}
-      <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-3">
+      <div className="bg-mig-surface border border-mig-border rounded-lg p-5 space-y-3">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold text-gray-800">
+              <h1 className="text-xl font-bold text-mig-text">
                 {match.teamName} vs {match.opponent}
               </h1>
               {match.finalized ? (
-                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-medium">Finalized</span>
+                <span className="text-xs bg-mig-card text-mig-dim border border-mig-border px-2 py-0.5 rounded font-medium">Finalized</span>
               ) : (
-                <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded font-medium">
+                <span className="text-xs bg-mig-success/10 text-mig-success border border-mig-success/20 px-2 py-0.5 rounded font-medium">
                   {new Date(match.matchDateTime) < new Date() ? 'Pending' : 'Upcoming'}
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500 mt-1">{dateStr} · {timeStr}</p>
+            <p className="text-sm text-mig-muted mt-1">{dateStr} · {timeStr}</p>
           </div>
           {score && (
             <div className="text-center">
-              <p className="text-3xl font-bold font-mono text-gray-800">{score}</p>
-              <p className="text-xs text-gray-400">{match.homeAway}</p>
+              <p className="text-3xl font-bold font-mono text-mig-text">{score}</p>
+              <p className="text-xs text-mig-dim">{match.homeAway}</p>
             </div>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+        <div className="flex flex-wrap gap-4 text-sm text-mig-muted">
           {match.location && <Detail label="Location" value={match.location} />}
           {match.homeAway && <Detail label="Home/Away" value={match.homeAway} />}
           {match.competitionName && <Detail label="Competition" value={match.competitionName} />}
@@ -107,10 +107,10 @@ export default function MatchDetailPage() {
         </div>
 
         {!match.finalized && (
-          <div className="pt-2 border-t border-gray-100 flex items-center gap-3 flex-wrap">
+          <div className="pt-2 border-t border-mig-border flex items-center gap-3 flex-wrap">
             <Link
               to={`/matches/${matchId}/stats`}
-              className="text-sm bg-green-700 text-white px-4 py-2 rounded hover:bg-green-600"
+              className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-4 py-2 rounded-lg transition-colors"
             >
               Enter Stats
             </Link>
@@ -120,7 +120,7 @@ export default function MatchDetailPage() {
                 <button
                   onClick={handleFinalize}
                   disabled={finalizing}
-                  className="text-sm border border-gray-300 text-gray-600 px-4 py-2 rounded hover:bg-gray-50 disabled:opacity-50"
+                  className="text-sm border border-mig-border text-mig-muted hover:text-mig-text hover:border-mig-orange/30 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {finalizing ? 'Finalizing…' : 'Finalize Match'}
                 </button>
@@ -131,18 +131,18 @@ export default function MatchDetailPage() {
       </div>
 
       {/* Player status table */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-700">Player Status</h2>
-          <span className="text-xs text-gray-400">{roster.length} players</span>
+      <div className="bg-mig-surface border border-mig-border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-mig-border flex items-center justify-between">
+          <h2 className="font-semibold text-mig-text">Player Status</h2>
+          <span className="text-xs text-mig-dim">{roster.length} players</span>
         </div>
 
         {roster.length === 0 ? (
-          <p className="px-4 py-8 text-center text-gray-500 text-sm">No active players on this team.</p>
+          <p className="px-4 py-8 text-center text-mig-muted text-sm">No active players on this team.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+              <thead className="bg-mig-bg text-mig-dim text-xs uppercase tracking-wider">
                 <tr>
                   <th className="px-4 py-2 text-left font-medium">Player</th>
                   <th className="px-4 py-2 text-left font-medium">Pos</th>
@@ -151,19 +151,19 @@ export default function MatchDetailPage() {
                   <th className="px-4 py-2 text-right font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-mig-border">
                 {roster.map((p) => {
                   const hasStat = !!statsByPlayer[p.id]
                   const evalInfo = evalsForPlayer[p.id] ?? { any: false, own: false }
                   const hasEval = evalInfo.own  // checkmark only when current coach submitted
                   return (
-                    <tr key={p.id} className="hover:bg-gray-50">
+                    <tr key={p.id} className="hover:bg-mig-card transition-colors">
                       <td className="px-4 py-3">
-                        <Link to={`/players/${p.id}`} className="font-medium text-gray-800 hover:text-green-700">
+                        <Link to={`/players/${p.id}`} className="font-medium text-mig-text hover:text-mig-orange">
                           {p.firstName} {p.lastName}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-gray-500">{p.primaryPosition ?? '—'}</td>
+                      <td className="px-4 py-3 text-mig-muted">{p.primaryPosition ?? '—'}</td>
                       <td className="px-4 py-3 text-center">
                         <StatusDot done={hasStat} />
                       </td>
@@ -177,7 +177,7 @@ export default function MatchDetailPage() {
                           {!match.finalized && (
                             <Link
                               to={`/matches/${matchId}/stats`}
-                              className="text-xs text-green-700 border border-green-300 px-2 py-1 rounded hover:bg-green-50"
+                              className="text-xs text-mig-orange border border-mig-orange/30 px-2 py-1 rounded hover:bg-mig-orange/10 transition-colors"
                             >
                               Stats
                             </Link>
@@ -185,7 +185,7 @@ export default function MatchDetailPage() {
                           {!isParent && !match.finalized && (
                             <Link
                               to={`/matches/${matchId}/players/${p.id}/evaluation`}
-                              className="text-xs text-blue-700 border border-blue-300 px-2 py-1 rounded hover:bg-blue-50"
+                              className="text-xs text-blue-400 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500/10 transition-colors"
                             >
                               {evalInfo.own ? 'Edit My Eval' : 'Evaluate'}
                             </Link>
@@ -193,7 +193,7 @@ export default function MatchDetailPage() {
                           {!isParent && match.finalized && evalInfo.own && (
                             <Link
                               to={`/matches/${matchId}/players/${p.id}/evaluation`}
-                              className="text-xs text-gray-600 border border-gray-300 px-2 py-1 rounded"
+                              className="text-xs text-mig-muted border border-mig-border px-2 py-1 rounded transition-colors"
                             >
                               View My Eval
                             </Link>
@@ -215,14 +215,14 @@ export default function MatchDetailPage() {
 function Detail({ label, value }) {
   return (
     <span>
-      <span className="text-gray-400">{label}: </span>
-      <span className="font-medium text-gray-700">{value}</span>
+      <span className="text-mig-dim">{label}: </span>
+      <span className="font-medium text-mig-muted">{value}</span>
     </span>
   )
 }
 
 function StatusDot({ done }) {
   return done
-    ? <span className="inline-block w-5 h-5 rounded-full bg-green-100 text-green-700 text-xs flex items-center justify-center font-bold">✓</span>
-    : <span className="inline-block w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-xs flex items-center justify-center">–</span>
+    ? <span className="inline-flex w-5 h-5 rounded-full bg-mig-success/10 text-mig-success text-xs items-center justify-center font-bold">✓</span>
+    : <span className="inline-flex w-5 h-5 rounded-full bg-mig-card text-mig-dim text-xs items-center justify-center">–</span>
 }

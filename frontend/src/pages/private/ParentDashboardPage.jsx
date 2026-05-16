@@ -18,8 +18,8 @@ export default function ParentDashboardPage() {
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Parent Portal</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Welcome back, {user?.firstName || user?.email}.</p>
+        <h1 className="text-2xl font-black tracking-tight text-mig-text">Parent Portal</h1>
+        <p className="text-sm text-mig-muted mt-0.5">Welcome back, {user?.firstName || user?.email}.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -47,34 +47,34 @@ export default function ParentDashboardPage() {
 
       {children && children.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Quick Access</h2>
+          <h2 className="text-xs text-mig-dim font-semibold uppercase tracking-wider">Quick Access</h2>
           <div className="grid gap-2">
             {children.slice(0, 5).map((child) => (
               <button
                 key={child.id}
                 onClick={() => navigate(`/parent/children/${child.id}`)}
-                className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3 hover:border-green-400 transition text-left"
+                className="bg-mig-surface border border-mig-border rounded-lg px-4 py-3 flex items-center gap-3 hover:border-mig-orange/40 transition text-left"
               >
-                <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm shrink-0 overflow-hidden">
+                <div className="w-9 h-9 rounded-full bg-mig-orange/20 flex items-center justify-center text-mig-orange font-bold text-sm shrink-0 overflow-hidden">
                   {child.profileImageUrl
                     ? <img src={child.profileImageUrl} alt="" className="w-full h-full object-cover" />
                     : `${child.firstName?.[0]}${child.lastName?.[0]}`}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 text-sm">
+                  <p className="font-medium text-mig-text text-sm">
                     {child.firstName} {child.lastName}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-mig-dim">
                     {child.primaryPosition}
                     {child.teams?.length > 0 && ` · ${child.teams.length} team${child.teams.length !== 1 ? 's' : ''}`}
                   </p>
                 </div>
-                <span className="text-gray-300">›</span>
+                <span className="text-mig-dim">›</span>
               </button>
             ))}
             {children.length > 5 && (
               <button onClick={() => navigate('/parent/children')}
-                className="text-sm text-green-700 text-center py-2 hover:underline">
+                className="text-sm text-mig-orange text-center py-2 hover:underline">
                 View all {children.length} children →
               </button>
             )}
@@ -91,20 +91,20 @@ function NavCard({ onClick, title, subtitle, badge, icon, accent }) {
       onClick={onClick}
       className={`text-left rounded-lg border p-5 space-y-1 hover:shadow-sm transition ${
         accent
-          ? 'border-green-200 bg-green-50 hover:border-green-400'
-          : 'border-gray-200 bg-white hover:border-green-300'
+          ? 'border-mig-orange/30 bg-mig-orange/5 hover:border-mig-orange/50'
+          : 'border-mig-border bg-mig-surface hover:border-mig-orange/30'
       }`}
     >
       <div className="flex items-center justify-between">
-        <div className={accent ? 'text-green-700' : 'text-gray-500'}>{icon}</div>
+        <div className={accent ? 'text-mig-orange' : 'text-mig-muted'}>{icon}</div>
         {badge && (
-          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-medium">
+          <span className="text-xs bg-mig-warning/10 text-mig-warning border border-mig-warning/20 px-2 py-0.5 rounded font-medium">
             {badge}
           </span>
         )}
       </div>
-      <p className={`font-semibold ${accent ? 'text-green-800' : 'text-gray-800'}`}>{title}</p>
-      <p className="text-xs text-gray-500">{subtitle}</p>
+      <p className={`font-semibold ${accent ? 'text-mig-orange' : 'text-mig-text'}`}>{title}</p>
+      <p className="text-xs text-mig-muted">{subtitle}</p>
     </button>
   )
 }

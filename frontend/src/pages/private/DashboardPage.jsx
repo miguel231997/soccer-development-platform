@@ -17,9 +17,9 @@ function matchStatus(match) {
 
 function StatusBadge({ status }) {
   const colors = {
-    green:  'bg-green-50 text-green-700',
-    yellow: 'bg-yellow-50 text-yellow-700',
-    gray:   'bg-gray-100 text-gray-500',
+    green:  'bg-mig-success/10 text-mig-success border border-mig-success/20',
+    yellow: 'bg-mig-warning/10 text-mig-warning border border-mig-warning/20',
+    gray:   'bg-mig-card text-mig-dim border border-mig-border',
   }
   return (
     <span className={`text-xs px-2 py-0.5 rounded font-medium ${colors[status.color]}`}>
@@ -51,8 +51,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Welcome back, {user?.firstName || user?.email}.</p>
+        <h1 className="text-2xl font-black tracking-tight text-mig-text">Dashboard</h1>
+        <p className="text-mig-muted text-sm mt-1">Welcome back, {user?.firstName || user?.email}.</p>
       </div>
 
       {/* Summary strip */}
@@ -72,34 +72,34 @@ export default function DashboardPage() {
       {/* Teams */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-700">My Teams</h2>
+          <h2 className="text-lg font-semibold text-mig-text">My Teams</h2>
           <div className="flex items-center gap-3">
             {user?.role === 'COACH' && (
               <JoinTeamInline onJoined={() => setTeamsKey((k) => k + 1)} />
             )}
-            <Link to="/teams" className="text-sm text-green-700 hover:underline">View all →</Link>
+            <Link to="/teams" className="text-sm text-mig-orange hover:underline">View all →</Link>
           </div>
         </div>
         {teamsLoading && <Spinner label="Loading teams…" />}
         {teamsError && <ErrorAlert message={teamsError} />}
         {!teamsLoading && !teamsError && (
           teams?.length === 0 ? (
-            <p className="text-sm text-gray-500">No teams assigned.</p>
+            <p className="text-sm text-mig-muted">No teams assigned.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {teams?.map((t) => (
                 <Link
                   key={t.id}
                   to={`/teams/${t.id}`}
-                  className="bg-white border border-gray-200 rounded-lg p-4 hover:border-green-400 hover:shadow-sm transition group"
+                  className="bg-mig-surface border border-mig-border rounded-lg p-4 hover:border-mig-orange/40 hover:shadow-sm transition group"
                 >
-                  <p className="font-semibold text-gray-800 group-hover:text-green-700">{t.name}</p>
+                  <p className="font-semibold text-mig-text group-hover:text-mig-orange">{t.name}</p>
                   <div className="flex gap-2 mt-1 flex-wrap">
-                    {t.ageGroup && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">{t.ageGroup}</span>}
-                    {t.gender && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{t.gender}</span>}
-                    {t.competitiveLevel && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded">{t.competitiveLevel}</span>}
+                    {t.ageGroup && <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">{t.ageGroup}</span>}
+                    {t.gender && <span className="text-xs bg-mig-card text-mig-dim border border-mig-border px-2 py-0.5 rounded">{t.gender}</span>}
+                    {t.competitiveLevel && <span className="text-xs bg-mig-orange/10 text-mig-orange border border-mig-orange/20 px-2 py-0.5 rounded">{t.competitiveLevel}</span>}
                   </div>
-                  {t.clubName && <p className="text-xs text-gray-400 mt-1">{t.clubName}</p>}
+                  {t.clubName && <p className="text-xs text-mig-dim mt-1">{t.clubName}</p>}
                 </Link>
               ))}
             </div>
@@ -110,12 +110,12 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Upcoming */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">Upcoming Matches</h2>
+          <h2 className="text-lg font-semibold text-mig-text mb-3">Upcoming Matches</h2>
           {matchesLoading && <Spinner label="Loading matches…" />}
           {matchesError && <ErrorAlert message={matchesError} />}
           {!matchesLoading && !matchesError && (
             upcoming.length === 0 ? (
-              <p className="text-sm text-gray-500">No upcoming matches.</p>
+              <p className="text-sm text-mig-muted">No upcoming matches.</p>
             ) : (
               <div className="space-y-2">
                 {upcoming.map((m) => <MatchRow key={m.id} match={m} />)}
@@ -126,11 +126,11 @@ export default function DashboardPage() {
 
         {/* Recent */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">Recent Matches</h2>
+          <h2 className="text-lg font-semibold text-mig-text mb-3">Recent Matches</h2>
           {matchesLoading && <Spinner label="Loading matches…" />}
           {!matchesLoading && !matchesError && (
             recent.length === 0 ? (
-              <p className="text-sm text-gray-500">No recent matches.</p>
+              <p className="text-sm text-mig-muted">No recent matches.</p>
             ) : (
               <div className="space-y-2">
                 {recent.map((m) => <MatchRow key={m.id} match={m} />)}
@@ -141,9 +141,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex gap-3 flex-wrap">
-        <Link to="/teams" className="text-sm bg-green-700 text-white px-4 py-2 rounded hover:bg-green-600">Teams</Link>
-        <Link to="/matches" className="text-sm border border-green-700 text-green-700 px-4 py-2 rounded hover:bg-green-50">All Matches</Link>
-        <Link to="/players" className="text-sm border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50">Players</Link>
+        <Link to="/teams" className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white px-4 py-2 rounded-lg font-semibold transition-colors">Teams</Link>
+        <Link to="/matches" className="text-sm border border-mig-border text-mig-muted hover:text-mig-text hover:border-mig-orange/30 px-4 py-2 rounded-lg transition-colors">All Matches</Link>
+        <Link to="/players" className="text-sm border border-mig-border text-mig-muted hover:text-mig-text hover:border-mig-orange/30 px-4 py-2 rounded-lg transition-colors">Players</Link>
       </div>
 
       <PendingRegistrationRequests />
@@ -201,25 +201,25 @@ function SeasonSetupSection() {
   const available = SEASON_YEARS.filter((y) => !existingNames.has(y))
 
   return (
-    <section className="bg-white border border-gray-200 rounded-lg p-4">
+    <section className="bg-mig-surface border border-mig-border rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-sm font-semibold text-gray-700">Seasons</h2>
+          <h2 className="text-sm font-semibold text-mig-text">Seasons</h2>
           {!seasonsLoading && (seasons ?? []).length === 0 && (
-            <p className="text-xs text-amber-600 mt-0.5">No seasons yet — create one before adding matches.</p>
+            <p className="text-xs text-mig-warning mt-0.5">No seasons yet — create one before adding matches.</p>
           )}
         </div>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="text-sm bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600"
+            className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white px-3 py-1.5 rounded-lg font-semibold transition-colors"
           >
             + New Season
           </button>
         )}
       </div>
 
-      {msg && <p className="text-xs text-green-700 mb-2">{msg}</p>}
+      {msg && <p className="text-xs text-mig-success mb-2">{msg}</p>}
       {err && <FormError message={err} />}
 
       {showForm && (
@@ -228,17 +228,17 @@ function SeasonSetupSection() {
             required
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 flex-1"
+            className="w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors flex-1"
           >
             <option value="">Select season year…</option>
             {available.map((y) => <option key={y} value={y}>{y}</option>)}
           </select>
           <button type="submit" disabled={saving || !selectedYear}
-            className="text-sm bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600 disabled:opacity-50 shrink-0">
+            className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white px-3 py-1.5 rounded-lg font-semibold transition-colors disabled:opacity-50 shrink-0">
             {saving ? '…' : 'Create'}
           </button>
           <button type="button" onClick={() => { setShowForm(false); setSelectedYear('') }}
-            className="text-sm text-gray-500 hover:text-gray-700">
+            className="text-sm text-mig-muted hover:text-mig-text transition-colors">
             Cancel
           </button>
         </form>
@@ -248,7 +248,7 @@ function SeasonSetupSection() {
         <div className="flex flex-wrap gap-2">
           {(seasons ?? []).map((s) => (
             <span key={s.id}
-              className={`text-xs px-2 py-1 rounded border ${s.active ? 'bg-green-50 border-green-300 text-green-700 font-medium' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+              className={`text-xs px-2 py-1 rounded border ${s.active ? 'bg-mig-orange/10 border-mig-orange/30 text-mig-orange font-medium' : 'bg-mig-card border-mig-border text-mig-dim'}`}>
               {s.name}{s.active ? ' (active)' : ''}
             </span>
           ))}
@@ -281,11 +281,11 @@ function JoinTeamInline({ onJoined }) {
   return (
     <div className="relative">
       {success && (
-        <span className="text-xs text-green-700 mr-2">{success}</span>
+        <span className="text-xs text-mig-success mr-2">{success}</span>
       )}
       {!open ? (
         <button onClick={() => { setOpen(true); setSuccess('') }}
-          className="text-sm border border-green-700 text-green-700 px-3 py-1.5 rounded hover:bg-green-50">
+          className="text-sm border border-mig-border text-mig-muted hover:text-mig-text hover:border-mig-orange/30 px-3 py-1.5 rounded-lg transition-colors">
           + Join a Team
         </button>
       ) : (
@@ -300,14 +300,14 @@ function JoinTeamInline({ onJoined }) {
                 placeholder="Team code"
                 required
                 autoFocus
-                className="border rounded px-3 py-1.5 text-sm font-mono w-52 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-1.5 text-sm font-mono w-52 focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
               />
               <button type="submit" disabled={loading || !code.trim()}
-                className="text-sm bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600 disabled:opacity-50">
+                className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white px-3 py-1.5 rounded-lg font-semibold transition-colors disabled:opacity-50">
                 {loading ? '…' : 'Join'}
               </button>
               <button type="button" onClick={() => { setOpen(false); setError('') }}
-                className="text-sm text-gray-500 hover:text-gray-700">×</button>
+                className="text-mig-muted hover:text-mig-text transition-colors text-xl">×</button>
             </div>
           </div>
         </form>
@@ -352,27 +352,27 @@ function PendingRegistrationRequests() {
 
   return (
     <section>
-      <h2 className="text-lg font-semibold text-gray-700 mb-3">
+      <h2 className="text-lg font-semibold text-mig-text mb-3">
         Player Registration Requests
-        <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded font-medium">{pending.length} pending</span>
+        <span className="ml-2 text-xs bg-mig-warning/10 text-mig-warning border border-mig-warning/20 px-2 py-0.5 rounded font-medium">{pending.length} pending</span>
       </h2>
-      <div className="bg-white border border-yellow-200 rounded-lg divide-y divide-gray-100">
+      <div className="bg-mig-surface border border-mig-warning/20 rounded-lg divide-y divide-mig-border">
         {pending.map((r) => (
           <div key={r.id} className="px-4 py-3 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="font-medium text-sm text-gray-800">{r.firstName} {r.lastName}</p>
-              <p className="text-xs text-gray-500">
+              <p className="font-medium text-sm text-mig-text">{r.firstName} {r.lastName}</p>
+              <p className="text-xs text-mig-muted">
                 {r.teamName} · {r.primaryPosition}{r.jerseyNumber ? ` · #${r.jerseyNumber}` : ''} · DOB: {r.dateOfBirth}
               </p>
-              <p className="text-xs text-gray-400">Submitted by {r.parentUserName}</p>
+              <p className="text-xs text-mig-dim">Submitted by {r.parentUserName}</p>
             </div>
             <div className="flex gap-2 shrink-0">
               <button disabled={acting === r.id} onClick={() => handleApprove(r.id)}
-                className="text-xs bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600 disabled:opacity-50">
+                className="text-xs bg-mig-orange hover:bg-mig-orange-dark text-white px-3 py-1.5 rounded-lg font-semibold transition-colors disabled:opacity-50">
                 {acting === r.id ? '…' : 'Approve'}
               </button>
               <button disabled={acting === r.id} onClick={() => setRejectId(r.id)}
-                className="text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-50 disabled:opacity-50">
+                className="text-xs border border-mig-border text-mig-muted hover:text-mig-text px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
                 Reject
               </button>
             </div>
@@ -381,17 +381,17 @@ function PendingRegistrationRequests() {
       </div>
 
       {rejectId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
-            <h3 className="font-semibold text-gray-800">Reject request</h3>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-mig-surface border border-mig-border rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="font-semibold text-mig-text">Reject request</h3>
             <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
               placeholder="Reason (optional)" rows={3}
-              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+              className="w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mig-danger/40 focus:border-mig-danger transition-colors" />
             <div className="flex gap-3 justify-end">
               <button onClick={() => { setRejectId(null); setRejectReason('') }}
-                className="text-sm border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50">Cancel</button>
+                className="text-sm border border-mig-border text-mig-muted hover:text-mig-text px-4 py-2 rounded-lg transition-colors">Cancel</button>
               <button disabled={acting} onClick={handleReject}
-                className="text-sm bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500 disabled:opacity-50">
+                className="text-sm bg-mig-danger/10 hover:bg-mig-danger/20 text-mig-danger border border-mig-danger/30 px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
                 {acting ? 'Rejecting…' : 'Reject'}
               </button>
             </div>
@@ -404,11 +404,11 @@ function PendingRegistrationRequests() {
 
 function StatCard({ label, value, loading, warn }) {
   return (
-    <div className={`bg-white border rounded-lg p-4 ${warn && value > 0 ? 'border-yellow-300' : 'border-gray-200'}`}>
-      <p className={`text-2xl font-bold ${warn && value > 0 ? 'text-yellow-600' : 'text-green-700'}`}>
+    <div className={`bg-mig-surface border rounded-lg p-4 ${warn && value > 0 ? 'border-mig-warning/30' : 'border-mig-border'}`}>
+      <p className={`text-2xl font-bold ${warn && value > 0 ? 'text-mig-warning' : 'text-mig-orange'}`}>
         {loading ? '…' : value}
       </p>
-      <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+      <p className="text-xs text-mig-muted mt-0.5">{label}</p>
     </div>
   )
 }
@@ -425,16 +425,16 @@ function MatchRow({ match }) {
   return (
     <Link
       to={`/matches/${match.id}`}
-      className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-green-400 hover:shadow-sm transition"
+      className="flex items-center justify-between bg-mig-surface border border-mig-border rounded-lg px-4 py-3 hover:border-mig-orange/40 hover:shadow-sm transition"
     >
       <div className="min-w-0">
-        <p className="font-medium text-gray-800 truncate">
+        <p className="font-medium text-mig-text truncate">
           {match.teamName} vs {match.opponent}
         </p>
-        <p className="text-xs text-gray-400 mt-0.5">{dateStr} · {timeStr}{match.location && ` · ${match.location}`}</p>
+        <p className="text-xs text-mig-dim mt-0.5">{dateStr} · {timeStr}{match.location && ` · ${match.location}`}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0 ml-3">
-        {scoreStr && <span className="text-sm font-mono font-semibold text-gray-700">{scoreStr}</span>}
+        {scoreStr && <span className="text-sm font-mono font-semibold text-mig-text">{scoreStr}</span>}
         <StatusBadge status={status} />
       </div>
     </Link>

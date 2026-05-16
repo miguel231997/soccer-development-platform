@@ -29,9 +29,9 @@ const RATINGS = [
 ]
 
 function ratingColor(v) {
-  if (v >= 8) return 'text-green-600'
-  if (v >= 5) return 'text-blue-600'
-  return 'text-red-500'
+  if (v >= 8) return 'text-mig-success'
+  if (v >= 5) return 'text-blue-400'
+  return 'text-mig-danger'
 }
 
 const STAT_COLS = [
@@ -112,22 +112,22 @@ export default function ChildDetailPage() {
     <div className="max-w-4xl space-y-6">
       {/* Back */}
       <button onClick={() => navigate('/parent/children')}
-        className="text-sm text-gray-500 hover:text-gray-700">← My Children</button>
+        className="text-xs text-mig-muted hover:text-mig-orange transition-colors font-medium uppercase tracking-wide">← My Children</button>
 
       {/* Profile card */}
-      <div className="bg-white border border-gray-200 rounded-lg p-5 flex gap-5 items-start">
+      <div className="bg-mig-surface border border-mig-border rounded-lg p-5 flex gap-5 items-start">
         <div className="shrink-0">
           <label
             htmlFor={photoInputId}
             title="Change photo"
             className={`relative block ${uploading ? 'cursor-wait' : 'cursor-pointer'}`}
           >
-            <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center text-gray-400">
+            <div className="w-16 h-16 rounded-full bg-mig-card overflow-hidden flex items-center justify-center text-mig-dim">
               {(imageUrl ?? child?.profileImageUrl)
                 ? <img src={imageUrl ?? child.profileImageUrl} alt="" className="w-full h-full object-cover" />
                 : <PersonIcon />}
             </div>
-            <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-700 rounded-full flex items-center justify-center shadow hover:bg-green-600 transition">
+            <div className="absolute bottom-0 right-0 w-6 h-6 bg-mig-orange rounded-full flex items-center justify-center shadow hover:bg-mig-orange-dark transition">
               {uploading
                 ? <span className="text-white text-xs leading-none">…</span>
                 : <CameraIcon />}
@@ -135,13 +135,13 @@ export default function ChildDetailPage() {
             <input id={photoInputId} type="file" accept="image/jpeg,image/png,image/webp"
               className="sr-only" disabled={uploading} onChange={handleImagePick} />
           </label>
-          {uploadErr && <p className="mt-1 text-xs text-red-500">{uploadErr}</p>}
+          {uploadErr && <p className="mt-1 text-xs text-mig-danger">{uploadErr}</p>}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-bold text-gray-800">{child?.firstName} {child?.lastName}</h1>
+            <h1 className="text-xl font-bold text-mig-text">{child?.firstName} {child?.lastName}</h1>
             {child?.jerseyNumber != null && (
-              <span className="text-sm font-mono bg-green-700 text-white px-2 py-0.5 rounded">
+              <span className="text-sm font-mono bg-mig-orange text-white px-2 py-0.5 rounded">
                 #{child.jerseyNumber}
               </span>
             )}
@@ -151,14 +151,14 @@ export default function ChildDetailPage() {
               title={isPublic ? 'Public profile — click to make private' : 'Private profile — click to make public'}
               className={`text-xs px-2 py-0.5 rounded border transition ${
                 isPublic
-                  ? 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'
-                  : 'border-gray-300 text-gray-500 bg-gray-50 hover:bg-gray-100'
+                  ? 'border-mig-success/30 text-mig-success bg-mig-success/10 hover:bg-mig-success/20'
+                  : 'border-mig-border text-mig-muted bg-mig-card hover:border-mig-orange/30'
               } disabled:opacity-50`}
             >
               {togglingPublic ? '…' : isPublic ? 'Public' : 'Private'}
             </button>
           </div>
-          <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
+          <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-mig-muted">
             {child?.primaryPosition && <Pair label="Position" value={child.primaryPosition} />}
             {child?.secondaryPosition && <Pair label="Alt position" value={child.secondaryPosition} />}
             {child?.strongFoot && <Pair label="Strong foot" value={child.strongFoot} />}
@@ -167,7 +167,7 @@ export default function ChildDetailPage() {
         </div>
         <button
           onClick={() => setJoinOpen(true)}
-          className="shrink-0 text-sm border border-green-700 text-green-700 px-3 py-1.5 rounded hover:bg-green-50">
+          className="shrink-0 text-sm border border-mig-border text-mig-muted hover:text-mig-text hover:border-mig-orange/30 px-3 py-1.5 rounded-lg transition-colors">
           + Join Another Team
         </button>
       </div>
@@ -184,14 +184,14 @@ export default function ChildDetailPage() {
 
       {/* Team tabs */}
       {teams.length > 1 && (
-        <div className="flex gap-1 border-b border-gray-200 overflow-x-auto">
+        <div className="flex gap-1 border-b border-mig-border overflow-x-auto">
           {teams.map((t) => (
             <button key={t.teamId}
               onClick={() => setSelectedTeamId(t.teamId)}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition ${
                 (activeTeamId === t.teamId)
-                  ? 'border-green-600 text-green-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-mig-orange text-mig-orange'
+                  : 'border-transparent text-mig-muted hover:text-mig-text'
               }`}>
               {t.teamName}
             </button>
@@ -200,8 +200,8 @@ export default function ChildDetailPage() {
             onClick={() => setSelectedTeamId(null)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition ${
               activeTeamId === null
-                ? 'border-green-600 text-green-700'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-mig-orange text-mig-orange'
+                : 'border-transparent text-mig-muted hover:text-mig-text'
             }`}>
             All Teams
           </button>
@@ -209,7 +209,7 @@ export default function ChildDetailPage() {
       )}
 
       {/* Content tabs */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-mig-border">
         {[
           { id: 'matches', label: `Matches (${statsForTeam.length})` },
           { id: 'stats',   label: 'Stats' },
@@ -219,8 +219,8 @@ export default function ChildDetailPage() {
           <button key={tabId} onClick={() => setTab(tabId)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
               tab === tabId
-                ? 'border-green-600 text-green-700'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-mig-orange text-mig-orange'
+                : 'border-transparent text-mig-muted hover:text-mig-text'
             }`}>
             {label}
           </button>
@@ -288,20 +288,22 @@ function JoinAnotherTeamForm({ playerId, playerName, onClose, onSuccess }) {
     }
   }
 
+  const inputCls = "w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-mig-surface border border-mig-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="font-bold text-gray-800">Join Another Team</h2>
-            <p className="text-sm text-gray-500">{playerName}</p>
+            <h2 className="font-bold text-mig-text">Join Another Team</h2>
+            <p className="text-sm text-mig-muted">{playerName}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+          <button onClick={onClose} className="text-mig-muted hover:text-mig-text transition-colors text-xl leading-none">×</button>
         </div>
 
         {step === 'code' && (
           <>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-mig-muted">
               Enter the team code provided by the new team's administrator.
             </p>
             <FormError message={codeError} />
@@ -312,10 +314,10 @@ function JoinAnotherTeamForm({ playerId, playerName, onClose, onSuccess }) {
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="e.g. A1B2C3D4"
                 required
-                className="flex-1 border rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
+                className={`flex-1 ${inputCls} font-mono`}
               />
               <button type="submit" disabled={codeLoading || !code.trim()}
-                className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50">
+                className="bg-mig-orange hover:bg-mig-orange-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
                 {codeLoading ? '…' : 'Next'}
               </button>
             </form>
@@ -324,26 +326,26 @@ function JoinAnotherTeamForm({ playerId, playerName, onClose, onSuccess }) {
 
         {step === 'confirm' && teamInfo && (
           <form onSubmit={handleConfirm} className="space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded px-3 py-2 text-sm text-green-800">
+            <div className="bg-mig-success/10 border border-mig-success/20 rounded-lg px-3 py-2 text-sm text-mig-success">
               Team: <strong>{teamInfo.teamName}</strong>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Jersey number on this team (optional)</label>
+              <label className="block text-sm font-medium text-mig-muted mb-1">Jersey number on this team (optional)</label>
               <input type="number" min="1" max="99" value={jerseyNumber}
                 onChange={(e) => setJerseyNumber(e.target.value)}
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                className={inputCls} />
             </div>
             <FormError message={submitError} />
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-mig-dim">
               A registration request will be sent to the coach for review.
             </p>
             <div className="flex gap-3">
               <button type="submit" disabled={saving}
-                className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50">
+                className="bg-mig-orange hover:bg-mig-orange-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
                 {saving ? 'Submitting…' : 'Send Request'}
               </button>
               <button type="button" onClick={() => setStep('code')}
-                className="text-sm text-gray-500 hover:text-gray-700">Back</button>
+                className="text-sm text-mig-muted hover:text-mig-text transition-colors">Back</button>
             </div>
           </form>
         )}
@@ -363,10 +365,10 @@ function StatsTab({ stats, loading, error }) {
   const sorted = [...stats].sort((a, b) => new Date(b.matchDateTime) - new Date(a.matchDateTime))
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div className="bg-mig-surface border border-mig-border rounded-xl overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+          <thead className="bg-mig-bg text-mig-dim text-xs uppercase tracking-wider">
             <tr>
               {STAT_COLS.map((c) => (
                 <th key={c.key} className="px-3 py-2 text-left font-medium">{c.label}</th>
@@ -374,11 +376,11 @@ function StatsTab({ stats, loading, error }) {
               <th className="px-3 py-2 text-left font-medium">Date</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-mig-border">
             {sorted.map((s) => (
-              <tr key={s.id} className="hover:bg-gray-50">
+              <tr key={s.id} className="hover:bg-mig-card transition-colors">
                 {STAT_COLS.map((c) => (
-                  <td key={c.key} className="px-3 py-2 text-gray-700">
+                  <td key={c.key} className="px-3 py-2 text-mig-muted">
                     {c.key === 'cleanSheet'
                       ? (s.cleanSheet ? '✓' : '—')
                       : c.decimal
@@ -386,7 +388,7 @@ function StatsTab({ stats, loading, error }) {
                         : (s[c.key] ?? '—')}
                   </td>
                 ))}
-                <td className="px-3 py-2 text-gray-400 text-xs">
+                <td className="px-3 py-2 text-mig-dim text-xs">
                   {s.matchDateTime
                     ? new Date(s.matchDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
                     : '—'}
@@ -443,16 +445,16 @@ function EvalsTab({ evals, loading, error }) {
           <div key={matchId} className="space-y-3">
             {/* Match header */}
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-gray-700">
+              <p className="text-sm font-semibold text-mig-text">
                 vs {first.opponent}
                 {first.matchDateTime && (
-                  <span className="ml-2 font-normal text-gray-400">
+                  <span className="ml-2 font-normal text-mig-dim">
                     {new Date(first.matchDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 )}
               </p>
               {multi && (
-                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">
                   {group.length} coach evaluations
                 </span>
               )}
@@ -460,8 +462,8 @@ function EvalsTab({ evals, loading, error }) {
 
             {/* Averaged card — only when multiple coaches */}
             {multi && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Coach Average</p>
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-3">
+                <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Coach Average</p>
                 <RatingsGrid ratings={avg} />
               </div>
             )}
@@ -485,7 +487,7 @@ function RatingsGrid({ ratings }) {
           <p className={`text-base font-bold ${ratingColor(Math.round(ratings[key]))}`}>
             {Number.isInteger(ratings[key]) ? ratings[key] : ratings[key].toFixed(1)}
           </p>
-          <p className="text-xs text-gray-400 leading-tight">{label}</p>
+          <p className="text-xs text-mig-dim leading-tight">{label}</p>
         </div>
       ))}
     </div>
@@ -499,13 +501,13 @@ function EvalCard({ ev, showCoach }) {
   const visible = RATINGS.filter(({ key }) => ev[key] != null)
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+    <div className="bg-mig-surface border border-mig-border rounded-lg p-4 space-y-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          {!showCoach && <p className="font-medium text-gray-800">vs {ev.opponent}</p>}
-          <p className="text-xs text-gray-400 mt-0.5">
+          {!showCoach && <p className="font-medium text-mig-text">vs {ev.opponent}</p>}
+          <p className="text-xs text-mig-dim mt-0.5">
             {showCoach
-              ? <span className="font-medium text-gray-600">{ev.coachName ?? 'Coach'}</span>
+              ? <span className="font-medium text-mig-muted">{ev.coachName ?? 'Coach'}</span>
               : date}
             {ev.positionPlayed && ` · played ${ev.positionPlayed}`}
           </p>
@@ -513,7 +515,7 @@ function EvalCard({ ev, showCoach }) {
         {ev.overallRating != null && (
           <div className="text-center">
             <p className={`text-2xl font-bold ${ratingColor(ev.overallRating)}`}>{ev.overallRating}</p>
-            <p className="text-xs text-gray-400">Overall</p>
+            <p className="text-xs text-mig-dim">Overall</p>
           </div>
         )}
       </div>
@@ -522,14 +524,14 @@ function EvalCard({ ev, showCoach }) {
           {visible.map(({ key, label }) => (
             <div key={key} className="text-center">
               <p className={`text-base font-bold ${ratingColor(ev[key])}`}>{ev[key]}</p>
-              <p className="text-xs text-gray-400 leading-tight">{label}</p>
+              <p className="text-xs text-mig-dim leading-tight">{label}</p>
             </div>
           ))}
         </div>
       )}
       {ev.parentVisibleNotes && (
-        <div className="bg-gray-50 rounded p-3 text-sm text-gray-700">
-          <p className="text-xs font-medium text-gray-400 mb-1">Coach notes</p>
+        <div className="bg-mig-card rounded p-3 text-sm text-mig-muted">
+          <p className="text-xs font-medium text-mig-dim mb-1">Coach notes</p>
           {ev.parentVisibleNotes}
         </div>
       )}
@@ -561,19 +563,19 @@ function ReportCard({ report }) {
     : null
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div className="bg-mig-surface border border-mig-border rounded-lg overflow-hidden">
       <button onClick={() => setOpen((o) => !o)}
-        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-mig-card transition-colors">
         <div>
-          <p className="font-medium text-gray-800">{report.title}</p>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="font-medium text-mig-text">{report.title}</p>
+          <p className="text-xs text-mig-dim mt-0.5">
             {report.seasonName && `${report.seasonName} · `}{date}
           </p>
         </div>
-        <span className="text-gray-400 text-sm">{open ? '▲' : '▼'}</span>
+        <span className="text-mig-dim text-sm">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
-        <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-mig-border pt-3">
           {[
             { key: 'strengths',      label: 'Strengths' },
             { key: 'areasToImprove', label: 'Areas to Improve' },
@@ -582,8 +584,8 @@ function ReportCard({ report }) {
           ].map(({ key, label }) =>
             report[key] ? (
               <div key={key}>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{label}</p>
-                <p className="text-sm text-gray-700 whitespace-pre-line">{report[key]}</p>
+                <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-1">{label}</p>
+                <p className="text-sm text-mig-muted whitespace-pre-line">{report[key]}</p>
               </div>
             ) : null,
           )}
@@ -599,14 +601,14 @@ function Pair({ label, value }) {
   if (!value) return null
   return (
     <div className="flex gap-1 text-sm">
-      <span className="text-gray-400">{label}:</span>
-      <span className="font-medium text-gray-700">{value}</span>
+      <span className="text-mig-dim">{label}:</span>
+      <span className="font-medium text-mig-muted">{value}</span>
     </div>
   )
 }
 
 function Empty({ children }) {
-  return <div className="text-center py-10 text-gray-400 text-sm">{children}</div>
+  return <div className="text-center py-10 text-mig-dim text-sm">{children}</div>
 }
 
 function PersonIcon() {

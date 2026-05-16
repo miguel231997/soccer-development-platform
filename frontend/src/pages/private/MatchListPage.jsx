@@ -10,9 +10,9 @@ import FormError from '../../components/FormError'
 const STATUS_TABS = ['All', 'Upcoming', 'Pending', 'Finalized']
 
 const STATUS_STYLE = {
-  Upcoming:  'bg-green-50 text-green-700',
-  Pending:   'bg-yellow-50 text-yellow-700',
-  Finalized: 'bg-gray-100 text-gray-500',
+  Upcoming:  'bg-mig-success/10 text-mig-success border border-mig-success/20',
+  Pending:   'bg-mig-warning/10 text-mig-warning border border-mig-warning/20',
+  Finalized: 'bg-mig-card text-mig-dim border border-mig-border',
 }
 
 function matchStatus(match) {
@@ -66,17 +66,19 @@ function NewMatchModal({ onClose, onCreated }) {
     }
   }
 
+  const inputCls = "w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">New Match</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-mig-surface border border-mig-border rounded-xl shadow-2xl w-full max-w-lg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-mig-border">
+          <h2 className="text-lg font-semibold text-mig-text">New Match</h2>
+          <button onClick={onClose} className="text-mig-muted hover:text-mig-text transition-colors text-xl leading-none">&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           {noSeasons && (
-            <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 text-amber-700 text-sm">
+            <div className="bg-mig-warning/10 border border-mig-warning/20 rounded-lg px-3 py-2 text-mig-warning text-sm">
               Please create a season before adding matches.{' '}
               <button type="button" onClick={onClose} className="underline">Go back to dashboard.</button>
             </div>
@@ -86,18 +88,16 @@ function NewMatchModal({ onClose, onCreated }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Team *</label>
-              <select value={form.teamId} onChange={set('teamId')} required
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+              <label className="block text-sm font-medium text-mig-muted mb-1">Team *</label>
+              <select value={form.teamId} onChange={set('teamId')} required className={inputCls}>
                 <option value="">Select team…</option>
                 {(teams ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Home / Away *</label>
-              <select value={form.homeAway} onChange={set('homeAway')} required
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+              <label className="block text-sm font-medium text-mig-muted mb-1">Home / Away *</label>
+              <select value={form.homeAway} onChange={set('homeAway')} required className={inputCls}>
                 <option value="HOME">Home</option>
                 <option value="AWAY">Away</option>
               </select>
@@ -105,29 +105,25 @@ function NewMatchModal({ onClose, onCreated }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Opponent *</label>
+            <label className="block text-sm font-medium text-mig-muted mb-1">Opponent *</label>
             <input type="text" value={form.opponent} onChange={set('opponent')} required
-              placeholder="e.g. Bay United FC"
-              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              placeholder="e.g. Bay United FC" className={inputCls} />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date &amp; Time *</label>
-            <input type="datetime-local" value={form.matchDateTime} onChange={set('matchDateTime')} required
-              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+            <label className="block text-sm font-medium text-mig-muted mb-1">Date &amp; Time *</label>
+            <input type="datetime-local" value={form.matchDateTime} onChange={set('matchDateTime')} required className={inputCls} />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <label className="block text-sm font-medium text-mig-muted mb-1">Location</label>
             <input type="text" value={form.location} onChange={set('location')}
-              placeholder="e.g. Silver Lake Sports Complex – Field 1"
-              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              placeholder="e.g. Silver Lake Sports Complex – Field 1" className={inputCls} />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Season *</label>
-            <select value={form.seasonId} onChange={set('seasonId')} required
-              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+            <label className="block text-sm font-medium text-mig-muted mb-1">Season *</label>
+            <select value={form.seasonId} onChange={set('seasonId')} required className={inputCls}>
               <option value="">Select season…</option>
               {(seasons ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -135,10 +131,10 @@ function NewMatchModal({ onClose, onCreated }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by state</label>
+              <label className="block text-sm font-medium text-mig-muted mb-1">Filter by state</label>
               <select value={competitionState}
                 onChange={(e) => { setCompetitionState(e.target.value); set('competitionId')({ target: { value: '' } }) }}
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                className={inputCls}>
                 <option value="">National / All</option>
                 <option value="NJ">New Jersey</option>
                 <option value="NY">New York</option>
@@ -149,9 +145,8 @@ function NewMatchModal({ onClose, onCreated }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Competition</label>
-              <select value={form.competitionId} onChange={set('competitionId')}
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+              <label className="block text-sm font-medium text-mig-muted mb-1">Competition</label>
+              <select value={form.competitionId} onChange={set('competitionId')} className={inputCls}>
                 <option value="">Friendly / None</option>
                 {(competitions ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
@@ -164,11 +159,11 @@ function NewMatchModal({ onClose, onCreated }) {
 
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50">
+              className="px-4 py-2 text-sm border border-mig-border text-mig-muted hover:text-mig-text hover:border-mig-orange/30 rounded-lg transition-colors">
               Cancel
             </button>
             <button type="submit" disabled={saving || noSeasons}
-              className="px-4 py-2 text-sm bg-green-700 text-white rounded hover:bg-green-600 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold rounded-lg transition-colors disabled:opacity-50">
               {saving ? 'Creating…' : 'Create Match'}
             </button>
           </div>
@@ -213,14 +208,16 @@ export default function MatchListPage() {
     navigate(`/matches/${newMatch.id}`)
   }
 
+  const selectCls = "bg-mig-bg border border-mig-border text-mig-text rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Matches</h1>
+        <h1 className="text-2xl font-black tracking-tight text-mig-text">Matches</h1>
         {canCreateMatch && (
           <button
             onClick={() => setShowModal(true)}
-            className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600"
+            className="bg-mig-orange hover:bg-mig-orange-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
           >
             + New Match
           </button>
@@ -228,15 +225,15 @@ export default function MatchListPage() {
       </div>
 
       {/* Status tabs */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-mig-border">
         {STATUS_TABS.map((f) => (
           <button
             key={f}
             onClick={() => setStatusFilter(f)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
               statusFilter === f
-                ? 'border-green-600 text-green-700'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-mig-orange text-mig-orange'
+                : 'border-transparent text-mig-muted hover:text-mig-text'
             }`}
           >
             {f}
@@ -251,7 +248,7 @@ export default function MatchListPage() {
             <select
               value={seasonFilter}
               onChange={(e) => setSeasonFilter(e.target.value)}
-              className="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={selectCls}
             >
               <option value="">All Seasons</option>
               {uniqueSeasons.map((s) => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
@@ -261,7 +258,7 @@ export default function MatchListPage() {
             <select
               value={competitionFilter}
               onChange={(e) => setCompetitionFilter(e.target.value)}
-              className="border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={selectCls}
             >
               <option value="">All Competitions</option>
               {uniqueCompetitions.map((c) => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
@@ -270,7 +267,7 @@ export default function MatchListPage() {
           {(seasonFilter || competitionFilter) && (
             <button
               onClick={() => { setSeasonFilter(''); setCompetitionFilter('') }}
-              className="text-sm text-gray-500 hover:text-gray-700 underline"
+              className="text-sm text-mig-muted hover:text-mig-text underline"
             >
               Clear filters
             </button>
@@ -282,11 +279,11 @@ export default function MatchListPage() {
       {error && <ErrorAlert message={error} />}
 
       {!loading && !error && visible.length === 0 && (
-        <p className="text-gray-500 text-sm">No matches found.</p>
+        <p className="text-mig-muted text-sm">No matches found.</p>
       )}
 
       {!loading && !error && visible.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
+        <div className="bg-mig-surface border border-mig-border rounded-xl overflow-hidden divide-y divide-mig-border">
           {visible.map((m) => {
             const status = matchStatus(m)
             const date = new Date(m.matchDateTime)
@@ -304,18 +301,18 @@ export default function MatchListPage() {
               <Link
                 key={m.id}
                 to={`/matches/${m.id}`}
-                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition"
+                className="flex items-center justify-between px-4 py-3 hover:bg-mig-card transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-800 truncate">
+                  <p className="font-medium text-mig-text truncate">
                     {m.teamName} vs {m.opponent}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-mig-dim mt-0.5">
                     {dateStr} · {timeStr}{meta ? ` · ${meta}` : ''}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0 ml-4">
-                  {score && <span className="text-sm font-mono font-semibold text-gray-700">{score}</span>}
+                  {score && <span className="text-sm font-mono font-semibold text-mig-text">{score}</span>}
                   <span className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_STYLE[status]}`}>
                     {status}
                   </span>

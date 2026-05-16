@@ -125,12 +125,12 @@ export default function MatchStatsEntryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to={`/matches/${matchId}`} className="text-sm text-gray-400 hover:text-green-700">← Match</Link>
-        <h1 className="text-xl font-bold text-gray-800 mt-1">
+        <Link to={`/matches/${matchId}`} className="text-xs text-mig-muted hover:text-mig-orange transition-colors font-medium uppercase tracking-wide">← Match</Link>
+        <h1 className="text-xl font-bold text-mig-text mt-1">
           Stats Entry — {match.teamName} vs {match.opponent}
         </h1>
         {match.finalized && (
-          <div className="mt-2 text-sm bg-gray-100 text-gray-600 rounded px-3 py-2 inline-block">
+          <div className="mt-2 text-sm bg-mig-card text-mig-muted border border-mig-border rounded-lg px-3 py-2 inline-block">
             {isParent
               ? 'This match has been finalized. Stats can no longer be edited.'
               : 'Match is finalized. Stats are locked.'}
@@ -139,7 +139,7 @@ export default function MatchStatsEntryPage() {
       </div>
 
       {roster.length === 0 ? (
-        <p className="text-gray-500 text-sm">No active players on this team.</p>
+        <p className="text-mig-muted text-sm">No active players on this team.</p>
       ) : (
         <div className="space-y-3">
           {roster.map((player) => (
@@ -184,31 +184,31 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
   }
 
   return (
-    <div className={`bg-white border rounded-lg p-4 ${saved ? 'border-green-300' : 'border-gray-200'}`}>
+    <div className={`bg-mig-surface border rounded-lg p-4 ${saved ? 'border-mig-success/30' : 'border-mig-border'}`}>
       {/* Player header */}
       <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <Link to={`/players/${player.id}`} className="font-medium text-gray-800 hover:text-green-700">
+          <Link to={`/players/${player.id}`} className="font-medium text-mig-text hover:text-mig-orange">
             {player.firstName} {player.lastName}
           </Link>
           {player.primaryPosition && (
-            <span className="text-xs text-gray-400">{player.primaryPosition}</span>
+            <span className="text-xs text-mig-dim">{player.primaryPosition}</span>
           )}
           {player.jerseyNumber != null && (
-            <span className="text-xs font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+            <span className="text-xs font-mono bg-mig-card text-mig-muted border border-mig-border px-1.5 py-0.5 rounded">
               #{player.jerseyNumber}
             </span>
           )}
-          {existing && <span className="text-xs text-green-600">✓ has stats</span>}
+          {existing && <span className="text-xs text-mig-success">✓ has stats</span>}
         </div>
         <div className="flex items-center gap-2">
-          {saved && <span className="text-xs text-green-600">Saved</span>}
-          {error && <span className="text-xs text-red-500 font-medium">{error}</span>}
+          {saved && <span className="text-xs text-mig-success">Saved</span>}
+          {error && <span className="text-xs text-mig-danger font-medium">{error}</span>}
           {!finalized && (
             <button
               onClick={handleSave}
               disabled={saving}
-              className="text-sm bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600 disabled:opacity-50"
+              className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -220,26 +220,26 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
       <div className="space-y-4">
         {SECTIONS.map((section) => (
           <div key={section.label}>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+            <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-2">
               {section.label}
             </p>
             <div className="flex flex-wrap gap-3 items-end">
               {section.fields.map(({ key, label, width, type }) => (
                 type === 'bool' ? (
                   <label key={key} className="flex flex-col gap-1 items-center">
-                    <span className="text-xs font-medium text-gray-500">{label}</span>
+                    <span className="text-xs font-medium text-mig-muted">{label}</span>
                     <input
                       type="checkbox"
                       name={key}
                       checked={form[key]}
                       onChange={handleChange}
                       disabled={finalized}
-                      className="w-5 h-5 accent-green-600 mt-1"
+                      className="w-5 h-5 accent-orange-500 mt-1"
                     />
                   </label>
                 ) : (
                   <label key={key} className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-500">{label}</span>
+                    <span className="text-xs font-medium text-mig-muted">{label}</span>
                     <input
                       type="number"
                       name={key}
@@ -248,7 +248,7 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
                       value={form[key]}
                       onChange={handleChange}
                       disabled={finalized}
-                      className={`${width} border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-50 disabled:text-gray-400`}
+                      className={`${width} bg-mig-bg border border-mig-border text-mig-text rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors disabled:opacity-50 disabled:text-mig-dim`}
                     />
                   </label>
                 )

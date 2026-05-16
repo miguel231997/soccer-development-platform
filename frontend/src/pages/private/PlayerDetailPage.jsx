@@ -75,7 +75,7 @@ export default function PlayerDetailPage() {
       {/* Header */}
       <div>
         {activeTeam && (
-          <Link to={`/teams/${activeTeam.teamId}`} className="text-sm text-gray-400 hover:text-green-700">
+          <Link to={`/teams/${activeTeam.teamId}`} className="text-xs text-mig-muted hover:text-mig-orange transition-colors font-medium uppercase tracking-wide">
             ← {activeTeam.teamName}
           </Link>
         )}
@@ -86,12 +86,12 @@ export default function PlayerDetailPage() {
               title="Change photo"
               className={`relative block ${uploading ? 'cursor-wait' : 'cursor-pointer'}`}
             >
-              <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center text-gray-400">
+              <div className="w-16 h-16 rounded-full bg-mig-card overflow-hidden flex items-center justify-center text-mig-dim">
                 {(imageUrl ?? player.profileImageUrl)
                   ? <img src={imageUrl ?? player.profileImageUrl} alt="" className="w-full h-full object-cover" />
                   : <PersonIcon />}
               </div>
-              <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-700 rounded-full flex items-center justify-center shadow hover:bg-green-600 transition">
+              <div className="absolute bottom-0 right-0 w-6 h-6 bg-mig-orange rounded-full flex items-center justify-center shadow hover:bg-mig-orange-dark transition">
                 {uploading
                   ? <span className="text-white text-xs leading-none">…</span>
                   : <CameraIcon />}
@@ -99,18 +99,18 @@ export default function PlayerDetailPage() {
               <input id={photoInputId} type="file" accept="image/jpeg,image/png,image/webp"
                 className="sr-only" disabled={uploading} onChange={handleImagePick} />
             </label>
-            {uploadErr && <p className="mt-1 text-xs text-red-500">{uploadErr}</p>}
+            {uploadErr && <p className="mt-1 text-xs text-mig-danger">{uploadErr}</p>}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="text-2xl font-black tracking-tight text-mig-text">
               {player.firstName} {player.lastName}
               {player.jerseyNumber != null && (
-                <span className="ml-2 text-base font-mono bg-green-700 text-white px-2 py-0.5 rounded">
+                <span className="ml-2 text-base font-mono bg-mig-orange text-white px-2 py-0.5 rounded">
                   #{player.jerseyNumber}
                 </span>
               )}
             </h1>
-            <p className="text-gray-500 text-sm mt-0.5">
+            <p className="text-mig-muted text-sm mt-0.5">
               {player.primaryPosition ?? '—'}
               {player.secondaryPosition && ` / ${player.secondaryPosition}`}
               {activeTeam && ` · ${activeTeam.teamName}`}
@@ -120,7 +120,7 @@ export default function PlayerDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-mig-border">
         {[
           { id: 'info',        label: 'Info' },
           { id: 'matches',     label: `Matches (${(stats ?? []).length})` },
@@ -132,8 +132,8 @@ export default function PlayerDetailPage() {
             onClick={() => setTab(t)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
               tab === t
-                ? 'border-green-600 text-green-700'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-mig-orange text-mig-orange'
+                : 'border-transparent text-mig-muted hover:text-mig-text'
             }`}
           >
             {label}
@@ -143,7 +143,7 @@ export default function PlayerDetailPage() {
 
       {/* Info tab */}
       {tab === 'info' && (
-        <div className="bg-white border border-gray-200 rounded-lg p-5 grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+        <div className="bg-mig-surface border border-mig-border rounded-lg p-5 grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
           <InfoRow label="Primary position" value={player.primaryPosition} />
           <InfoRow label="Secondary position" value={player.secondaryPosition} />
           <InfoRow label="Strong foot" value={player.strongFoot} />
@@ -154,7 +154,7 @@ export default function PlayerDetailPage() {
             <InfoRow
               key={t.teamId}
               label={t.active ? 'Current team' : 'Former team'}
-              value={<Link to={`/teams/${t.teamId}`} className="text-green-700 hover:underline">{t.teamName}</Link>}
+              value={<Link to={`/teams/${t.teamId}`} className="text-mig-orange hover:underline">{t.teamName}</Link>}
             />
           ))}
         </div>
@@ -170,13 +170,13 @@ export default function PlayerDetailPage() {
         <>
           {sLoading && <Spinner label="Loading stats…" />}
           {!sLoading && (stats ?? []).length === 0 && (
-            <p className="text-gray-500 text-sm">No match stats recorded.</p>
+            <p className="text-mig-muted text-sm">No match stats recorded.</p>
           )}
           {!sLoading && (stats ?? []).length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-mig-surface border border-mig-border rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                  <thead className="bg-mig-bg text-mig-dim text-xs uppercase tracking-wider">
                     <tr>
                       {STAT_COLS.map((c) => (
                         <th key={c.key} className="px-3 py-2 text-left font-medium">{c.label}</th>
@@ -184,11 +184,11 @@ export default function PlayerDetailPage() {
                       <th className="px-3 py-2 text-left font-medium">Date</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-mig-border">
                     {stats.map((s) => (
-                      <tr key={s.id} className="hover:bg-gray-50">
+                      <tr key={s.id} className="hover:bg-mig-card transition-colors">
                         {STAT_COLS.map((c) => (
-                          <td key={c.key} className="px-3 py-2 text-gray-700">
+                          <td key={c.key} className="px-3 py-2 text-mig-muted">
                             {c.key === 'cleanSheet'
                               ? (s.cleanSheet ? '✓' : '—')
                               : c.decimal
@@ -196,7 +196,7 @@ export default function PlayerDetailPage() {
                                 : (s[c.key] ?? '—')}
                           </td>
                         ))}
-                        <td className="px-3 py-2 text-gray-400 text-xs">
+                        <td className="px-3 py-2 text-mig-dim text-xs">
                           {s.matchDateTime
                             ? new Date(s.matchDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
                             : '—'}
@@ -216,7 +216,7 @@ export default function PlayerDetailPage() {
         <>
           {eLoading && <Spinner label="Loading evaluations…" />}
           {!eLoading && (evals ?? []).length === 0 && (
-            <p className="text-gray-500 text-sm">No evaluations recorded.</p>
+            <p className="text-mig-muted text-sm">No evaluations recorded.</p>
           )}
           {!eLoading && (evals ?? []).length > 0 && (
             <EvaluationsTab evals={evals} playerId={playerId} />
@@ -248,32 +248,32 @@ function EvaluationsTab({ evals, playerId }) {
           : '—'
 
         return (
-          <div key={matchId} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div key={matchId} className="bg-mig-surface border border-mig-border rounded-lg overflow-hidden">
             {/* Match header with avg */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-mig-border bg-mig-card">
               <div>
-                <p className="font-medium text-gray-800">vs {first.opponent}</p>
-                <p className="text-xs text-gray-400">{date}{first.positionPlayed && ` · ${first.positionPlayed}`}</p>
+                <p className="font-medium text-mig-text">vs {first.opponent}</p>
+                <p className="text-xs text-mig-dim">{date}{first.positionPlayed && ` · ${first.positionPlayed}`}</p>
               </div>
               {avgOverall != null && (
                 <div className="text-center shrink-0">
-                  <p className="text-xl font-bold text-green-700">{avgOverall}</p>
-                  <p className="text-xs text-gray-400">{matchEvals.length > 1 ? 'Avg Overall' : 'Overall'}</p>
+                  <p className={`text-xl font-bold ${avgOverall >= 8 ? 'text-mig-success' : avgOverall >= 5 ? 'text-blue-400' : 'text-mig-danger'}`}>{avgOverall}</p>
+                  <p className="text-xs text-mig-dim">{matchEvals.length > 1 ? 'Avg Overall' : 'Overall'}</p>
                 </div>
               )}
             </div>
 
             {/* Per-coach cards */}
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-mig-border">
               {matchEvals.map((ev) => (
                 <div key={ev.id} className="px-4 py-3">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-gray-500">
+                    <span className="text-xs font-semibold text-mig-dim">
                       {ev.coachName}
-                      {ev.own && <span className="ml-1 text-green-600">(you)</span>}
+                      {ev.own && <span className="ml-1 text-mig-success">(you)</span>}
                     </span>
                     {ev.overallRating != null && (
-                      <span className="text-sm font-bold text-gray-700">{ev.overallRating} overall</span>
+                      <span className="text-sm font-bold text-mig-text">{ev.overallRating} overall</span>
                     )}
                   </div>
 
@@ -283,8 +283,8 @@ function EvaluationsTab({ evals, playerId }) {
                       {RATING_KEYS.filter((r) => r.key !== 'overallRating').map(({ key, label }) =>
                         ev[key] != null ? (
                           <div key={key} className="text-center min-w-[52px]">
-                            <p className="text-sm font-semibold text-gray-700">{ev[key]}</p>
-                            <p className="text-xs text-gray-400">{label}</p>
+                            <p className="text-sm font-semibold text-mig-text">{ev[key]}</p>
+                            <p className="text-xs text-mig-dim">{label}</p>
                           </div>
                         ) : null,
                       )}
@@ -293,14 +293,14 @@ function EvaluationsTab({ evals, playerId }) {
 
                   {/* Notes — visible to all coaches */}
                   {ev.parentVisibleNotes && (
-                    <div className="mt-1 text-sm text-gray-600 bg-gray-50 rounded p-2">
-                      <span className="text-xs font-medium text-gray-400 block mb-0.5">Parent notes</span>
+                    <div className="mt-1 text-sm text-mig-muted bg-mig-card rounded p-2">
+                      <span className="text-xs font-medium text-mig-dim block mb-0.5">Parent notes</span>
                       {ev.parentVisibleNotes}
                     </div>
                   )}
                   {ev.coachOnlyNotes && (
-                    <div className="mt-1 text-sm text-gray-600 bg-yellow-50 rounded p-2">
-                      <span className="text-xs font-medium text-yellow-600 block mb-0.5">Coach only</span>
+                    <div className="mt-1 text-sm text-mig-warning bg-mig-warning/5 border border-mig-warning/20 rounded p-2">
+                      <span className="text-xs font-medium text-mig-warning block mb-0.5">Coach only</span>
                       {ev.coachOnlyNotes}
                     </div>
                   )}
@@ -309,7 +309,7 @@ function EvaluationsTab({ evals, playerId }) {
                     <div className="mt-2">
                       <Link
                         to={`/matches/${ev.matchId}/players/${playerId}/evaluation`}
-                        className="text-xs text-green-700 hover:underline"
+                        className="text-xs text-mig-orange hover:underline"
                       >
                         Edit my evaluation →
                       </Link>
@@ -329,8 +329,8 @@ function InfoRow({ label, value }) {
   if (!value) return null
   return (
     <div className="flex gap-2">
-      <span className="text-gray-400 shrink-0">{label}:</span>
-      <span className="font-medium text-gray-700">{value}</span>
+      <span className="text-mig-dim shrink-0">{label}:</span>
+      <span className="font-medium text-mig-text">{value}</span>
     </div>
   )
 }

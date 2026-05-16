@@ -23,8 +23,8 @@ const LEVELS = ['RECREATIONAL','COMPETITIVE','ELITE','ACADEMY']
 
 function Section({ title, children }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-5">
-      <h3 className="text-base font-semibold text-gray-700 mb-4">{title}</h3>
+    <div className="bg-mig-surface border border-mig-border rounded-lg p-5">
+      <h3 className="text-base font-semibold text-mig-text mb-4">{title}</h3>
       {children}
     </div>
   )
@@ -33,7 +33,7 @@ function Section({ title, children }) {
 function Field({ label, children }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-mig-muted mb-1">{label}</label>
       {children}
     </div>
   )
@@ -43,7 +43,7 @@ function Input({ ...props }) {
   return (
     <input
       {...props}
-      className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+      className="w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
     />
   )
 }
@@ -52,7 +52,7 @@ function Select({ children, ...props }) {
   return (
     <select
       {...props}
-      className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+      className="w-full bg-mig-bg border border-mig-border text-mig-text rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
     >
       {children}
     </select>
@@ -60,13 +60,13 @@ function Select({ children, ...props }) {
 }
 
 function Btn({ children, variant = 'primary', size = 'sm', disabled, ...props }) {
-  const base = 'rounded font-medium transition disabled:opacity-50'
+  const base = 'rounded-lg font-medium transition-colors disabled:opacity-50'
   const sz = size === 'xs' ? 'px-2 py-1 text-xs' : 'px-4 py-2 text-sm'
   const v = variant === 'primary'
-    ? 'bg-green-700 text-white hover:bg-green-600'
+    ? 'bg-mig-orange hover:bg-mig-orange-dark text-white'
     : variant === 'danger'
-      ? 'bg-red-600 text-white hover:bg-red-500'
-      : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+      ? 'bg-mig-danger/10 hover:bg-mig-danger/20 text-mig-danger border border-mig-danger/30'
+      : 'border border-mig-border text-mig-muted hover:text-mig-text hover:border-mig-orange/30'
   return <button disabled={disabled} className={`${base} ${sz} ${v}`} {...props}>{children}</button>
 }
 
@@ -176,15 +176,15 @@ function ClubsTeamsTab() {
       <Section title={`All Clubs (${allClubs.length})`}>
         {clubsLoading && <Spinner label="Loading…" />}
         {clubsError && <ErrorAlert message={clubsError} />}
-        {!clubsLoading && allClubs.length === 0 && <p className="text-sm text-gray-500">No clubs yet.</p>}
-        <div className="divide-y divide-gray-100">
+        {!clubsLoading && allClubs.length === 0 && <p className="text-sm text-mig-muted">No clubs yet.</p>}
+        <div className="divide-y divide-mig-border">
           {allClubs.map((c) => (
             <div key={c.id} className="py-2 flex items-center justify-between">
               <div>
-                <p className="font-medium text-sm text-gray-800">{c.name}</p>
-                {(c.city || c.state) && <p className="text-xs text-gray-400">{[c.city, c.state].filter(Boolean).join(', ')}</p>}
+                <p className="font-medium text-sm text-mig-text">{c.name}</p>
+                {(c.city || c.state) && <p className="text-xs text-mig-dim">{[c.city, c.state].filter(Boolean).join(', ')}</p>}
               </div>
-              <span className="text-xs text-gray-400">id {c.id}</span>
+              <span className="text-xs text-mig-dim">id {c.id}</span>
             </div>
           ))}
         </div>
@@ -194,15 +194,15 @@ function ClubsTeamsTab() {
       <Section title={`All Teams (${allTeams.length})`}>
         {teamsLoading && <Spinner label="Loading…" />}
         {teamsError && <ErrorAlert message={teamsError} />}
-        {!teamsLoading && allTeams.length === 0 && <p className="text-sm text-gray-500">No teams yet.</p>}
-        <div className="divide-y divide-gray-100">
+        {!teamsLoading && allTeams.length === 0 && <p className="text-sm text-mig-muted">No teams yet.</p>}
+        <div className="divide-y divide-mig-border">
           {allTeams.map((t) => (
             <div key={t.id} className="py-2 flex items-center justify-between">
               <div>
-                <p className="font-medium text-sm text-gray-800">{t.name}</p>
-                <p className="text-xs text-gray-400">{t.clubName} · {t.ageGroup} · {t.gender} · {t.competitiveLevel}</p>
+                <p className="font-medium text-sm text-mig-text">{t.name}</p>
+                <p className="text-xs text-mig-dim">{t.clubName} · {t.ageGroup} · {t.gender} · {t.competitiveLevel}</p>
               </div>
-              <span className="text-xs text-gray-400">id {t.id}</span>
+              <span className="text-xs text-mig-dim">id {t.id}</span>
             </div>
           ))}
         </div>
@@ -297,18 +297,18 @@ function RegistrationCodesTab() {
       {error && <ErrorAlert message={error} />}
 
       <Section title={`Active Codes (${active.length})`}>
-        {active.length === 0 && <p className="text-sm text-gray-500">No active codes.</p>}
-        <div className="divide-y divide-gray-100">
+        {active.length === 0 && <p className="text-sm text-mig-muted">No active codes.</p>}
+        <div className="divide-y divide-mig-border">
           {active.map((c) => (
             <div key={c.id} className="py-3 flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-semibold text-green-800 text-sm tracking-wide">{c.code}</span>
-                  <button onClick={() => copyCode(c.code)} className="text-xs text-gray-400 hover:text-green-700">
+                  <span className="font-mono font-semibold text-mig-orange text-sm tracking-wide">{c.code}</span>
+                  <button onClick={() => copyCode(c.code)} className="text-xs text-mig-dim hover:text-mig-orange transition-colors">
                     {copied === c.code ? '✓ copied' : 'copy'}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-mig-muted mt-0.5">
                   {c.teamName} · {c.role} · {c.usesCount}{c.maxUses ? `/${c.maxUses}` : ''} uses
                 </p>
               </div>
@@ -322,11 +322,11 @@ function RegistrationCodesTab() {
 
       {inactive.length > 0 && (
         <Section title={`Inactive Codes (${inactive.length})`}>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-mig-border">
             {inactive.map((c) => (
               <div key={c.id} className="py-2 flex items-center justify-between opacity-50">
-                <span className="font-mono text-sm line-through text-gray-500">{c.code}</span>
-                <span className="text-xs text-gray-400">{c.teamName} · {c.role}</span>
+                <span className="font-mono text-sm line-through text-mig-dim">{c.code}</span>
+                <span className="text-xs text-mig-dim">{c.teamName} · {c.role}</span>
               </div>
             ))}
           </div>
@@ -390,7 +390,7 @@ function TeamCodesTab() {
   return (
     <div className="space-y-6">
       <Section title="Generate Team Code">
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-mig-muted mb-4">
           Team codes let parents register their children to a specific team.
           They are separate from registration codes (which are for coach/parent accounts).
         </p>
@@ -448,23 +448,23 @@ function CodeRow({ code, onDisable, disabled }) {
   }
 
   return (
-    <div className={`flex items-center justify-between gap-3 p-3 rounded border ${disabled ? 'border-gray-100 bg-gray-50' : 'border-gray-200'}`}>
+    <div className={`flex items-center justify-between gap-3 p-3 rounded-lg border ${disabled ? 'border-mig-border bg-mig-card' : 'border-mig-border bg-mig-bg'}`}>
       <div>
-        <p className={`font-mono font-semibold text-sm ${disabled ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+        <p className={`font-mono font-semibold text-sm ${disabled ? 'line-through text-mig-dim' : 'text-mig-text'}`}>
           {code.code}
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-mig-dim">
           {code.teamName} · {code.usesCount}/{code.maxUses ?? '∞'} uses
         </p>
       </div>
       {!disabled && (
         <div className="flex gap-2">
           <button onClick={copy}
-            className="text-xs border border-gray-300 rounded px-2 py-1 text-gray-600 hover:bg-gray-50">
+            className="text-xs border border-mig-border rounded-lg px-2 py-1 text-mig-muted hover:text-mig-text hover:border-mig-orange/30 transition-colors">
             {copied ? 'Copied!' : 'Copy'}
           </button>
           <button onClick={onDisable}
-            className="text-xs border border-red-200 text-red-600 rounded px-2 py-1 hover:bg-red-50">
+            className="text-xs border border-mig-danger/30 text-mig-danger rounded-lg px-2 py-1 hover:bg-mig-danger/10 transition-colors">
             Disable
           </button>
         </div>
@@ -476,9 +476,9 @@ function CodeRow({ code, onDisable, disabled }) {
 // ── Player Registration Requests tab ────────────────────────────────────────
 
 const STATUS_STYLE = {
-  PENDING:  'bg-yellow-50 text-yellow-700',
-  APPROVED: 'bg-green-50 text-green-700',
-  REJECTED: 'bg-red-50 text-red-600',
+  PENDING:  'bg-mig-warning/10 text-mig-warning border border-mig-warning/20',
+  APPROVED: 'bg-mig-success/10 text-mig-success border border-mig-success/20',
+  REJECTED: 'bg-mig-danger/10 text-mig-danger border border-mig-danger/20',
 }
 
 function PlayerRequestsTab() {
@@ -521,8 +521,8 @@ function PlayerRequestsTab() {
       {error && <ErrorAlert message={error} />}
 
       <Section title={`Pending (${pending.length})`}>
-        {pending.length === 0 && <p className="text-sm text-gray-500">No pending requests.</p>}
-        <div className="divide-y divide-gray-100">
+        {pending.length === 0 && <p className="text-sm text-mig-muted">No pending requests.</p>}
+        <div className="divide-y divide-mig-border">
           {pending.map((r) => (
             <RequestRow key={r.id} r={r} onApprove={() => handleApprove(r.id)} onReject={() => setRejectId(r.id)} acting={acting === r.id} />
           ))}
@@ -531,22 +531,22 @@ function PlayerRequestsTab() {
 
       {reviewed.length > 0 && (
         <Section title={`Reviewed (${reviewed.length})`}>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-mig-border">
             {reviewed.map((r) => <RequestRow key={r.id} r={r} reviewed />)}
           </div>
         </Section>
       )}
 
       {rejectId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
-            <h3 className="font-semibold text-gray-800">Reject request</h3>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-mig-surface border border-mig-border rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="font-semibold text-mig-text">Reject request</h3>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="Reason (optional)"
               rows={3}
-              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mig-danger/40 focus:border-mig-danger transition-colors"
             />
             <div className="flex gap-3 justify-end">
               <Btn variant="ghost" onClick={() => { setRejectId(null); setRejectReason('') }}>Cancel</Btn>
@@ -564,17 +564,17 @@ function RequestRow({ r, onApprove, onReject, acting, reviewed }) {
     <div className="py-3">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="font-medium text-sm text-gray-800">
+          <p className="font-medium text-sm text-mig-text">
             {r.firstName} {r.lastName}
             <span className={`ml-2 text-xs px-1.5 py-0.5 rounded font-medium ${STATUS_STYLE[r.status]}`}>{r.status}</span>
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-mig-muted mt-0.5">
             DOB: {r.dateOfBirth} · {r.primaryPosition}{r.jerseyNumber ? ` · #${r.jerseyNumber}` : ''}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-mig-muted">
             Team: {r.teamName} · Parent: {r.parentUserName}
           </p>
-          {r.rejectionReason && <p className="text-xs text-red-500 mt-0.5">Reason: {r.rejectionReason}</p>}
+          {r.rejectionReason && <p className="text-xs text-mig-danger mt-0.5">Reason: {r.rejectionReason}</p>}
         </div>
         {!reviewed && (
           <div className="flex gap-2 shrink-0">
@@ -595,15 +595,15 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Manage clubs, teams, registration codes, and player requests.</p>
+        <h1 className="text-2xl font-black tracking-tight text-mig-text">Admin Dashboard</h1>
+        <p className="text-mig-muted text-sm mt-1">Manage clubs, teams, registration codes, and player requests.</p>
       </div>
 
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-mig-border">
         {TABS.map((t, i) => (
           <button key={t} onClick={() => setTab(i)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
-              tab === i ? 'border-green-600 text-green-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+              tab === i ? 'border-mig-orange text-mig-orange' : 'border-transparent text-mig-muted hover:text-mig-text'
             }`}>
             {t}
           </button>

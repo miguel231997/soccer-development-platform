@@ -82,20 +82,22 @@ export default function RegisterChildPage() {
     }
   }
 
+  const inputCls = "w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
+
   return (
     <div className="max-w-lg space-y-6">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate('/parent/children')}
-          className="text-sm text-gray-500 hover:text-gray-700">← Back</button>
-        <h1 className="text-2xl font-bold text-gray-800">Register a Child</h1>
+          className="text-xs text-mig-muted hover:text-mig-orange transition-colors font-medium uppercase tracking-wide">← Back</button>
+        <h1 className="text-2xl font-black tracking-tight text-mig-text">Register a Child</h1>
       </div>
 
       {/* Step 1 — Enter code */}
       {step === 'code' && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+        <div className="bg-mig-surface border border-mig-border rounded-lg p-6 space-y-4">
           <div>
-            <h2 className="font-semibold text-gray-700">Step 1 — Enter team code</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="font-semibold text-mig-text">Step 1 — Enter team code</h2>
+            <p className="text-sm text-mig-muted mt-1">
               Ask your club administrator for the team's player registration code.
               This code is different from the code you used to create your account.
             </p>
@@ -108,10 +110,10 @@ export default function RegisterChildPage() {
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
               placeholder="e.g. A1B2C3D4"
               required
-              className="flex-1 border rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={`flex-1 ${inputCls} font-mono`}
             />
             <button type="submit" disabled={codeLoading || !codeInput.trim()}
-              className="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50">
+              className="bg-mig-orange hover:bg-mig-orange-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
               {codeLoading ? 'Checking…' : 'Next'}
             </button>
           </form>
@@ -123,9 +125,9 @@ export default function RegisterChildPage() {
         <div className="space-y-4">
           <TeamBanner teamInfo={teamInfo} onReset={() => { setStep('code'); setTeamInfo(null) }} />
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-            <h2 className="font-semibold text-gray-700">Step 2 — Is your child already on this team?</h2>
-            <p className="text-sm text-gray-500">
+          <div className="bg-mig-surface border border-mig-border rounded-lg p-6 space-y-4">
+            <h2 className="font-semibold text-mig-text">Step 2 — Is your child already on this team?</h2>
+            <p className="text-sm text-mig-muted">
               If a coach has already added your child, select them below to request a parent link.
               Otherwise, add them as a new player.
             </p>
@@ -133,31 +135,31 @@ export default function RegisterChildPage() {
             <FormError message={formError} />
 
             {teamPlayers.length > 0 ? (
-              <ul className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
+              <ul className="divide-y divide-mig-border border border-mig-border rounded-xl overflow-hidden">
                 {teamPlayers.map((p) => (
-                  <li key={p.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
-                    <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-400">
+                  <li key={p.id} className="flex items-center gap-3 px-4 py-3 hover:bg-mig-card transition-colors">
+                    <div className="w-9 h-9 rounded-full bg-mig-orange/20 overflow-hidden flex-shrink-0 flex items-center justify-center text-mig-orange font-bold text-sm">
                       {p.profileImageUrl
                         ? <img src={p.profileImageUrl} alt="" className="w-full h-full object-cover" />
                         : <PersonIcon />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800">
+                      <p className="text-sm font-medium text-mig-text">
                         {p.firstName} {p.lastName}
                         {p.jerseyNumber != null && (
-                          <span className="ml-1.5 text-xs font-mono bg-green-700 text-white px-1.5 py-0.5 rounded">
+                          <span className="ml-1.5 text-xs font-mono bg-mig-orange text-white px-1.5 py-0.5 rounded">
                             #{p.jerseyNumber}
                           </span>
                         )}
                       </p>
                       {p.primaryPosition && (
-                        <p className="text-xs text-gray-400">{p.primaryPosition}</p>
+                        <p className="text-xs text-mig-dim">{p.primaryPosition}</p>
                       )}
                     </div>
                     <button
                       onClick={() => handleSelectExisting(p)}
                       disabled={saving}
-                      className="text-sm bg-green-700 text-white px-3 py-1.5 rounded hover:bg-green-600 disabled:opacity-50 shrink-0"
+                      className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 shrink-0"
                     >
                       This is my child
                     </button>
@@ -165,13 +167,13 @@ export default function RegisterChildPage() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-gray-500 italic">No players have been added to this team yet.</p>
+              <p className="text-sm text-mig-muted italic">No players have been added to this team yet.</p>
             )}
 
-            <div className="pt-2 border-t border-gray-100">
+            <div className="pt-2 border-t border-mig-border">
               <button
                 onClick={() => setStep('details')}
-                className="text-sm text-green-700 hover:underline"
+                className="text-sm text-mig-orange hover:underline"
               >
                 My child isn't listed — add them as a new player →
               </button>
@@ -185,61 +187,54 @@ export default function RegisterChildPage() {
         <div className="space-y-4">
           <TeamBanner teamInfo={teamInfo} onReset={() => { setStep('code'); setTeamInfo(null) }} />
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+          <div className="bg-mig-surface border border-mig-border rounded-lg p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <button onClick={() => setStep('select')} className="text-sm text-gray-500 hover:text-gray-700">← Back</button>
-              <h2 className="font-semibold text-gray-700">Step 3 — Child's details</h2>
+              <button onClick={() => setStep('select')} className="text-xs text-mig-muted hover:text-mig-orange transition-colors font-medium uppercase tracking-wide">← Back</button>
+              <h2 className="font-semibold text-mig-text">Step 3 — Child's details</h2>
             </div>
             <FormError message={formError} />
 
             <form onSubmit={handleSubmitNew} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">First name *</label>
-                  <input type="text" value={form.firstName} onChange={set('firstName')} required
-                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  <label className="block text-sm font-medium text-mig-muted mb-1">First name *</label>
+                  <input type="text" value={form.firstName} onChange={set('firstName')} required className={inputCls} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Last name *</label>
-                  <input type="text" value={form.lastName} onChange={set('lastName')} required
-                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  <label className="block text-sm font-medium text-mig-muted mb-1">Last name *</label>
+                  <input type="text" value={form.lastName} onChange={set('lastName')} required className={inputCls} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of birth *</label>
-                  <input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} required
-                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  <label className="block text-sm font-medium text-mig-muted mb-1">Date of birth *</label>
+                  <input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} required className={inputCls} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Jersey number</label>
-                  <input type="number" min="1" max="99" value={form.jerseyNumber} onChange={set('jerseyNumber')}
-                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                  <label className="block text-sm font-medium text-mig-muted mb-1">Jersey number</label>
+                  <input type="number" min="1" max="99" value={form.jerseyNumber} onChange={set('jerseyNumber')} className={inputCls} />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Primary position *</label>
-                  <select value={form.primaryPosition} onChange={set('primaryPosition')} required
-                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <label className="block text-sm font-medium text-mig-muted mb-1">Primary position *</label>
+                  <select value={form.primaryPosition} onChange={set('primaryPosition')} required className={inputCls}>
                     <option value="">—</option>
                     {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Secondary position</label>
-                  <select value={form.secondaryPosition} onChange={set('secondaryPosition')}
-                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <label className="block text-sm font-medium text-mig-muted mb-1">Secondary position</label>
+                  <select value={form.secondaryPosition} onChange={set('secondaryPosition')} className={inputCls}>
                     <option value="">—</option>
                     {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Strong foot</label>
-                  <select value={form.strongFoot} onChange={set('strongFoot')}
-                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <label className="block text-sm font-medium text-mig-muted mb-1">Strong foot</label>
+                  <select value={form.strongFoot} onChange={set('strongFoot')} className={inputCls}>
                     <option value="RIGHT">Right</option>
                     <option value="LEFT">Left</option>
                     <option value="BOTH">Both</option>
@@ -249,11 +244,11 @@ export default function RegisterChildPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={saving}
-                  className="bg-green-700 text-white text-sm px-5 py-2 rounded hover:bg-green-600 disabled:opacity-50">
+                  className="bg-mig-orange hover:bg-mig-orange-dark text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors disabled:opacity-50">
                   {saving ? 'Submitting…' : 'Submit Registration Request'}
                 </button>
                 <button type="button" onClick={() => navigate('/parent/children')}
-                  className="text-sm border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50">
+                  className="text-sm border border-mig-border text-mig-muted hover:text-mig-text hover:border-mig-orange/30 px-4 py-2 rounded-lg transition-colors">
                   Cancel
                 </button>
               </div>
@@ -267,12 +262,12 @@ export default function RegisterChildPage() {
 
 function TeamBanner({ teamInfo, onReset }) {
   return (
-    <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center justify-between">
+    <div className="bg-mig-success/10 border border-mig-success/20 rounded-lg px-4 py-3 flex items-center justify-between">
       <div>
-        <p className="text-sm font-medium text-green-800">Team: {teamInfo.teamName}</p>
-        <p className="text-xs text-green-600">Code verified.</p>
+        <p className="text-sm font-medium text-mig-success">Team: {teamInfo.teamName}</p>
+        <p className="text-xs text-mig-success/70">Code verified.</p>
       </div>
-      <button onClick={onReset} className="text-xs text-green-700 underline">Change</button>
+      <button onClick={onReset} className="text-xs text-mig-success underline">Change</button>
     </div>
   )
 }
