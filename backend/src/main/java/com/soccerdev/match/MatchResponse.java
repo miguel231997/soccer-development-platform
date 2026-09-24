@@ -35,6 +35,8 @@ public class MatchResponse {
 
     private boolean finalized;
 
+    private String analysis;
+
     private Instant createdAt;
     private Instant updatedAt;
 }

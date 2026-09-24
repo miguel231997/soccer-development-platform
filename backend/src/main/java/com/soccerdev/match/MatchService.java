@@ -95,6 +95,16 @@ public class MatchService {
     }
 
     @Transactional
+    public MatchResponse updateAnalysis(User user, Long id, String analysis) {
+        Match match = findOrThrow(id);
+        if (!authorizationService.canEditMatch(user, id)) {
+            throw new AccessDeniedException("Access denied");
+        }
+        match.setAnalysis(analysis);
+        return toResponse(matchRepository.save(match));
+    }
+
+    @Transactional
     public MatchResponse finalize(User user, Long id) {
         Match match = findOrThrow(id);
         if (!authorizationService.canEditMatch(user, id)) {
@@ -154,6 +164,7 @@ public class MatchService {
                 .homeScore(match.getHomeScore())
                 .awayScore(match.getAwayScore())
                 .finalized(match.isFinalized())
+                .analysis(match.getAnalysis())
                 .createdAt(match.getCreatedAt())
                 .updatedAt(match.getUpdatedAt());
 

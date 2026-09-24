@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
-  getMatch, listPlayers, getMatchStats, getMatchEvaluations, finalizeMatch, updateMatch,
+  getMatch, listPlayers, getMatchStats, getMatchEvaluations, finalizeMatch, updateMatch, updateMatchAnalysis,
 } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
 import { useAuth } from '../../context/AuthContext'
@@ -134,6 +134,8 @@ export default function MatchDetailPage() {
         )}
       </div>
 
+      <PostGameAnalysis match={match} isParent={isParent} />
+
       {/* Player status table */}
       <div className="bg-mig-surface border border-mig-border rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-mig-border flex items-center justify-between">
@@ -212,6 +214,57 @@ export default function MatchDetailPage() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function PostGameAnalysis({ match, isParent }) {
+  const [text, setText] = useState(match.analysis ?? '')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [err, setErr] = useState('')
+
+  if (isParent) {
+    if (!match.analysis) return null
+    return (
+      <div className="bg-mig-surface border border-mig-border rounded-lg p-5">
+        <h2 className="text-sm font-semibold text-mig-text mb-2">Post-Game Analysis</h2>
+        <p className="text-sm text-mig-muted whitespace-pre-wrap">{match.analysis}</p>
+      </div>
+    )
+  }
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    setSaving(true); setErr(''); setSaved(false)
+    try {
+      await updateMatchAnalysis(match.id, text)
+      setSaved(true)
+    } catch (e) {
+      setErr(e?.response?.data?.message || 'Failed to save.')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="bg-mig-surface border border-mig-border rounded-lg p-5">
+      <h2 className="text-sm font-semibold text-mig-text mb-3">Post-Game Analysis</h2>
+      <form onSubmit={handleSave} className="space-y-3">
+        <textarea
+          value={text}
+          onChange={(e) => { setText(e.target.value); setSaved(false) }}
+          rows={5}
+          placeholder="Write your post-game analysis here… tactics, performance highlights, areas to improve."
+          className="w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors resize-y"
+        />
+        <div className="flex items-center gap-3">
+          <button type="submit" disabled={saving}
+            className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
+            {saving ? 'Saving…' : 'Save Analysis'}
+          </button>
+          {saved && <span className="text-xs text-mig-success">Saved — parents can now see this</span>}
+          {err && <span className="text-xs text-mig-danger">{err}</span>}
+        </div>
+      </form>
     </div>
   )
 }

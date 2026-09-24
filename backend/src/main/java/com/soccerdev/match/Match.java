@@ -68,4 +68,7 @@ public class Match extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean finalized = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String analysis;
 }
