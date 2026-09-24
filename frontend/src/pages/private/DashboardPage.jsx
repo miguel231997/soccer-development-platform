@@ -151,10 +151,10 @@ export default function DashboardPage() {
   )
 }
 
-const SEASON_YEARS = Array.from({ length: 15 }, (_, i) => {
-  const s = 2024 + i
-  return `${s}-${s + 1}`
-})
+const SEASON_OPTIONS = Array.from({ length: 15 }, (_, i) => {
+  const year = 2024 + i
+  return [`Spring ${year}`, `Fall ${year}`]
+}).flat()
 
 function SeasonSetupSection() {
   const { user } = useAuth()
@@ -180,12 +180,14 @@ function SeasonSetupSection() {
     e.preventDefault()
     if (!selectedYear) return
     setSaving(true); setErr('')
-    const [startYear, endYear] = selectedYear.split('-').map(Number)
+    const [term, yearStr] = selectedYear.split(' ')
+    const year = Number(yearStr)
+    const isFall = term === 'Fall'
     try {
       await createSeason({
         name: selectedYear,
-        startDate: `${startYear}-08-01`,
-        endDate: `${endYear}-07-31`,
+        startDate: isFall ? `${year}-08-01` : `${year}-01-01`,
+        endDate:   isFall ? `${year}-12-31` : `${year}-06-30`,
         active: (seasons ?? []).length === 0,
       })
       setSeasonsKey((k) => k + 1)
@@ -198,7 +200,7 @@ function SeasonSetupSection() {
   }
 
   const existingNames = new Set((seasons ?? []).map((s) => s.name))
-  const available = SEASON_YEARS.filter((y) => !existingNames.has(y))
+  const available = SEASON_OPTIONS.filter((y) => !existingNames.has(y))
 
   return (
     <section className="bg-mig-surface border border-mig-border rounded-lg p-4">
@@ -230,7 +232,7 @@ function SeasonSetupSection() {
             onChange={(e) => setSelectedYear(e.target.value)}
             className="w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors flex-1"
           >
-            <option value="">Select season year…</option>
+            <option value="">Select season…</option>
             {available.map((y) => <option key={y} value={y}>{y}</option>)}
           </select>
           <button type="submit" disabled={saving || !selectedYear}
