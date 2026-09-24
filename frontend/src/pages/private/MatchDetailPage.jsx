@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
-  getMatch, listPlayers, getMatchStats, getMatchEvaluations, finalizeMatch,
+  getMatch, listPlayers, getMatchStats, getMatchEvaluations, finalizeMatch, updateMatch,
 } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
 import { useAuth } from '../../context/AuthContext'
@@ -106,6 +106,10 @@ export default function MatchDetailPage() {
           {match.seasonPhaseName && <Detail label="Phase" value={match.seasonPhaseName} />}
         </div>
 
+        {!isParent && (
+          <ScoreEntry match={match} onSaved={() => window.location.reload()} />
+        )}
+
         {!match.finalized && (
           <div className="pt-2 border-t border-mig-border flex items-center gap-3 flex-wrap">
             <Link
@@ -208,6 +212,71 @@ export default function MatchDetailPage() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function ScoreEntry({ match, onSaved }) {
+  const [home, setHome] = useState(match.homeScore ?? '')
+  const [away, setAway] = useState(match.awayScore ?? '')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [err, setErr] = useState('')
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    if (home === '' || away === '') return
+    setSaving(true); setErr(''); setSaved(false)
+    try {
+      await updateMatch(match.id, {
+        teamId: match.teamId,
+        seasonId: match.seasonId,
+        seasonPhaseId: match.seasonPhaseId ?? null,
+        competitionId: match.competitionId ?? null,
+        opponent: match.opponent,
+        matchDateTime: match.matchDateTime,
+        location: match.location ?? null,
+        homeAway: match.homeAway,
+        homeScore: Number(home),
+        awayScore: Number(away),
+      })
+      setSaved(true)
+      onSaved()
+    } catch (e) {
+      setErr(e?.response?.data?.message || 'Failed to save score.')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="pt-2 border-t border-mig-border">
+      <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-2">Score</p>
+      <form onSubmit={handleSave} className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-mig-muted">{match.homeAway === 'HOME' ? match.teamName : match.opponent}</label>
+          <input
+            type="number" min="0" value={home}
+            onChange={(e) => { setHome(e.target.value); setSaved(false) }}
+            disabled={match.finalized}
+            className="w-14 bg-mig-bg border border-mig-border text-mig-text rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors disabled:opacity-50"
+          />
+          <span className="text-mig-dim font-bold">–</span>
+          <input
+            type="number" min="0" value={away}
+            onChange={(e) => { setAway(e.target.value); setSaved(false) }}
+            disabled={match.finalized}
+            className="w-14 bg-mig-bg border border-mig-border text-mig-text rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors disabled:opacity-50"
+          />
+          <label className="text-xs text-mig-muted">{match.homeAway === 'HOME' ? match.opponent : match.teamName}</label>
+        </div>
+        {!match.finalized && (
+          <button type="submit" disabled={saving || home === '' || away === ''}
+            className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
+            {saving ? 'Saving…' : 'Save Score'}
+          </button>
+        )}
+        {saved && <span className="text-xs text-mig-success">Score saved</span>}
+        {err && <span className="text-xs text-mig-danger">{err}</span>}
+      </form>
     </div>
   )
 }
