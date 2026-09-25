@@ -65,6 +65,13 @@ export default function MatchDetailPage() {
   const score = match.homeScore != null && match.awayScore != null
     ? `${match.homeScore}–${match.awayScore}`
     : null
+  const teamGoals = match.homeAway === 'HOME' ? match.homeScore : match.awayScore
+  const oppGoals  = match.homeAway === 'HOME' ? match.awayScore : match.homeScore
+  const result = score
+    ? teamGoals > oppGoals ? { label: 'W', cls: 'text-mig-success' }
+    : teamGoals === oppGoals ? { label: 'D', cls: 'text-mig-warning' }
+    : { label: 'L', cls: 'text-mig-danger' }
+    : null
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -92,7 +99,10 @@ export default function MatchDetailPage() {
           {score && (
             <div className="text-center">
               <p className="text-3xl font-bold font-mono text-mig-text">{score}</p>
-              <p className="text-xs text-mig-dim">{match.homeAway}</p>
+              <div className="flex items-center justify-center gap-2 mt-0.5">
+                <p className="text-xs text-mig-dim">{match.homeAway}</p>
+                {result && <span className={`text-xs font-bold ${result.cls}`}>{result.label}</span>}
+              </div>
             </div>
           )}
         </div>

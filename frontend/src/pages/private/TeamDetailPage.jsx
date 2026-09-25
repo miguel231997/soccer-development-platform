@@ -5,6 +5,15 @@ import { useFetch } from '../../hooks/useFetch'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 
+function matchResult(m) {
+  if (m.homeScore == null || m.awayScore == null) return null
+  const teamGoals = m.homeAway === 'HOME' ? m.homeScore : m.awayScore
+  const oppGoals  = m.homeAway === 'HOME' ? m.awayScore : m.homeScore
+  if (teamGoals > oppGoals) return { label: 'W', cls: 'text-mig-success font-bold' }
+  if (teamGoals === oppGoals) return { label: 'D', cls: 'text-mig-warning font-bold' }
+  return { label: 'L', cls: 'text-mig-danger font-bold' }
+}
+
 function matchStatus(match) {
   const past = new Date(match.matchDateTime) < new Date()
   if (match.finalized) return { label: 'Finalized', cls: 'bg-mig-card text-mig-dim border border-mig-border' }
@@ -117,6 +126,7 @@ export default function TeamDetailPage() {
                 const date = new Date(m.matchDateTime)
                 const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
                 const score = m.homeScore != null && m.awayScore != null ? `${m.homeScore}–${m.awayScore}` : null
+                const result = matchResult(m)
                 return (
                   <Link
                     key={m.id}
@@ -132,6 +142,7 @@ export default function TeamDetailPage() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       {score && <span className="font-mono text-sm font-semibold text-mig-text">{score}</span>}
+                      {result && <span className={`text-sm ${result.cls}`}>{result.label}</span>}
                       <span className={`text-xs px-2 py-0.5 rounded font-medium ${st.cls}`}>{st.label}</span>
                     </div>
                   </Link>
