@@ -63,9 +63,9 @@ public class PlayerRegistrationService {
             if (parentPlayerRelationshipRepository.existsByParentUserIdAndPlayerId(parent.getId(), existingPlayer.getId())) {
                 throw new IllegalArgumentException("You are already linked to " + existingPlayer.getFirstName() + " " + existingPlayer.getLastName() + ".");
             }
-            // Prevent duplicate pending request
-            if (playerRegistrationRepository.existsByExistingPlayerIdAndTeamIdAndStatus(existingPlayer.getId(), team.getId(), RegistrationStatus.PENDING)) {
-                throw new IllegalArgumentException("A link request for this player is already pending approval.");
+            // Prevent this parent from submitting a duplicate pending request for the same player
+            if (playerRegistrationRepository.existsByParentUserIdAndExistingPlayerIdAndStatus(parent.getId(), existingPlayer.getId(), RegistrationStatus.PENDING)) {
+                throw new IllegalArgumentException("You already have a pending request for " + existingPlayer.getFirstName() + " " + existingPlayer.getLastName() + ".");
             }
         } else {
             // New child: require name/dob/position

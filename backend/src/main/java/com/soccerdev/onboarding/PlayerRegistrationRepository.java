@@ -64,4 +64,6 @@ public interface PlayerRegistrationRepository extends JpaRepository<PlayerRegist
     Optional<PlayerRegistrationRequest> findByIdWithAssociations(@Param("id") Long id);
 
     boolean existsByExistingPlayerIdAndTeamIdAndStatus(Long existingPlayerId, Long teamId, RegistrationStatus status);
+
+    boolean existsByParentUserIdAndExistingPlayerIdAndStatus(Long parentUserId, Long existingPlayerId, RegistrationStatus status);
 }
