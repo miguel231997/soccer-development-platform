@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
-  getMatch, listPlayers, getMatchStats, getMatchEvaluations, finalizeMatch, updateMatch, updateMatchAnalysis,
+  getMatch, listPlayers, getMatchStats, getMatchEvaluations, finalizeMatch, updateMatch, updateMatchAnalysis, updateMatchGameStats,
 } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
 import { useAuth } from '../../context/AuthContext'
@@ -154,6 +154,8 @@ export default function MatchDetailPage() {
       </div>
 
       <PostGameAnalysis match={match} isParent={isParent} />
+
+      <GameStats match={match} isParent={isParent} />
 
       {/* Player status table */}
       <div className="bg-mig-surface border border-mig-border rounded-xl overflow-hidden">
@@ -349,6 +351,155 @@ function ScoreEntry({ match, onSaved }) {
         {saved && <span className="text-xs text-mig-success">Score saved</span>}
         {err && <span className="text-xs text-mig-danger">{err}</span>}
       </form>
+    </div>
+  )
+}
+
+function GameStats({ match, isParent }) {
+  const [form, setForm] = useState({
+    possessionPct: match.possessionPct ?? '',
+    teamShots: match.teamShots ?? '',
+    opponentShots: match.opponentShots ?? '',
+    teamCompletedPasses: match.teamCompletedPasses ?? '',
+    opponentCompletedPasses: match.opponentCompletedPasses ?? '',
+    teamTouches: match.teamTouches ?? '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [err, setErr] = useState('')
+
+  if (match.gameStatsLocked) {
+    return (
+      <div className="bg-mig-surface border border-mig-border rounded-lg p-5">
+        <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-4">Game Stats</p>
+        <div className="space-y-4">
+          {match.possessionPct != null && (
+            <StatCompareRow
+              label="Possession"
+              teamVal={`${match.possessionPct}%`}
+              oppVal={`${100 - match.possessionPct}%`}
+              teamName={match.teamName}
+              oppName={match.opponent}
+            />
+          )}
+          {(match.teamShots != null || match.opponentShots != null) && (
+            <StatCompareRow
+              label="Shots"
+              teamVal={match.teamShots}
+              oppVal={match.opponentShots}
+              teamName={match.teamName}
+              oppName={match.opponent}
+            />
+          )}
+          {(match.teamCompletedPasses != null || match.opponentCompletedPasses != null) && (
+            <StatCompareRow
+              label="Completed Passes"
+              teamVal={match.teamCompletedPasses}
+              oppVal={match.opponentCompletedPasses}
+              teamName={match.teamName}
+              oppName={match.opponent}
+            />
+          )}
+          {match.teamTouches != null && (
+            <div>
+              <p className="text-xs text-mig-dim mb-1">Our Touches</p>
+              <p className="text-lg font-bold text-mig-text">{match.teamTouches}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (isParent) return null
+
+  const handleChange = (field) => (e) => {
+    setForm((f) => ({ ...f, [field]: e.target.value }))
+    setSaved(false)
+  }
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    setSaving(true); setErr(''); setSaved(false)
+    try {
+      const payload = {}
+      if (form.possessionPct !== '') payload.possessionPct = Number(form.possessionPct)
+      if (form.teamShots !== '') payload.teamShots = Number(form.teamShots)
+      if (form.opponentShots !== '') payload.opponentShots = Number(form.opponentShots)
+      if (form.teamCompletedPasses !== '') payload.teamCompletedPasses = Number(form.teamCompletedPasses)
+      if (form.opponentCompletedPasses !== '') payload.opponentCompletedPasses = Number(form.opponentCompletedPasses)
+      if (form.teamTouches !== '') payload.teamTouches = Number(form.teamTouches)
+      await updateMatchGameStats(match.id, payload)
+      setSaved(true)
+      setTimeout(() => window.location.reload(), 600)
+    } catch (ex) {
+      setErr(ex?.response?.data?.message || 'Failed to save.')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="bg-mig-surface border border-mig-border rounded-lg p-5">
+      <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-4">Game Stats</p>
+      <form onSubmit={handleSave} className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <StatInput label="Possession %" value={form.possessionPct} onChange={handleChange('possessionPct')} min={0} max={100} />
+          <StatInput label="Our Touches" value={form.teamTouches} onChange={handleChange('teamTouches')} min={0} />
+        </div>
+        <div>
+          <p className="text-xs text-mig-dim mb-2">Shots</p>
+          <div className="grid grid-cols-2 gap-3">
+            <StatInput label={match.teamName} value={form.teamShots} onChange={handleChange('teamShots')} min={0} />
+            <StatInput label={match.opponent} value={form.opponentShots} onChange={handleChange('opponentShots')} min={0} />
+          </div>
+        </div>
+        <div>
+          <p className="text-xs text-mig-dim mb-2">Completed Passes</p>
+          <div className="grid grid-cols-2 gap-3">
+            <StatInput label={match.teamName} value={form.teamCompletedPasses} onChange={handleChange('teamCompletedPasses')} min={0} />
+            <StatInput label={match.opponent} value={form.opponentCompletedPasses} onChange={handleChange('opponentCompletedPasses')} min={0} />
+          </div>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button type="submit" disabled={saving}
+            className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
+            {saving ? 'Saving…' : 'Save Game Stats'}
+          </button>
+          <span className="text-xs text-mig-dim">Once saved, these stats are locked</span>
+          {saved && <span className="text-xs text-mig-success">Saved!</span>}
+          {err && <span className="text-xs text-mig-danger">{err}</span>}
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function StatInput({ label, value, onChange, min = 0, max }) {
+  return (
+    <div>
+      <label className="block text-xs text-mig-muted mb-1 truncate">{label}</label>
+      <input
+        type="number" min={min} max={max} value={value} onChange={onChange}
+        className="w-full bg-mig-bg border border-mig-border text-mig-text rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
+      />
+    </div>
+  )
+}
+
+function StatCompareRow({ label, teamVal, oppVal, teamName, oppName }) {
+  return (
+    <div>
+      <p className="text-xs text-mig-dim mb-2">{label}</p>
+      <div className="flex items-center gap-3">
+        <div className="flex-1 text-center">
+          <p className="text-xs text-mig-muted mb-0.5 truncate">{teamName}</p>
+          <p className="text-xl font-bold text-mig-text">{teamVal ?? '—'}</p>
+        </div>
+        <span className="text-mig-dim text-xs font-medium">vs</span>
+        <div className="flex-1 text-center">
+          <p className="text-xs text-mig-muted mb-0.5 truncate">{oppName}</p>
+          <p className="text-xl font-bold text-mig-text">{oppVal ?? '—'}</p>
+        </div>
+      </div>
     </div>
   )
 }

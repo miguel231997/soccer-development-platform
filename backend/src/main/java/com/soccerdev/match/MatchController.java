@@ -79,6 +79,15 @@ public class MatchController {
         return ResponseEntity.ok(ApiResponse.ok(matchService.updateAnalysis(user, id, request.getAnalysis())));
     }
 
+    @PatchMapping("/api/matches/{id}/game-stats")
+    public ResponseEntity<ApiResponse<MatchResponse>> updateGameStats(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody GameStatsRequest request) {
+        User user = currentUserService.getUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.ok(matchService.updateGameStats(user, id, request)));
+    }
+
     @PostMapping("/api/matches/{id}/finalize")
     public ResponseEntity<ApiResponse<MatchResponse>> finalize(
             @AuthenticationPrincipal UserDetails userDetails,

@@ -37,6 +37,14 @@ public class MatchResponse {
 
     private String analysis;
 
+    private boolean gameStatsLocked;
+    private Integer possessionPct;
+    private Integer teamShots;
+    private Integer opponentShots;
+    private Integer teamCompletedPasses;
+    private Integer opponentCompletedPasses;
+    private Integer teamTouches;
+
     private Instant createdAt;
     private Instant updatedAt;
 }

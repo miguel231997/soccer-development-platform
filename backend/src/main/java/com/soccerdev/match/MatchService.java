@@ -105,6 +105,25 @@ public class MatchService {
     }
 
     @Transactional
+    public MatchResponse updateGameStats(User user, Long id, GameStatsRequest req) {
+        Match match = findOrThrow(id);
+        if (!authorizationService.canEditMatch(user, id)) {
+            throw new AccessDeniedException("Access denied");
+        }
+        if (match.isGameStatsLocked()) {
+            throw new IllegalArgumentException("Game stats are already saved and locked");
+        }
+        match.setPossessionPct(req.getPossessionPct());
+        match.setTeamShots(req.getTeamShots());
+        match.setOpponentShots(req.getOpponentShots());
+        match.setTeamCompletedPasses(req.getTeamCompletedPasses());
+        match.setOpponentCompletedPasses(req.getOpponentCompletedPasses());
+        match.setTeamTouches(req.getTeamTouches());
+        match.setGameStatsLocked(true);
+        return toResponse(matchRepository.save(match));
+    }
+
+    @Transactional
     public MatchResponse finalize(User user, Long id) {
         Match match = findOrThrow(id);
         if (!authorizationService.canEditMatch(user, id)) {
@@ -165,6 +184,13 @@ public class MatchService {
                 .awayScore(match.getAwayScore())
                 .finalized(match.isFinalized())
                 .analysis(match.getAnalysis())
+                .gameStatsLocked(match.isGameStatsLocked())
+                .possessionPct(match.getPossessionPct())
+                .teamShots(match.getTeamShots())
+                .opponentShots(match.getOpponentShots())
+                .teamCompletedPasses(match.getTeamCompletedPasses())
+                .opponentCompletedPasses(match.getOpponentCompletedPasses())
+                .teamTouches(match.getTeamTouches())
                 .createdAt(match.getCreatedAt())
                 .updatedAt(match.getUpdatedAt());
 

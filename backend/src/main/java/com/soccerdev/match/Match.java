@@ -71,4 +71,27 @@ public class Match extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String analysis;
+
+    // Team-level game stats (locked once saved)
+    @Column(name = "game_stats_locked", nullable = false)
+    @Builder.Default
+    private boolean gameStatsLocked = false;
+
+    @Column(name = "possession_pct")
+    private Integer possessionPct;
+
+    @Column(name = "team_shots")
+    private Integer teamShots;
+
+    @Column(name = "opponent_shots")
+    private Integer opponentShots;
+
+    @Column(name = "team_completed_passes")
+    private Integer teamCompletedPasses;
+
+    @Column(name = "opponent_completed_passes")
+    private Integer opponentCompletedPasses;
+
+    @Column(name = "team_touches")
+    private Integer teamTouches;
 }
