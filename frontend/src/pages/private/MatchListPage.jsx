@@ -290,6 +290,13 @@ export default function MatchListPage() {
             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
             const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
             const score = m.homeScore != null && m.awayScore != null ? `${m.homeScore}–${m.awayScore}` : null
+            const teamGoals = m.homeAway === 'HOME' ? m.homeScore : m.awayScore
+            const oppGoals  = m.homeAway === 'HOME' ? m.awayScore : m.homeScore
+            const result = score
+              ? teamGoals > oppGoals ? { label: 'W', cls: 'text-mig-success' }
+              : teamGoals === oppGoals ? { label: 'D', cls: 'text-mig-warning' }
+              : { label: 'L', cls: 'text-mig-danger' }
+              : null
 
             const meta = [
               m.seasonName,
@@ -313,6 +320,7 @@ export default function MatchListPage() {
                 </div>
                 <div className="flex items-center gap-3 shrink-0 ml-4">
                   {score && <span className="text-sm font-mono font-semibold text-mig-text">{score}</span>}
+                  {result && <span className={`text-xs font-bold ${result.cls}`}>{result.label}</span>}
                   <span className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_STYLE[status]}`}>
                     {status}
                   </span>
