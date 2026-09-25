@@ -6,7 +6,7 @@ import {
   getChildEvaluations,
   getChildReports,
   getChildSeasonStats,
-  lookupTeamInviteCode,
+  joinTeam,
   submitPlayerRegistration,
   uploadChildImage,
   setChildPublicProfile,
@@ -260,8 +260,8 @@ function JoinAnotherTeamForm({ playerId, playerName, onClose, onSuccess }) {
     setCodeError('')
     setCodeLoading(true)
     try {
-      const info = await lookupTeamInviteCode(code.trim())
-      setTeamInfo({ ...info, code: code.trim() })
+      const info = await joinTeam(code.trim())
+      setTeamInfo(info)
       setStep('confirm')
     } catch (err) {
       setCodeError(err?.response?.data?.message || 'Invalid or inactive team code.')
@@ -276,7 +276,7 @@ function JoinAnotherTeamForm({ playerId, playerName, onClose, onSuccess }) {
     setSaving(true)
     try {
       await submitPlayerRegistration({
-        teamInviteCode: teamInfo.code,
+        teamId: teamInfo.teamId,
         existingPlayerId: playerId,
         jerseyNumber: jerseyNumber ? Number(jerseyNumber) : null,
       })
