@@ -423,6 +423,13 @@ function MatchRow({ match }) {
   const scoreStr = match.homeScore != null && match.awayScore != null
     ? `${match.homeScore}–${match.awayScore}`
     : null
+  const teamGoals = match.homeAway === 'HOME' ? match.homeScore : match.awayScore
+  const oppGoals  = match.homeAway === 'HOME' ? match.awayScore : match.homeScore
+  const result = scoreStr
+    ? teamGoals > oppGoals ? { label: 'W', cls: 'text-mig-success' }
+    : teamGoals === oppGoals ? { label: 'D', cls: 'text-mig-warning' }
+    : { label: 'L', cls: 'text-mig-danger' }
+    : null
 
   return (
     <Link
@@ -437,6 +444,7 @@ function MatchRow({ match }) {
       </div>
       <div className="flex items-center gap-2 shrink-0 ml-3">
         {scoreStr && <span className="text-sm font-mono font-semibold text-mig-text">{scoreStr}</span>}
+        {result && <span className={`text-xs font-bold ${result.cls}`}>{result.label}</span>}
         <StatusBadge status={status} />
       </div>
     </Link>
