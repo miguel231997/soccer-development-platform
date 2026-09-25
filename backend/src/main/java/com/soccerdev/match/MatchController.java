@@ -70,6 +70,15 @@ public class MatchController {
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).message("Match deleted").build());
     }
 
+    @PatchMapping("/api/matches/{id}/score")
+    public ResponseEntity<ApiResponse<MatchResponse>> updateScore(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody ScoreRequest request) {
+        User user = currentUserService.getUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.ok(matchService.updateScore(user, id, request)));
+    }
+
     @PatchMapping("/api/matches/{id}/analysis")
     public ResponseEntity<ApiResponse<MatchResponse>> updateAnalysis(
             @AuthenticationPrincipal UserDetails userDetails,

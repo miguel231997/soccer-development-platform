@@ -95,12 +95,31 @@ public class MatchService {
     }
 
     @Transactional
+    public MatchResponse updateScore(User user, Long id, ScoreRequest req) {
+        Match match = findOrThrow(id);
+        if (!authorizationService.canEditMatch(user, id)) {
+            throw new AccessDeniedException("Access denied");
+        }
+        if (match.isScoreLocked()) {
+            throw new IllegalArgumentException("Score is already locked");
+        }
+        match.setHomeScore(req.getHomeScore());
+        match.setAwayScore(req.getAwayScore());
+        match.setScoreLocked(true);
+        return toResponse(matchRepository.save(match));
+    }
+
+    @Transactional
     public MatchResponse updateAnalysis(User user, Long id, String analysis) {
         Match match = findOrThrow(id);
         if (!authorizationService.canEditMatch(user, id)) {
             throw new AccessDeniedException("Access denied");
         }
+        if (match.isAnalysisLocked()) {
+            throw new IllegalArgumentException("Analysis is already locked");
+        }
         match.setAnalysis(analysis);
+        match.setAnalysisLocked(true);
         return toResponse(matchRepository.save(match));
     }
 
@@ -184,7 +203,9 @@ public class MatchService {
                 .homeScore(match.getHomeScore())
                 .awayScore(match.getAwayScore())
                 .finalized(match.isFinalized())
+                .scoreLocked(match.isScoreLocked())
                 .analysis(match.getAnalysis())
+                .analysisLocked(match.isAnalysisLocked())
                 .gameStatsLocked(match.isGameStatsLocked())
                 .possessionPct(match.getPossessionPct())
                 .teamShots(match.getTeamShots())

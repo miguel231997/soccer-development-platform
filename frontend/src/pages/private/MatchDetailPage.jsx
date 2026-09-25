@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
-  getMatch, listPlayers, getMatchStats, getMatchEvaluations, finalizeMatch, updateMatch, updateMatchAnalysis, updateMatchGameStats,
+  getMatch, listPlayers, getMatchStats, getMatchEvaluations, finalizeMatch, updateMatch, updateMatchScore, updateMatchAnalysis, updateMatchGameStats,
 } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
 import { useAuth } from '../../context/AuthContext'
@@ -160,11 +160,13 @@ export default function MatchDetailPage() {
       {/* Player status table */}
       <div className="bg-mig-surface border border-mig-border rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-mig-border flex items-center justify-between">
-          <h2 className="font-semibold text-mig-text">Player Status</h2>
-          <span className="text-xs text-mig-dim">{roster.length} players</span>
+          <h2 className="font-semibold text-mig-text">Player Stats</h2>
+          {!isParent && <span className="text-xs text-mig-dim">{roster.length} players</span>}
         </div>
 
-        {roster.length === 0 ? (
+        {isParent && (stats ?? []).length === 0 ? (
+          <p className="px-4 py-8 text-center text-mig-dim text-sm italic">Player stats not available yet.</p>
+        ) : roster.length === 0 ? (
           <p className="px-4 py-8 text-center text-mig-muted text-sm">No active players on this team.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -242,8 +244,9 @@ export default function MatchDetailPage() {
 function PostGameAnalysis({ match, isParent }) {
   const [text, setText] = useState(match.analysis ?? '')
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [err, setErr] = useState('')
+
+  const locked = match.analysisLocked || match.finalized
 
   if (isParent) {
     if (!match.analysis) return null
@@ -255,14 +258,26 @@ function PostGameAnalysis({ match, isParent }) {
     )
   }
 
+  if (locked) {
+    return (
+      <div className="bg-mig-surface border border-mig-border rounded-lg p-5">
+        <h2 className="text-sm font-semibold text-mig-text mb-2">Post-Game Analysis <span className="text-xs font-normal text-mig-dim">(locked)</span></h2>
+        {match.analysis
+          ? <p className="text-sm text-mig-muted whitespace-pre-wrap">{match.analysis}</p>
+          : <p className="text-sm text-mig-dim italic">No analysis was entered.</p>
+        }
+      </div>
+    )
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
-    setSaving(true); setErr(''); setSaved(false)
+    setSaving(true); setErr('')
     try {
       await updateMatchAnalysis(match.id, text)
-      setSaved(true)
-    } catch (e) {
-      setErr(e?.response?.data?.message || 'Failed to save.')
+      window.location.reload()
+    } catch (ex) {
+      setErr(ex?.response?.data?.message || 'Failed to save.')
     } finally { setSaving(false) }
   }
 
@@ -272,17 +287,17 @@ function PostGameAnalysis({ match, isParent }) {
       <form onSubmit={handleSave} className="space-y-3">
         <textarea
           value={text}
-          onChange={(e) => { setText(e.target.value); setSaved(false) }}
+          onChange={(e) => setText(e.target.value)}
           rows={5}
           placeholder="Write your post-game analysis here… tactics, performance highlights, areas to improve."
           className="w-full bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors resize-y"
         />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button type="submit" disabled={saving}
             className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
             {saving ? 'Saving…' : 'Save Analysis'}
           </button>
-          {saved && <span className="text-xs text-mig-success">Saved — parents can now see this</span>}
+          <span className="text-xs text-mig-dim">Once saved, the analysis is locked</span>
           {err && <span className="text-xs text-mig-danger">{err}</span>}
         </div>
       </form>
@@ -294,30 +309,35 @@ function ScoreEntry({ match, onSaved }) {
   const [home, setHome] = useState(match.homeScore ?? '')
   const [away, setAway] = useState(match.awayScore ?? '')
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [err, setErr] = useState('')
+
+  const locked = match.scoreLocked || match.finalized
+
+  if (locked && match.homeScore != null && match.awayScore != null) {
+    return (
+      <div className="pt-2 border-t border-mig-border">
+        <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-2">Score</p>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-mig-muted">{match.homeAway === 'HOME' ? match.teamName : match.opponent}</span>
+          <span className="font-bold font-mono text-mig-text">{match.homeScore}</span>
+          <span className="text-mig-dim font-bold">–</span>
+          <span className="font-bold font-mono text-mig-text">{match.awayScore}</span>
+          <span className="text-mig-muted">{match.homeAway === 'HOME' ? match.opponent : match.teamName}</span>
+          <span className="text-xs text-mig-dim ml-1">(locked)</span>
+        </div>
+      </div>
+    )
+  }
 
   const handleSave = async (e) => {
     e.preventDefault()
     if (home === '' || away === '') return
-    setSaving(true); setErr(''); setSaved(false)
+    setSaving(true); setErr('')
     try {
-      await updateMatch(match.id, {
-        teamId: match.teamId,
-        seasonId: match.seasonId,
-        seasonPhaseId: match.seasonPhaseId ?? null,
-        competitionId: match.competitionId ?? null,
-        opponent: match.opponent,
-        matchDateTime: match.matchDateTime,
-        location: match.location ?? null,
-        homeAway: match.homeAway,
-        homeScore: Number(home),
-        awayScore: Number(away),
-      })
-      setSaved(true)
+      await updateMatchScore(match.id, Number(home), Number(away))
       onSaved()
-    } catch (e) {
-      setErr(e?.response?.data?.message || 'Failed to save score.')
+    } catch (ex) {
+      setErr(ex?.response?.data?.message || 'Failed to save score.')
     } finally { setSaving(false) }
   }
 
@@ -329,26 +349,22 @@ function ScoreEntry({ match, onSaved }) {
           <label className="text-xs text-mig-muted">{match.homeAway === 'HOME' ? match.teamName : match.opponent}</label>
           <input
             type="number" min="0" value={home}
-            onChange={(e) => { setHome(e.target.value); setSaved(false) }}
-            disabled={match.finalized}
-            className="w-14 bg-mig-bg border border-mig-border text-mig-text rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors disabled:opacity-50"
+            onChange={(e) => setHome(e.target.value)}
+            className="w-14 bg-mig-bg border border-mig-border text-mig-text rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
           />
           <span className="text-mig-dim font-bold">–</span>
           <input
             type="number" min="0" value={away}
-            onChange={(e) => { setAway(e.target.value); setSaved(false) }}
-            disabled={match.finalized}
-            className="w-14 bg-mig-bg border border-mig-border text-mig-text rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors disabled:opacity-50"
+            onChange={(e) => setAway(e.target.value)}
+            className="w-14 bg-mig-bg border border-mig-border text-mig-text rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
           />
           <label className="text-xs text-mig-muted">{match.homeAway === 'HOME' ? match.opponent : match.teamName}</label>
         </div>
-        {!match.finalized && (
-          <button type="submit" disabled={saving || home === '' || away === ''}
-            className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
-            {saving ? 'Saving…' : 'Save Score'}
-          </button>
-        )}
-        {saved && <span className="text-xs text-mig-success">Score saved</span>}
+        <button type="submit" disabled={saving || home === '' || away === ''}
+          className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save Score'}
+        </button>
+        <span className="text-xs text-mig-dim">Once saved, the score is locked</span>
         {err && <span className="text-xs text-mig-danger">{err}</span>}
       </form>
     </div>
@@ -418,7 +434,14 @@ function GameStats({ match, isParent }) {
     )
   }
 
-  if (isParent) return null
+  if (isParent) {
+    return (
+      <div className="bg-mig-surface border border-mig-border rounded-lg p-5">
+        <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-2">Game Stats</p>
+        <p className="text-sm text-mig-dim italic">Game stats not available yet.</p>
+      </div>
+    )
+  }
 
   const handleChange = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }))

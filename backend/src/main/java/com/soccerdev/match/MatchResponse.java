@@ -35,7 +35,10 @@ public class MatchResponse {
 
     private boolean finalized;
 
+    private boolean scoreLocked;
+
     private String analysis;
+    private boolean analysisLocked;
 
     private boolean gameStatsLocked;
     private Integer possessionPct;

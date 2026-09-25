@@ -12,6 +12,7 @@ export const listTeamMatches = (teamId) => api.get(`/api/teams/${teamId}/matches
 export const getMatch = (matchId) => api.get(`/api/matches/${matchId}`).then((r) => r.data.data)
 export const createMatch = (data) => api.post('/api/matches', data).then((r) => r.data.data)
 export const updateMatch = (matchId, data) => api.put(`/api/matches/${matchId}`, data).then((r) => r.data.data)
+export const updateMatchScore = (matchId, homeScore, awayScore) => api.patch(`/api/matches/${matchId}/score`, { homeScore, awayScore }).then((r) => r.data.data)
 export const updateMatchAnalysis = (matchId, analysis) => api.patch(`/api/matches/${matchId}/analysis`, { analysis }).then((r) => r.data.data)
 export const updateMatchGameStats = (matchId, data) => api.patch(`/api/matches/${matchId}/game-stats`, data).then((r) => r.data.data)
 export const finalizeMatch = (matchId) => api.post(`/api/matches/${matchId}/finalize`).then((r) => r.data.data)

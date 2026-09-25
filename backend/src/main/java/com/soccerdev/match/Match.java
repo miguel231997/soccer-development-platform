@@ -69,8 +69,16 @@ public class Match extends BaseEntity {
     @Builder.Default
     private boolean finalized = false;
 
+    @Column(name = "score_locked", nullable = false)
+    @Builder.Default
+    private boolean scoreLocked = false;
+
     @Column(columnDefinition = "TEXT")
     private String analysis;
+
+    @Column(name = "analysis_locked", nullable = false)
+    @Builder.Default
+    private boolean analysisLocked = false;
 
     // Team-level game stats (locked once saved)
     @Column(name = "game_stats_locked", nullable = false)
