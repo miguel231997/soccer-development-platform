@@ -363,6 +363,7 @@ function GameStats({ match, isParent }) {
     teamCompletedPasses: match.teamCompletedPasses ?? '',
     opponentCompletedPasses: match.opponentCompletedPasses ?? '',
     teamTouches: match.teamTouches ?? '',
+    teamPassCompletionPct: match.teamPassCompletionPct ?? '',
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -402,8 +403,14 @@ function GameStats({ match, isParent }) {
           )}
           {match.teamTouches != null && (
             <div>
-              <p className="text-xs text-mig-dim mb-1">Our Touches</p>
+              <p className="text-xs text-mig-dim mb-1">Touches Near Opp. Box</p>
               <p className="text-lg font-bold text-mig-text">{match.teamTouches}</p>
+            </div>
+          )}
+          {match.teamPassCompletionPct != null && (
+            <div>
+              <p className="text-xs text-mig-dim mb-1">Pass Completion</p>
+              <p className="text-lg font-bold text-mig-text">{match.teamPassCompletionPct}%</p>
             </div>
           )}
         </div>
@@ -429,6 +436,7 @@ function GameStats({ match, isParent }) {
       if (form.teamCompletedPasses !== '') payload.teamCompletedPasses = Number(form.teamCompletedPasses)
       if (form.opponentCompletedPasses !== '') payload.opponentCompletedPasses = Number(form.opponentCompletedPasses)
       if (form.teamTouches !== '') payload.teamTouches = Number(form.teamTouches)
+      if (form.teamPassCompletionPct !== '') payload.teamPassCompletionPct = Number(form.teamPassCompletionPct)
       await updateMatchGameStats(match.id, payload)
       setSaved(true)
       setTimeout(() => window.location.reload(), 600)
@@ -441,9 +449,10 @@ function GameStats({ match, isParent }) {
     <div className="bg-mig-surface border border-mig-border rounded-lg p-5">
       <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-4">Game Stats</p>
       <form onSubmit={handleSave} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatInput label="Possession %" value={form.possessionPct} onChange={handleChange('possessionPct')} min={0} max={100} />
-          <StatInput label="Our Touches" value={form.teamTouches} onChange={handleChange('teamTouches')} min={0} />
+          <StatInput label="Touches Near Opp. Box" value={form.teamTouches} onChange={handleChange('teamTouches')} min={0} />
+          <StatInput label="Pass Completion %" value={form.teamPassCompletionPct} onChange={handleChange('teamPassCompletionPct')} min={0} max={100} />
         </div>
         <div>
           <p className="text-xs text-mig-dim mb-2">Shots</p>

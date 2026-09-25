@@ -94,4 +94,7 @@ public class Match extends BaseEntity {
 
     @Column(name = "team_touches")
     private Integer teamTouches;
+
+    @Column(name = "team_pass_completion_pct")
+    private Integer teamPassCompletionPct;
 }

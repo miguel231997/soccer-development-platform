@@ -26,4 +26,7 @@ public class GameStatsRequest {
 
     @Min(0)
     private Integer teamTouches;
+
+    @Min(0) @Max(100)
+    private Integer teamPassCompletionPct;
 }

@@ -44,6 +44,7 @@ public class MatchResponse {
     private Integer teamCompletedPasses;
     private Integer opponentCompletedPasses;
     private Integer teamTouches;
+    private Integer teamPassCompletionPct;
 
     private Instant createdAt;
     private Instant updatedAt;

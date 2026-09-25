@@ -119,6 +119,7 @@ public class MatchService {
         match.setTeamCompletedPasses(req.getTeamCompletedPasses());
         match.setOpponentCompletedPasses(req.getOpponentCompletedPasses());
         match.setTeamTouches(req.getTeamTouches());
+        match.setTeamPassCompletionPct(req.getTeamPassCompletionPct());
         match.setGameStatsLocked(true);
         return toResponse(matchRepository.save(match));
     }
@@ -191,6 +192,7 @@ public class MatchService {
                 .teamCompletedPasses(match.getTeamCompletedPasses())
                 .opponentCompletedPasses(match.getOpponentCompletedPasses())
                 .teamTouches(match.getTeamTouches())
+                .teamPassCompletionPct(match.getTeamPassCompletionPct())
                 .createdAt(match.getCreatedAt())
                 .updatedAt(match.getUpdatedAt());
 
