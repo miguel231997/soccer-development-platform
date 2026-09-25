@@ -56,6 +56,13 @@ export default function TeamDetailPage() {
           {team.gender && <Badge color="gray">{team.gender}</Badge>}
           {team.competitiveLevel && <Badge color="orange">{team.competitiveLevel}</Badge>}
         </div>
+        {(team.wins > 0 || team.draws > 0 || team.losses > 0) && (
+          <div className="flex items-center gap-4 mt-2">
+            <span className="text-sm font-semibold text-mig-success">{team.wins}W</span>
+            <span className="text-sm font-semibold text-mig-warning">{team.draws}D</span>
+            <span className="text-sm font-semibold text-mig-danger">{team.losses}L</span>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}

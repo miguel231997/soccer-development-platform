@@ -99,6 +99,13 @@ export default function DashboardPage() {
                     {t.gender && <span className="text-xs bg-mig-card text-mig-dim border border-mig-border px-2 py-0.5 rounded">{t.gender}</span>}
                     {t.competitiveLevel && <span className="text-xs bg-mig-orange/10 text-mig-orange border border-mig-orange/20 px-2 py-0.5 rounded">{t.competitiveLevel}</span>}
                   </div>
+                  {(t.wins > 0 || t.draws > 0 || t.losses > 0) && (
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-xs font-semibold text-mig-success">{t.wins}W</span>
+                      <span className="text-xs font-semibold text-mig-warning">{t.draws}D</span>
+                      <span className="text-xs font-semibold text-mig-danger">{t.losses}L</span>
+                    </div>
+                  )}
                   {t.clubName && <p className="text-xs text-mig-dim mt-1">{t.clubName}</p>}
                 </Link>
               ))}
