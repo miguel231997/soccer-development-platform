@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getPlayer, getPlayerStats, getPlayerEvaluations, getPlayerSeasonStats, uploadPlayerImage } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
+import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 import PlayerSeasonStatsTab from '../../components/PlayerSeasonStatsTab'
@@ -33,6 +34,8 @@ const RATING_KEYS = [
 
 export default function PlayerDetailPage() {
   const { playerId } = useParams()
+  const { hasRole } = useAuth()
+  const isParent = hasRole('ROLE_PARENT') && !hasRole('ROLE_COACH') && !hasRole('ROLE_ADMIN') && !hasRole('ROLE_DIRECTOR')
   const [tab, setTab] = useState('info')
   const [imageUrl, setImageUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -219,7 +222,7 @@ export default function PlayerDetailPage() {
             <p className="text-mig-muted text-sm">No evaluations recorded.</p>
           )}
           {!eLoading && (evals ?? []).length > 0 && (
-            <EvaluationsTab evals={evals} playerId={playerId} />
+            <EvaluationsTab evals={evals} playerId={playerId} isParent={isParent} />
           )}
         </>
       )}
@@ -227,7 +230,7 @@ export default function PlayerDetailPage() {
   )
 }
 
-function EvaluationsTab({ evals, playerId }) {
+function EvaluationsTab({ evals, playerId, isParent }) {
   // Group evaluations by match
   const byMatch = {}
   evals.forEach((ev) => {
@@ -298,7 +301,7 @@ function EvaluationsTab({ evals, playerId }) {
                       {ev.parentVisibleNotes}
                     </div>
                   )}
-                  {ev.coachOnlyNotes && (
+                  {!isParent && ev.coachOnlyNotes && (
                     <div className="mt-1 text-sm text-mig-warning bg-mig-warning/5 border border-mig-warning/20 rounded p-2">
                       <span className="text-xs font-medium text-mig-warning block mb-0.5">Coach only</span>
                       {ev.coachOnlyNotes}
