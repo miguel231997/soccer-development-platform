@@ -47,6 +47,9 @@ export const getMatchEvaluations = (matchId) =>
 export const getPlayerSeasonStats = (playerId) =>
   api.get(`/api/players/${playerId}/season-stats`).then((r) => r.data.data)
 
+export const getPlayerParents = (playerId) =>
+  api.get(`/api/players/${playerId}/parents`).then((r) => r.data.data)
+
 export const getPlayerEvaluations = (playerId) =>
   api.get(`/api/players/${playerId}/evaluations`).then((r) => r.data.data)
 export const createEvaluation = (matchId, playerId, data) =>

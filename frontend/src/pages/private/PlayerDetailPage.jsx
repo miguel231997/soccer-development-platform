@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getPlayer, getPlayerStats, getPlayerEvaluations, getPlayerSeasonStats, uploadPlayerImage } from '../../api/coach'
+import { getPlayer, getPlayerStats, getPlayerEvaluations, getPlayerSeasonStats, getPlayerParents, uploadPlayerImage } from '../../api/coach'
 import { useFetch } from '../../hooks/useFetch'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
@@ -46,11 +46,13 @@ export default function PlayerDetailPage() {
   const statsFetcher       = useCallback(() => getPlayerStats(playerId), [playerId])
   const evalsFetcher       = useCallback(() => getPlayerEvaluations(playerId), [playerId])
   const seasonStatsFetcher = useCallback(() => getPlayerSeasonStats(playerId), [playerId])
+  const parentsFetcher     = useCallback(() => isParent ? Promise.resolve([]) : getPlayerParents(playerId), [playerId, isParent])
 
   const { data: player,      loading: pLoading,  error: pError } = useFetch(playerFetcher, [playerId])
   const { data: stats,       loading: sLoading }                 = useFetch(statsFetcher,  [playerId])
   const { data: evals,       loading: eLoading }                 = useFetch(evalsFetcher,  [playerId])
   const { data: seasonStats, loading: ssLoading, error: ssError } = useFetch(seasonStatsFetcher, [playerId])
+  const { data: parents }                                         = useFetch(parentsFetcher, [playerId])
 
   const handleImagePick = async (e) => {
     const file = e.target.files?.[0]
@@ -146,20 +148,36 @@ export default function PlayerDetailPage() {
 
       {/* Info tab */}
       {tab === 'info' && (
-        <div className="bg-mig-surface border border-mig-border rounded-lg p-5 grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-          <InfoRow label="Primary position" value={player.primaryPosition} />
-          <InfoRow label="Secondary position" value={player.secondaryPosition} />
-          <InfoRow label="Strong foot" value={player.strongFoot} />
-          <InfoRow label="Date of birth" value={dob} />
-          <InfoRow label="Status" value={player.active ? 'Active' : 'Inactive'} />
-          <InfoRow label="Public profile" value={player.publicProfileEnabled ? 'Enabled' : 'Disabled'} />
-          {player.teams?.map((t) => (
-            <InfoRow
-              key={t.teamId}
-              label={t.active ? 'Current team' : 'Former team'}
-              value={<Link to={`/teams/${t.teamId}`} className="text-mig-orange hover:underline">{t.teamName}</Link>}
-            />
-          ))}
+        <div className="space-y-4">
+          <div className="bg-mig-surface border border-mig-border rounded-lg p-5 grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+            <InfoRow label="Primary position" value={player.primaryPosition} />
+            <InfoRow label="Secondary position" value={player.secondaryPosition} />
+            <InfoRow label="Strong foot" value={player.strongFoot} />
+            <InfoRow label="Date of birth" value={dob} />
+            <InfoRow label="Status" value={player.active ? 'Active' : 'Inactive'} />
+            <InfoRow label="Public profile" value={player.publicProfileEnabled ? 'Enabled' : 'Disabled'} />
+            {player.teams?.map((t) => (
+              <InfoRow
+                key={t.teamId}
+                label={t.active ? 'Current team' : 'Former team'}
+                value={<Link to={`/teams/${t.teamId}`} className="text-mig-orange hover:underline">{t.teamName}</Link>}
+              />
+            ))}
+          </div>
+
+          {!isParent && (parents ?? []).length > 0 && (
+            <div className="bg-mig-surface border border-mig-border rounded-lg p-5">
+              <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-3">Parents / Guardians</p>
+              <div className="space-y-2">
+                {parents.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-mig-text">{p.firstName} {p.lastName}</span>
+                    <a href={`mailto:${p.email}`} className="text-mig-orange hover:underline text-xs">{p.email}</a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

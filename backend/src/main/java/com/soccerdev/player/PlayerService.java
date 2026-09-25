@@ -25,6 +25,7 @@ public class PlayerService {
     private final TeamRepository teamRepository;
     private final PlayerTeamAssignmentRepository playerTeamAssignmentRepository;
     private final AuthorizationService authorizationService;
+    private final ParentPlayerRelationshipRepository parentPlayerRelationshipRepository;
 
     public List<PlayerResponse> list(User user) {
         List<Player> players = switch (user.getRole()) {
@@ -45,6 +46,21 @@ public class PlayerService {
             throw new AccessDeniedException("Access denied");
         }
         return toResponse(player);
+    }
+
+    public List<PlayerParentDto> listParents(User user, Long playerId) {
+        if (!authorizationService.canEditPlayer(user, playerId)) {
+            throw new AccessDeniedException("Access denied");
+        }
+        return parentPlayerRelationshipRepository.findByPlayerId(playerId).stream()
+                .map(r -> PlayerParentDto.builder()
+                        .id(r.getParentUser().getId())
+                        .firstName(r.getParentUser().getFirstName())
+                        .lastName(r.getParentUser().getLastName())
+                        .email(r.getParentUser().getEmail())
+                        .relationshipType(r.getRelationshipType().name())
+                        .build())
+                .toList();
     }
 
     @Transactional

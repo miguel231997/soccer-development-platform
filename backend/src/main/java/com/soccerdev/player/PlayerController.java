@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/players")
 @RequiredArgsConstructor
@@ -72,6 +73,14 @@ public class PlayerController {
             @RequestParam boolean enabled) {
         User user = currentUserService.getUser(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(playerService.setPublicProfile(user, id, enabled)));
+    }
+
+    @GetMapping("/{id}/parents")
+    public ResponseEntity<ApiResponse<List<PlayerParentDto>>> listParents(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        User user = currentUserService.getUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.ok(playerService.listParents(user, id)));
     }
 
     @PostMapping("/{playerId}/profile-image")
