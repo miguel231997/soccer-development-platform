@@ -1,19 +1,31 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { lookupTeamInviteCode, listTeamPlayers, submitPlayerRegistration } from '../../api/parent'
+import { useEffect, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { listMyTeams, listTeamPlayersById, joinTeam, submitPlayerRegistration } from '../../api/parent'
 import FormError from '../../components/FormError'
+import Spinner from '../../components/Spinner'
 
 const POSITIONS = ['GK','CB','LB','RB','LWB','RWB','CDM','CM','CAM','LM','RM','LW','RW','CF','ST']
 
 export default function RegisterChildPage() {
   const navigate = useNavigate()
-  // steps: 'code' → 'select' → 'details'
-  const [step, setStep] = useState('code')
-  const [teamInfo, setTeamInfo] = useState(null)   // { teamId, teamName, code }
+  const location = useLocation()
+
+  // steps: 'team' → 'select' → 'details'
+  const [step, setStep] = useState('team')
+  const [teamInfo, setTeamInfo] = useState(null)   // { teamId, teamName }
   const [teamPlayers, setTeamPlayers] = useState([])
-  const [codeInput, setCodeInput] = useState('')
-  const [codeError, setCodeError] = useState('')
-  const [codeLoading, setCodeLoading] = useState(false)
+  const [playersLoading, setPlayersLoading] = useState(false)
+
+  // For parents who arrive here post-registration (team already known)
+  // or for team picker (existing parents)
+  const [myTeams, setMyTeams] = useState([])
+  const [teamsLoading, setTeamsLoading] = useState(false)
+
+  // For existing parents joining an additional team via code
+  const [joinCode, setJoinCode] = useState('')
+  const [joinLoading, setJoinLoading] = useState(false)
+  const [joinError, setJoinError] = useState('')
+  const [showJoinCode, setShowJoinCode] = useState(false)
 
   const [form, setForm] = useState({
     firstName: '', lastName: '', dateOfBirth: '',
@@ -24,23 +36,52 @@ export default function RegisterChildPage() {
 
   const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }))
 
-  const handleCodeLookup = async (e) => {
-    e.preventDefault()
-    setCodeError('')
-    setCodeLoading(true)
+  // If coming from registration with team pre-filled, skip straight to player select
+  useEffect(() => {
+    const { teamId, teamName } = location.state ?? {}
+    if (teamId && teamName) {
+      selectTeam({ teamId, teamName })
+    } else {
+      loadMyTeams()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const loadMyTeams = async () => {
+    setTeamsLoading(true)
     try {
-      const code = codeInput.trim()
-      const [info, players] = await Promise.all([
-        lookupTeamInviteCode(code),
-        listTeamPlayers(code),
-      ])
-      setTeamInfo({ ...info, code })
-      setTeamPlayers(players ?? [])
-      setStep('select')
-    } catch (err) {
-      setCodeError(err?.response?.data?.message || 'Invalid or inactive team code.')
+      const teams = await listMyTeams()
+      setMyTeams(teams ?? [])
     } finally {
-      setCodeLoading(false)
+      setTeamsLoading(false)
+    }
+  }
+
+  const selectTeam = async ({ teamId, teamName }) => {
+    setTeamInfo({ teamId, teamName })
+    setPlayersLoading(true)
+    try {
+      const players = await listTeamPlayersById(teamId)
+      setTeamPlayers(players ?? [])
+    } finally {
+      setPlayersLoading(false)
+    }
+    setStep('select')
+  }
+
+  const handleJoinCode = async (e) => {
+    e.preventDefault()
+    setJoinError('')
+    setJoinLoading(true)
+    try {
+      const result = await joinTeam(joinCode.trim())
+      await selectTeam({ teamId: result.teamId, teamName: result.teamName })
+      setJoinCode('')
+      setShowJoinCode(false)
+    } catch (err) {
+      setJoinError(err?.response?.data?.message || 'Invalid or inactive code.')
+    } finally {
+      setJoinLoading(false)
     }
   }
 
@@ -48,10 +89,7 @@ export default function RegisterChildPage() {
     setFormError('')
     setSaving(true)
     try {
-      await submitPlayerRegistration({
-        teamInviteCode: teamInfo.code,
-        existingPlayerId: player.id,
-      })
+      await submitPlayerRegistration({ teamId: teamInfo.teamId, existingPlayerId: player.id })
       navigate('/parent/children', { state: { registered: `${player.firstName} ${player.lastName}` } })
     } catch (err) {
       setFormError(err?.response?.data?.message || 'Failed to submit. Please try again.')
@@ -65,7 +103,7 @@ export default function RegisterChildPage() {
     setSaving(true)
     try {
       await submitPlayerRegistration({
-        teamInviteCode: teamInfo.code,
+        teamId: teamInfo.teamId,
         firstName: form.firstName,
         lastName: form.lastName,
         dateOfBirth: form.dateOfBirth,
@@ -92,41 +130,73 @@ export default function RegisterChildPage() {
         <h1 className="text-2xl font-black tracking-tight text-mig-text">Register a Child</h1>
       </div>
 
-      {/* Step 1 — Enter code */}
-      {step === 'code' && (
+      {/* Step 1 — Pick a team */}
+      {step === 'team' && (
         <div className="bg-mig-surface border border-mig-border rounded-lg p-6 space-y-4">
           <div>
-            <h2 className="font-semibold text-mig-text">Step 1 — Enter team code</h2>
-            <p className="text-sm text-mig-muted mt-1">
-              Ask your club administrator for the team's player registration code.
-              This code is different from the code you used to create your account.
-            </p>
+            <h2 className="font-semibold text-mig-text">Which team is your child on?</h2>
+            <p className="text-sm text-mig-muted mt-1">Select one of your teams below.</p>
           </div>
-          <FormError message={codeError} />
-          <form onSubmit={handleCodeLookup} className="flex gap-3">
-            <input
-              type="text"
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-              placeholder="e.g. A1B2C3D4"
-              required
-              className={`flex-1 ${inputCls} font-mono`}
-            />
-            <button type="submit" disabled={codeLoading || !codeInput.trim()}
-              className="bg-mig-orange hover:bg-mig-orange-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
-              {codeLoading ? 'Checking…' : 'Next'}
-            </button>
-          </form>
+
+          {teamsLoading && <Spinner label="Loading teams…" />}
+
+          {!teamsLoading && myTeams.length > 0 && (
+            <ul className="divide-y divide-mig-border border border-mig-border rounded-xl overflow-hidden">
+              {myTeams.map((t) => (
+                <li key={t.id}>
+                  <button
+                    onClick={() => selectTeam({ teamId: t.id, teamName: t.name })}
+                    className="w-full text-left px-4 py-3 hover:bg-mig-card transition-colors"
+                  >
+                    <p className="font-medium text-mig-text">{t.name}</p>
+                    <p className="text-xs text-mig-dim">{t.clubName}{t.ageGroup && ` · ${t.ageGroup}`}</p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!teamsLoading && myTeams.length === 0 && (
+            <p className="text-sm text-mig-muted italic">You haven't joined any teams yet. Use a registration code below to join your child's team.</p>
+          )}
+
+          {/* Join a new team via code */}
+          <div className="pt-2 border-t border-mig-border">
+            {!showJoinCode ? (
+              <button onClick={() => setShowJoinCode(true)} className="text-sm text-mig-orange hover:underline">
+                My child's team isn't listed — join with a code →
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm text-mig-muted">Enter the registration code your club admin gave you.</p>
+                <FormError message={joinError} />
+                <form onSubmit={handleJoinCode} className="flex gap-3">
+                  <input
+                    type="text"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. A1B2C3D4"
+                    required
+                    className={`flex-1 ${inputCls} font-mono`}
+                  />
+                  <button type="submit" disabled={joinLoading || !joinCode.trim()}
+                    className="bg-mig-orange hover:bg-mig-orange-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
+                    {joinLoading ? 'Joining…' : 'Join'}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* Step 2 — Select existing player or add new */}
       {step === 'select' && teamInfo && (
         <div className="space-y-4">
-          <TeamBanner teamInfo={teamInfo} onReset={() => { setStep('code'); setTeamInfo(null) }} />
+          <TeamBanner teamInfo={teamInfo} onReset={() => { setStep('team'); setTeamInfo(null) }} />
 
           <div className="bg-mig-surface border border-mig-border rounded-lg p-6 space-y-4">
-            <h2 className="font-semibold text-mig-text">Step 2 — Is your child already on this team?</h2>
+            <h2 className="font-semibold text-mig-text">Is your child already on this team?</h2>
             <p className="text-sm text-mig-muted">
               If a coach has already added your child, select them below to request a parent link.
               Otherwise, add them as a new player.
@@ -134,7 +204,9 @@ export default function RegisterChildPage() {
 
             <FormError message={formError} />
 
-            {teamPlayers.length > 0 ? (
+            {playersLoading && <Spinner label="Loading roster…" />}
+
+            {!playersLoading && teamPlayers.length > 0 && (
               <ul className="divide-y divide-mig-border border border-mig-border rounded-xl overflow-hidden">
                 {teamPlayers.map((p) => (
                   <li key={p.id} className="flex items-center gap-3 px-4 py-3 hover:bg-mig-card transition-colors">
@@ -152,9 +224,7 @@ export default function RegisterChildPage() {
                           </span>
                         )}
                       </p>
-                      {p.primaryPosition && (
-                        <p className="text-xs text-mig-dim">{p.primaryPosition}</p>
-                      )}
+                      {p.primaryPosition && <p className="text-xs text-mig-dim">{p.primaryPosition}</p>}
                     </div>
                     <button
                       onClick={() => handleSelectExisting(p)}
@@ -166,15 +236,14 @@ export default function RegisterChildPage() {
                   </li>
                 ))}
               </ul>
-            ) : (
+            )}
+
+            {!playersLoading && teamPlayers.length === 0 && (
               <p className="text-sm text-mig-muted italic">No players have been added to this team yet.</p>
             )}
 
             <div className="pt-2 border-t border-mig-border">
-              <button
-                onClick={() => setStep('details')}
-                className="text-sm text-mig-orange hover:underline"
-              >
+              <button onClick={() => setStep('details')} className="text-sm text-mig-orange hover:underline">
                 My child isn't listed — add them as a new player →
               </button>
             </div>
@@ -185,12 +254,12 @@ export default function RegisterChildPage() {
       {/* Step 3 — New child details form */}
       {step === 'details' && teamInfo && (
         <div className="space-y-4">
-          <TeamBanner teamInfo={teamInfo} onReset={() => { setStep('code'); setTeamInfo(null) }} />
+          <TeamBanner teamInfo={teamInfo} onReset={() => { setStep('team'); setTeamInfo(null) }} />
 
           <div className="bg-mig-surface border border-mig-border rounded-lg p-6 space-y-4">
             <div className="flex items-center gap-3">
               <button onClick={() => setStep('select')} className="text-xs text-mig-muted hover:text-mig-orange transition-colors font-medium uppercase tracking-wide">← Back</button>
-              <h2 className="font-semibold text-mig-text">Step 3 — Child's details</h2>
+              <h2 className="font-semibold text-mig-text">Child's details</h2>
             </div>
             <FormError message={formError} />
 
@@ -265,7 +334,6 @@ function TeamBanner({ teamInfo, onReset }) {
     <div className="bg-mig-success/10 border border-mig-success/20 rounded-lg px-4 py-3 flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-mig-success">Team: {teamInfo.teamName}</p>
-        <p className="text-xs text-mig-success/70">Code verified.</p>
       </div>
       <button onClick={onReset} className="text-xs text-mig-success underline">Change</button>
     </div>

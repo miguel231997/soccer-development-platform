@@ -1,7 +1,7 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { listMyChildren, listMyRegistrationRequests } from '../../api/parent'
+import { listMyChildren, listMyRegistrationRequests, joinTeam } from '../../api/parent'
 import { useFetch } from '../../hooks/useFetch'
 
 export default function ParentDashboardPage() {
@@ -14,6 +14,25 @@ export default function ParentDashboardPage() {
   const { data: requests } = useFetch(requestsFetcher)
 
   const pendingCount = (requests ?? []).filter((r) => r.status === 'PENDING').length
+
+  const [joinCode, setJoinCode] = useState('')
+  const [joining, setJoining] = useState(false)
+  const [joinResult, setJoinResult] = useState(null)
+  const [joinError, setJoinError] = useState('')
+
+  const handleJoinTeam = async (e) => {
+    e.preventDefault()
+    setJoinError(''); setJoinResult(null); setJoining(true)
+    try {
+      const result = await joinTeam(joinCode.trim())
+      setJoinResult(result.teamName)
+      setJoinCode('')
+    } catch (err) {
+      setJoinError(err?.response?.data?.message || 'Invalid or inactive code.')
+    } finally {
+      setJoining(false)
+    }
+  }
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -39,11 +58,39 @@ export default function ParentDashboardPage() {
         <NavCard
           onClick={() => navigate('/parent/children/register')}
           title="Register a Child"
-          subtitle="Add a child to a team using a team invite code"
+          subtitle="Add a child to one of your teams"
           icon={<AddPersonIcon />}
           accent
         />
       </div>
+
+      {/* Join a new team */}
+      <section className="bg-mig-surface border border-mig-border rounded-lg p-5 space-y-3">
+        <div>
+          <p className="font-semibold text-mig-text text-sm">Join a new team</p>
+          <p className="text-xs text-mig-muted mt-0.5">Enter a registration code from your club admin to join another team.</p>
+        </div>
+        {joinResult && (
+          <p className="text-sm text-mig-success">Joined <strong>{joinResult}</strong>. You can now register a child on that team.</p>
+        )}
+        {joinError && <p className="text-sm text-mig-danger">{joinError}</p>}
+        <form onSubmit={handleJoinTeam} className="flex gap-3">
+          <input
+            type="text"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            placeholder="Registration code"
+            className="flex-1 bg-mig-bg border border-mig-border text-mig-text placeholder-mig-dim rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={joining || !joinCode.trim()}
+            className="bg-mig-orange hover:bg-mig-orange-dark text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {joining ? 'Joining…' : 'Join'}
+          </button>
+        </form>
+      </section>
 
       {children && children.length > 0 && (
         <section className="space-y-3">

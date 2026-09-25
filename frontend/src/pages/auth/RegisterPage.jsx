@@ -24,8 +24,13 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       const user = await register(form)
-      if (user?.role === 'PARENT') navigate('/parent')
-      else navigate('/dashboard')
+      if (user?.role === 'PARENT') {
+        navigate('/parent/children/register', {
+          state: { teamId: user.teamId, teamName: user.teamName },
+        })
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err) {
       const body = err?.response?.data
       if (body?.data && typeof body.data === 'object') {

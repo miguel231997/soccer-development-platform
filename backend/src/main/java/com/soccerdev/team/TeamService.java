@@ -5,8 +5,12 @@ import com.soccerdev.club.ClubRepository;
 import com.soccerdev.match.HomeAway;
 import com.soccerdev.match.Match;
 import com.soccerdev.match.MatchRepository;
+import com.soccerdev.onboarding.TeamPlayerDto;
+import com.soccerdev.player.Player;
+import com.soccerdev.player.PlayerRepository;
 import com.soccerdev.security.AuthorizationService;
 import com.soccerdev.user.User;
+import com.soccerdev.user.UserRole;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -25,6 +29,8 @@ public class TeamService {
     private final ClubRepository clubRepository;
     private final MatchRepository matchRepository;
     private final AuthorizationService authorizationService;
+    private final TeamMembershipRepository teamMembershipRepository;
+    private final PlayerRepository playerRepository;
 
     public List<TeamResponse> list(User user) {
         List<Team> teams = switch (user.getRole()) {
@@ -87,6 +93,32 @@ public class TeamService {
             throw new AccessDeniedException("Access denied");
         }
         teamRepository.deleteById(id);
+    }
+
+    public List<TeamResponse> listMyTeams(User user) {
+        return teamMembershipRepository.findByUserId(user.getId()).stream()
+                .map(tm -> toResponse(tm.getTeam()))
+                .toList();
+    }
+
+    public List<TeamPlayerDto> listPlayersForTeam(User user, Long teamId) {
+        Team team = findOrThrow(teamId);
+        boolean isMember = teamMembershipRepository.existsByUserIdAndTeamId(user.getId(), teamId);
+        boolean isStaff = user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.DIRECTOR;
+        if (!isMember && !isStaff) {
+            throw new AccessDeniedException("Access denied");
+        }
+        return playerRepository.findByTeamId(teamId).stream()
+                .filter(Player::isActive)
+                .map(p -> TeamPlayerDto.builder()
+                        .id(p.getId())
+                        .firstName(p.getFirstName())
+                        .lastName(p.getLastName())
+                        .primaryPosition(p.getPrimaryPosition() != null ? p.getPrimaryPosition().name() : null)
+                        .jerseyNumber(p.getJerseyNumber())
+                        .profileImageUrl(p.getProfileImageUrl())
+                        .build())
+                .toList();
     }
 
     private Team findOrThrow(Long id) {

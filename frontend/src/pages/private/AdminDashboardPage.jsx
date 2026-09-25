@@ -3,7 +3,6 @@ import {
   listClubs, createClub,
   listAllTeams, createTeam,
   listRegistrationCodes, createRegistrationCode, disableRegistrationCode,
-  listTeamInviteCodes, createTeamInviteCode, disableTeamInviteCode,
   listRegistrationRequests, approveRegistrationRequest, rejectRegistrationRequest,
 } from '../../api/admin'
 import { useFetch } from '../../hooks/useFetch'
@@ -11,7 +10,7 @@ import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 import FormError from '../../components/FormError'
 
-const TABS = ['Clubs & Teams', 'Registration Codes', 'Team Codes', 'Player Requests']
+const TABS = ['Clubs & Teams', 'Registration Codes', 'Player Requests']
 
 const POSITIONS = ['GK','CB','LB','RB','LWB','RWB','CDM','CM','CAM','LM','RM','LW','RW','CF','ST']
 const STRONG_FOOT = ['RIGHT','LEFT','BOTH']
@@ -336,143 +335,6 @@ function RegistrationCodesTab() {
   )
 }
 
-// ── Team Codes tab ───────────────────────────────────────────────────────────
-// These codes are for parents to link children to a team (separate from registration
-// codes, which are for coach/parent account creation).
-
-function TeamCodesTab() {
-  const teamsFetcher = useCallback(() => listAllTeams(), [])
-  const codesFetcher = useCallback(() => listTeamInviteCodes(), [])
-
-  const { data: teams } = useFetch(teamsFetcher)
-  const { data: codes, loading, error } = useFetch(codesFetcher)
-
-  const [teamId, setTeamId] = useState('')
-  const [maxUses, setMaxUses] = useState('20')
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState('')
-  const [localCodes, setLocalCodes] = useState(null)
-
-  const allCodes = localCodes ?? codes ?? []
-  const active   = allCodes.filter((c) => c.active)
-  const inactive = allCodes.filter((c) => !c.active)
-
-  const handleCreate = async (e) => {
-    e.preventDefault()
-    setSaveError('')
-    setSaving(true)
-    try {
-      const created = await createTeamInviteCode({
-        teamId: Number(teamId),
-        maxUses: maxUses ? Number(maxUses) : null,
-      })
-      setLocalCodes((prev) => {
-        const current = prev ?? codes ?? []
-        if (current.some((c) => c.id === created.id)) return current
-        return [created, ...current]
-      })
-      setTeamId('')
-      setMaxUses('20')
-    } catch (err) {
-      setSaveError(err?.response?.data?.message || 'Failed to create code.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleDisable = async (id) => {
-    try {
-      const updated = await disableTeamInviteCode(id)
-      setLocalCodes(allCodes.map((c) => (c.id === id ? updated : c)))
-    } catch { /* ignore */ }
-  }
-
-  return (
-    <div className="space-y-6">
-      <Section title="Generate Team Code">
-        <p className="text-sm text-mig-muted mb-4">
-          Team codes let parents register their children to a specific team.
-          They are separate from registration codes (which are for coach/parent accounts).
-        </p>
-        <FormError message={saveError} />
-        <form onSubmit={handleCreate} className="space-y-3">
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Team *">
-              <Select value={teamId} onChange={(e) => setTeamId(e.target.value)} required>
-                <option value="">Select team…</option>
-                {(teams ?? []).map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Max uses">
-              <Input type="number" min="1" value={maxUses} onChange={(e) => setMaxUses(e.target.value)} placeholder="Unlimited" />
-            </Field>
-          </div>
-          <Btn type="submit" disabled={saving || !teamId}>{saving ? 'Generating…' : 'Generate Code'}</Btn>
-        </form>
-      </Section>
-
-      {loading && <Spinner label="Loading codes…" />}
-      {error && <ErrorAlert message={error} />}
-
-      {active.length > 0 && (
-        <Section title={`Active Codes (${active.length})`}>
-          <div className="space-y-2">
-            {active.map((c) => (
-              <CodeRow key={c.id} code={c} onDisable={() => handleDisable(c.id)} />
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {inactive.length > 0 && (
-        <Section title={`Inactive Codes (${inactive.length})`}>
-          <div className="space-y-2 opacity-60">
-            {inactive.map((c) => (
-              <CodeRow key={c.id} code={c} disabled />
-            ))}
-          </div>
-        </Section>
-      )}
-    </div>
-  )
-}
-
-function CodeRow({ code, onDisable, disabled }) {
-  const [copied, setCopied] = useState(false)
-  const copy = () => {
-    navigator.clipboard.writeText(code.code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }
-
-  return (
-    <div className={`flex items-center justify-between gap-3 p-3 rounded-lg border ${disabled ? 'border-mig-border bg-mig-card' : 'border-mig-border bg-mig-bg'}`}>
-      <div>
-        <p className={`font-mono font-semibold text-sm ${disabled ? 'line-through text-mig-dim' : 'text-mig-text'}`}>
-          {code.code}
-        </p>
-        <p className="text-xs text-mig-dim">
-          {code.teamName} · {code.usesCount}/{code.maxUses ?? '∞'} uses
-        </p>
-      </div>
-      {!disabled && (
-        <div className="flex gap-2">
-          <button onClick={copy}
-            className="text-xs border border-mig-border rounded-lg px-2 py-1 text-mig-muted hover:text-mig-text hover:border-mig-orange/30 transition-colors">
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-          <button onClick={onDisable}
-            className="text-xs border border-mig-danger/30 text-mig-danger rounded-lg px-2 py-1 hover:bg-mig-danger/10 transition-colors">
-            Disable
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Player Registration Requests tab ────────────────────────────────────────
 
 const STATUS_STYLE = {
@@ -612,8 +474,7 @@ export default function AdminDashboardPage() {
 
       {tab === 0 && <ClubsTeamsTab />}
       {tab === 1 && <RegistrationCodesTab />}
-      {tab === 2 && <TeamCodesTab />}
-      {tab === 3 && <PlayerRequestsTab />}
+      {tab === 2 && <PlayerRequestsTab />}
     </div>
   )
 }

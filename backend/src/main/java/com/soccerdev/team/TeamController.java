@@ -1,6 +1,7 @@
 package com.soccerdev.team;
 
 import com.soccerdev.common.ApiResponse;
+import com.soccerdev.onboarding.TeamPlayerDto;
 import com.soccerdev.security.CurrentUserService;
 import com.soccerdev.user.User;
 import jakarta.validation.Valid;
@@ -26,6 +27,21 @@ public class TeamController {
             @AuthenticationPrincipal UserDetails userDetails) {
         User user = currentUserService.getUser(userDetails);
         return ResponseEntity.ok(ApiResponse.ok(teamService.list(user)));
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<ApiResponse<List<TeamResponse>>> listMine(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = currentUserService.getUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.ok(teamService.listMyTeams(user)));
+    }
+
+    @GetMapping("/{id}/players")
+    public ResponseEntity<ApiResponse<List<TeamPlayerDto>>> listPlayers(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        User user = currentUserService.getUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.ok(teamService.listPlayersForTeam(user, id)));
     }
 
     @GetMapping("/{id}")

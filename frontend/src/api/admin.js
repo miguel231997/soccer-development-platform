@@ -16,14 +16,6 @@ export const createRegistrationCode = (data) =>
 export const disableRegistrationCode = (id) =>
   api.put(`/api/admin/registration-codes/${id}/disable`).then((r) => r.data.data)
 
-// Team invite codes (for parents to link children to teams)
-export const listTeamInviteCodes = () =>
-  api.get('/api/admin/team-invite-codes').then((r) => r.data.data)
-export const createTeamInviteCode = (data) =>
-  api.post('/api/admin/team-invite-codes', data).then((r) => r.data.data)
-export const disableTeamInviteCode = (id) =>
-  api.put(`/api/admin/team-invite-codes/${id}/disable`).then((r) => r.data.data)
-
 // Player registration requests (also used by coaches)
 export const listRegistrationRequests = () =>
   api.get('/api/player-registration-requests/manage').then((r) => r.data.data)

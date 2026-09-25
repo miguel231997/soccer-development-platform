@@ -90,7 +90,7 @@ public class AuthService {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtService.generateToken(userDetails);
 
-        return toAuthResponse(user, token);
+        return toAuthResponse(user, token, role == UserRole.PARENT ? code.getTeam() : null);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -197,6 +197,10 @@ public class AuthService {
     }
 
     private AuthResponse toAuthResponse(User user, String token) {
+        return toAuthResponse(user, token, null);
+    }
+
+    private AuthResponse toAuthResponse(User user, String token, com.soccerdev.team.Team team) {
         return AuthResponse.builder()
                 .token(token)
                 .id(user.getId())
@@ -204,6 +208,8 @@ public class AuthService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .role(user.getRole())
+                .teamId(team != null ? team.getId() : null)
+                .teamName(team != null ? team.getName() : null)
                 .build();
     }
 }

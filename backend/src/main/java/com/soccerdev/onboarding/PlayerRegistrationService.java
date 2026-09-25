@@ -10,6 +10,9 @@ import com.soccerdev.team.CoachTeamAssignmentRepository;
 import com.soccerdev.team.PlayerTeamAssignment;
 import com.soccerdev.team.PlayerTeamAssignmentRepository;
 import com.soccerdev.team.Team;
+import com.soccerdev.team.TeamMembership;
+import com.soccerdev.team.TeamMembershipRepository;
+import com.soccerdev.team.TeamRepository;
 import com.soccerdev.user.User;
 import com.soccerdev.user.UserRole;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,7 +36,8 @@ public class PlayerRegistrationService {
     private final PlayerTeamAssignmentRepository playerTeamAssignmentRepository;
     private final CoachTeamAssignmentRepository coachTeamAssignmentRepository;
     private final AuthorizationService authorizationService;
-    private final TeamInviteCodeService teamInviteCodeService;
+    private final TeamRepository teamRepository;
+    private final TeamMembershipRepository teamMembershipRepository;
 
     @Transactional
     public PlayerRegistrationResponse create(User parent, PlayerRegistrationInput input) {
@@ -41,8 +45,11 @@ public class PlayerRegistrationService {
             throw new AccessDeniedException("Only PARENT users can submit player registration requests");
         }
 
-        // Validate and consume the team invite code
-        Team team = teamInviteCodeService.resolveAndConsume(input.getTeamInviteCode());
+        Team team = teamRepository.findById(input.getTeamId())
+                .orElseThrow(() -> new EntityNotFoundException("Team not found"));
+        if (!teamMembershipRepository.existsByUserIdAndTeamId(parent.getId(), team.getId())) {
+            throw new AccessDeniedException("You are not a member of this team");
+        }
 
         Player existingPlayer = null;
         if (input.getExistingPlayerId() != null) {
@@ -159,6 +166,15 @@ public class PlayerRegistrationService {
                     .player(player)
                     .team(req.getTeam())
                     .active(true)
+                    .build());
+        }
+
+        // Auto-add parent as a member of the team if not already
+        if (!teamMembershipRepository.existsByUserIdAndTeamId(req.getParentUser().getId(), req.getTeam().getId())) {
+            teamMembershipRepository.save(TeamMembership.builder()
+                    .user(req.getParentUser())
+                    .team(req.getTeam())
+                    .role(UserRole.PARENT)
                     .build());
         }
 

@@ -12,10 +12,10 @@ import java.time.LocalDate;
 @Setter
 public class PlayerRegistrationInput {
 
-    @NotBlank
-    private String teamInviteCode;
+    @NotNull
+    private Long teamId;
 
-    /** If set, the request is for an already-approved player joining a new team (no new player record created on approval). */
+    /** If set, links the parent to an existing player already on the team (no new player record created on approval). */
     private Long existingPlayerId;
 
     // Required when existingPlayerId is null (new child):

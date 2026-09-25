@@ -10,15 +10,18 @@ export const getChildReports = (playerId) =>
 export const listMyRegistrationRequests = () =>
   api.get('/api/player-registration-requests/my').then((r) => r.data.data)
 
-/** Look up a team invite code without consuming it (shows team name before submitting). */
-export const lookupTeamInviteCode = (code) =>
-  api.get(`/api/team-invite-codes/lookup/${code}`).then((r) => r.data.data)
+/** Returns teams the authenticated user is a member of. */
+export const listMyTeams = () => api.get('/api/teams/mine').then((r) => r.data.data)
 
-/** List active players on the team for the given invite code (parent selects their child). */
-export const listTeamPlayers = (code) =>
-  api.get(`/api/team-invite-codes/lookup/${code}/players`).then((r) => r.data.data)
+/** Returns active players on a specific team (user must be a member). */
+export const listTeamPlayersById = (teamId) =>
+  api.get(`/api/teams/${teamId}/players`).then((r) => r.data.data)
 
-/** Register a child (or add an existing child to another team) using a team invite code. */
+/** Join an additional team using a PARENT registration code. */
+export const joinTeam = (code) =>
+  api.post('/api/auth/join-team', { code }).then((r) => r.data.data)
+
+/** Register a child to a team the parent is already a member of. */
 export const submitPlayerRegistration = (data) =>
   api.post('/api/player-registration-requests', data).then((r) => r.data.data)
 
