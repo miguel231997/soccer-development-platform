@@ -120,17 +120,26 @@ export default function MatchDetailPage() {
           <ScoreEntry match={match} onSaved={() => window.location.reload()} />
         )}
 
-        {!match.finalized && (
-          <div className="pt-2 border-t border-mig-border flex items-center gap-3 flex-wrap">
+        <div className="pt-2 border-t border-mig-border flex items-center gap-3 flex-wrap">
+          {isParent ? (
             <Link
               to={`/matches/${matchId}/stats`}
-              className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+              className="text-sm border border-mig-border text-mig-muted hover:text-mig-text hover:border-mig-orange/30 font-semibold px-4 py-2 rounded-lg transition-colors"
             >
-              Enter Stats
+              View Stats
             </Link>
-            {!isParent && (
-              <>
-                <FormError message={finalizeError} />
+          ) : (
+            <>
+              {!match.finalized && (
+                <Link
+                  to={`/matches/${matchId}/stats`}
+                  className="text-sm bg-mig-orange hover:bg-mig-orange-dark text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  Enter Stats
+                </Link>
+              )}
+              <FormError message={finalizeError} />
+              {!match.finalized && (
                 <button
                   onClick={handleFinalize}
                   disabled={finalizing}
@@ -138,10 +147,10 @@ export default function MatchDetailPage() {
                 >
                   {finalizing ? 'Finalizing…' : 'Finalize Match'}
                 </button>
-              </>
-            )}
-          </div>
-        )}
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <PostGameAnalysis match={match} isParent={isParent} />

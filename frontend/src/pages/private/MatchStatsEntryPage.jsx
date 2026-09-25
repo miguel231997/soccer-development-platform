@@ -127,19 +127,17 @@ export default function MatchStatsEntryPage() {
       <div>
         <Link to={`/matches/${matchId}`} className="text-xs text-mig-muted hover:text-mig-orange transition-colors font-medium uppercase tracking-wide">← Match</Link>
         <h1 className="text-xl font-bold text-mig-text mt-1">
-          Stats Entry — {match.teamName} vs {match.opponent}
+          {isParent ? 'Match Stats' : 'Stats Entry'} — {match.teamName} vs {match.opponent}
         </h1>
-        {match.finalized && (
+        {(match.finalized || isParent) && (
           <div className="mt-2 text-sm bg-mig-card text-mig-muted border border-mig-border rounded-lg px-3 py-2 inline-block">
-            {isParent
-              ? 'This match has been finalized. Stats can no longer be edited.'
-              : 'Match is finalized. Stats are locked.'}
+            {isParent ? 'Viewing your child\'s stats for this match.' : 'Match is finalized. Stats are locked.'}
           </div>
         )}
       </div>
 
       {roster.length === 0 ? (
-        <p className="text-mig-muted text-sm">No active players on this team.</p>
+        <p className="text-mig-muted text-sm">{isParent ? 'No stats available for this match.' : 'No active players on this team.'}</p>
       ) : (
         <div className="space-y-3">
           {roster.map((player) => (
@@ -148,7 +146,7 @@ export default function MatchStatsEntryPage() {
               player={player}
               existing={statsByPlayer[player.id]}
               matchId={matchId}
-              finalized={match.finalized}
+              finalized={match.finalized || isParent}
             />
           ))}
         </div>
