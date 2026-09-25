@@ -30,6 +30,13 @@ export default function TeamsPage() {
             >
               <p className="font-semibold text-lg text-mig-text group-hover:text-mig-orange">{t.name}</p>
               {t.clubName && <p className="text-sm text-mig-dim mt-0.5">{t.clubName}</p>}
+              {(t.wins > 0 || t.draws > 0 || t.losses > 0) && (
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-xs font-semibold text-mig-success">{t.wins}W</span>
+                  <span className="text-xs font-semibold text-mig-warning">{t.draws}D</span>
+                  <span className="text-xs font-semibold text-mig-danger">{t.losses}L</span>
+                </div>
+              )}
               <div className="flex gap-2 mt-3 flex-wrap">
                 {t.ageGroup && (
                   <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">{t.ageGroup}</span>

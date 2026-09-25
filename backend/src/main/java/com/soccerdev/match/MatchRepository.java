@@ -27,6 +27,9 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     List<Match> findBySeasonPhaseId(Long seasonPhaseId);
 
+    @Query("SELECT m FROM Match m WHERE m.team.id = :teamId AND m.homeScore IS NOT NULL AND m.awayScore IS NOT NULL")
+    List<Match> findScoredMatchesByTeamId(@Param("teamId") Long teamId);
+
     @Query("""
             SELECT m FROM Match m
             JOIN FETCH m.team t JOIN FETCH t.club

@@ -2,6 +2,9 @@ package com.soccerdev.team;
 
 import com.soccerdev.club.Club;
 import com.soccerdev.club.ClubRepository;
+import com.soccerdev.match.HomeAway;
+import com.soccerdev.match.Match;
+import com.soccerdev.match.MatchRepository;
 import com.soccerdev.security.AuthorizationService;
 import com.soccerdev.user.User;
 import jakarta.persistence.EntityNotFoundException;
@@ -20,6 +23,7 @@ public class TeamService {
 
     private final TeamRepository teamRepository;
     private final ClubRepository clubRepository;
+    private final MatchRepository matchRepository;
     private final AuthorizationService authorizationService;
 
     public List<TeamResponse> list(User user) {
@@ -91,6 +95,14 @@ public class TeamService {
     }
 
     private TeamResponse toResponse(Team team) {
+        int wins = 0, draws = 0, losses = 0;
+        for (Match m : matchRepository.findScoredMatchesByTeamId(team.getId())) {
+            int teamGoals = m.getHomeAway() == HomeAway.HOME ? m.getHomeScore() : m.getAwayScore();
+            int oppGoals  = m.getHomeAway() == HomeAway.HOME ? m.getAwayScore() : m.getHomeScore();
+            if (teamGoals > oppGoals) wins++;
+            else if (teamGoals == oppGoals) draws++;
+            else losses++;
+        }
         return TeamResponse.builder()
                 .id(team.getId())
                 .clubId(team.getClub().getId())
@@ -99,6 +111,9 @@ public class TeamService {
                 .ageGroup(team.getAgeGroup())
                 .gender(team.getGender())
                 .competitiveLevel(team.getCompetitiveLevel())
+                .wins(wins)
+                .draws(draws)
+                .losses(losses)
                 .createdAt(team.getCreatedAt())
                 .updatedAt(team.getUpdatedAt())
                 .build();

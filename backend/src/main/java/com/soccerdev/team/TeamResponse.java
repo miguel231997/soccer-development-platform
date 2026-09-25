@@ -16,6 +16,10 @@ public class TeamResponse {
     private AgeGroup ageGroup;
     private Gender gender;
     private CompetitiveLevel competitiveLevel;
+    private int wins;
+    private int draws;
+    private int losses;
+
     private Instant createdAt;
     private Instant updatedAt;
 }
