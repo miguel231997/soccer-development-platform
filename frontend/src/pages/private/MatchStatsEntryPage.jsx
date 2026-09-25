@@ -6,51 +6,22 @@ import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import ErrorAlert from '../../components/ErrorAlert'
 
-const SECTIONS = [
-  {
-    label: 'General',
-    fields: [
-      { key: 'minutesPlayed', label: 'Min',   width: 'w-14', type: 'int' },
-      { key: 'saves',         label: 'Saves', width: 'w-14', type: 'int' },
-      { key: 'cleanSheet',    label: 'CS',                   type: 'bool' },
-    ],
-  },
+const ACTIVE_SECTIONS = [
   {
     label: 'Shooting',
     fields: [
-      { key: 'goals',         label: 'Goals',   width: 'w-14', type: 'int' },
-      { key: 'shots',         label: 'Shots',   width: 'w-14', type: 'int' },
-      { key: 'shotsOnTarget', label: 'SoT',     width: 'w-14', type: 'int' },
+      { key: 'goals',         label: 'Goals',         width: 'w-14', type: 'int' },
+      { key: 'assists',       label: 'Assists',        width: 'w-14', type: 'int' },
+      { key: 'shots',         label: 'Shots',          width: 'w-14', type: 'int' },
+      { key: 'shotsOnTarget', label: 'SoT',            width: 'w-14', type: 'int' },
     ],
   },
   {
-    label: 'Passing',
+    label: 'Goalkeeping',
     fields: [
-      { key: 'assists',          label: 'Assists',       width: 'w-14', type: 'int' },
-      { key: 'successfulPasses', label: 'Passes',        width: 'w-14', type: 'int' },
-      { key: 'accurateLongBalls',label: 'Long balls',    width: 'w-14', type: 'int' },
-      { key: 'chancesCreated',   label: 'Chances',       width: 'w-14', type: 'int' },
-      { key: 'successfulCrosses',label: 'Crosses',       width: 'w-14', type: 'int' },
-    ],
-  },
-  {
-    label: 'Possession',
-    fields: [
-      { key: 'successfulDribbles', label: 'Dribbles',    width: 'w-14', type: 'int' },
-      { key: 'duelsWon',           label: 'Duels won',   width: 'w-14', type: 'int' },
-      { key: 'dispossessed',       label: 'Dispossessed',width: 'w-14', type: 'int' },
-      { key: 'foulsWon',           label: 'Fouls won',   width: 'w-14', type: 'int' },
-    ],
-  },
-  {
-    label: 'Defending',
-    fields: [
-      { key: 'tackles',       label: 'Tackles',       width: 'w-14', type: 'int' },
-      { key: 'interceptions', label: 'Interceptions', width: 'w-14', type: 'int' },
-      { key: 'foulsCommitted',label: 'Fouls',         width: 'w-14', type: 'int' },
-      { key: 'blockedShots',  label: 'Blk shots',     width: 'w-14', type: 'int' },
-      { key: 'clearances',    label: 'Clearances',    width: 'w-14', type: 'int' },
-      { key: 'goalsConceded', label: 'Goals conceded',width: 'w-14', type: 'int' },
+      { key: 'saves',         label: 'Saves',          width: 'w-14', type: 'int' },
+      { key: 'goalsConceded', label: 'Goals conceded', width: 'w-14', type: 'int' },
+      { key: 'cleanSheet',    label: 'Clean sheet',                    type: 'bool' },
     ],
   },
   {
@@ -60,18 +31,34 @@ const SECTIONS = [
       { key: 'redCards',    label: 'Red',    width: 'w-14', type: 'int' },
     ],
   },
-  {
-    label: 'Advanced',
-    fields: [
-      { key: 'xg',              label: 'xG', width: 'w-16', type: 'dec' },
-      { key: 'xa',              label: 'xA', width: 'w-16', type: 'dec' },
-      { key: 'xt',              label: 'xT', width: 'w-16', type: 'dec' },
-      { key: 'dangerPrevented', label: 'DP', width: 'w-16', type: 'dec' },
-    ],
-  },
 ]
 
-const ALL_KEYS = SECTIONS.flatMap((s) => s.fields.map((f) => f.key))
+const COMING_SOON_LABELS = ['General', 'Passing', 'Possession', 'Defending', 'Advanced']
+
+// Full field list kept for form state so existing saved values aren't lost
+const ALL_FIELD_DEFS = [
+  ...ACTIVE_SECTIONS.flatMap((s) => s.fields),
+  { key: 'minutesPlayed',      type: 'int' },
+  { key: 'successfulPasses',   type: 'int' },
+  { key: 'accurateLongBalls',  type: 'int' },
+  { key: 'chancesCreated',     type: 'int' },
+  { key: 'successfulCrosses',  type: 'int' },
+  { key: 'successfulDribbles', type: 'int' },
+  { key: 'duelsWon',           type: 'int' },
+  { key: 'dispossessed',       type: 'int' },
+  { key: 'foulsWon',           type: 'int' },
+  { key: 'tackles',            type: 'int' },
+  { key: 'interceptions',      type: 'int' },
+  { key: 'foulsCommitted',     type: 'int' },
+  { key: 'blockedShots',       type: 'int' },
+  { key: 'clearances',         type: 'int' },
+  { key: 'xg',                 type: 'dec' },
+  { key: 'xa',                 type: 'dec' },
+  { key: 'xt',                 type: 'dec' },
+  { key: 'dangerPrevented',    type: 'dec' },
+]
+
+const ALL_KEYS = ALL_FIELD_DEFS.map((f) => f.key)
 
 function emptyRow() {
   return Object.fromEntries(ALL_KEYS.map((k) => [k, k === 'cleanSheet' ? false : '']))
@@ -87,10 +74,8 @@ function fromExisting(s) {
 
 function toPayload(form) {
   const payload = {}
-  ALL_KEYS.forEach((key) => {
-    const field = SECTIONS.flatMap((s) => s.fields).find((f) => f.key === key)
-    if (!field) return
-    if (field.type === 'bool') {
+  ALL_FIELD_DEFS.forEach(({ key, type }) => {
+    if (type === 'bool') {
       payload[key] = form[key]
     } else if (form[key] !== '') {
       payload[key] = Number(form[key])
@@ -131,7 +116,7 @@ export default function MatchStatsEntryPage() {
         </h1>
         {(match.finalized || isParent) && (
           <div className="mt-2 text-sm bg-mig-card text-mig-muted border border-mig-border rounded-lg px-3 py-2 inline-block">
-            {isParent ? 'Viewing your child\'s stats for this match.' : 'Match is finalized. Stats are locked.'}
+            {isParent ? "Viewing your child's stats for this match." : 'Match is finalized. Stats are locked.'}
           </div>
         )}
       </div>
@@ -146,7 +131,8 @@ export default function MatchStatsEntryPage() {
               player={player}
               existing={statsByPlayer[player.id]}
               matchId={matchId}
-              finalized={match.finalized || isParent}
+              finalized={match.finalized}
+              isParent={isParent}
             />
           ))}
         </div>
@@ -155,11 +141,13 @@ export default function MatchStatsEntryPage() {
   )
 }
 
-function PlayerStatsRow({ player, existing, matchId, finalized }) {
+function PlayerStatsRow({ player, existing, matchId, finalized, isParent }) {
   const [form, setForm] = useState(() => fromExisting(existing))
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState(null)
+
+  const readOnly = finalized || isParent
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -202,7 +190,7 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
         <div className="flex items-center gap-2">
           {saved && <span className="text-xs text-mig-success">Saved</span>}
           {error && <span className="text-xs text-mig-danger font-medium">{error}</span>}
-          {!finalized && (
+          {!readOnly && (
             <button
               onClick={handleSave}
               disabled={saving}
@@ -214,9 +202,9 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
         </div>
       </div>
 
-      {/* Sections */}
+      {/* Active sections */}
       <div className="space-y-4">
-        {SECTIONS.map((section) => (
+        {ACTIVE_SECTIONS.map((section) => (
           <div key={section.label}>
             <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider mb-2">
               {section.label}
@@ -231,7 +219,7 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
                       name={key}
                       checked={form[key]}
                       onChange={handleChange}
-                      disabled={finalized}
+                      disabled={readOnly}
                       className="w-5 h-5 accent-orange-500 mt-1"
                     />
                   </label>
@@ -245,7 +233,7 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
                       step={type === 'dec' ? '0.01' : '1'}
                       value={form[key]}
                       onChange={handleChange}
-                      disabled={finalized}
+                      disabled={readOnly}
                       className={`${width} bg-mig-bg border border-mig-border text-mig-text rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-mig-orange/40 focus:border-mig-orange transition-colors disabled:opacity-50 disabled:text-mig-dim`}
                     />
                   </label>
@@ -254,6 +242,18 @@ function PlayerStatsRow({ player, existing, matchId, finalized }) {
             </div>
           </div>
         ))}
+
+        {/* Coming soon sections — parents see label, coaches see nothing */}
+        {isParent && (
+          <div className="pt-2 border-t border-mig-border space-y-2">
+            {COMING_SOON_LABELS.map((label) => (
+              <div key={label} className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-mig-dim uppercase tracking-wider">{label}</p>
+                <span className="text-xs bg-mig-card text-mig-dim border border-mig-border px-2 py-0.5 rounded font-medium">Coming Soon</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -2,43 +2,14 @@ import { useState } from 'react'
 import Spinner from './Spinner'
 import ErrorAlert from './ErrorAlert'
 
-const SECTIONS = [
+const ACTIVE_SECTIONS = [
   {
     label: 'Shooting',
     stats: [
-      { key: 'goals',          label: 'Goals' },
-      { key: 'shots',          label: 'Shots' },
-      { key: 'shotsOnTarget',  label: 'Shots on target' },
-    ],
-  },
-  {
-    label: 'Passing',
-    stats: [
-      { key: 'assists',          label: 'Assists' },
-      { key: 'successfulPasses', label: 'Successful passes' },
-      { key: 'accurateLongBalls',label: 'Accurate long balls' },
-      { key: 'chancesCreated',   label: 'Chances created' },
-      { key: 'successfulCrosses',label: 'Successful crosses' },
-    ],
-  },
-  {
-    label: 'Possession',
-    stats: [
-      { key: 'successfulDribbles', label: 'Successful dribbles' },
-      { key: 'duelsWon',           label: 'Duels won' },
-      { key: 'dispossessed',       label: 'Dispossessed' },
-      { key: 'foulsWon',           label: 'Fouls won' },
-    ],
-  },
-  {
-    label: 'Defending',
-    stats: [
-      { key: 'tackles',       label: 'Tackles' },
-      { key: 'interceptions', label: 'Interceptions' },
-      { key: 'foulsCommitted',label: 'Fouls committed' },
-      { key: 'blockedShots',  label: 'Blocked shots' },
-      { key: 'clearances',    label: 'Clearances' },
-      { key: 'goalsConceded', label: 'Goals conceded while on pitch' },
+      { key: 'goals',         label: 'Goals' },
+      { key: 'assists',       label: 'Assists' },
+      { key: 'shots',         label: 'Shots' },
+      { key: 'shotsOnTarget', label: 'Shots on target' },
     ],
   },
   {
@@ -49,6 +20,8 @@ const SECTIONS = [
     ],
   },
 ]
+
+const COMING_SOON_LABELS = ['General', 'Passing', 'Possession', 'Defending', 'Advanced']
 
 function barColor(pct) {
   if (pct >= 75) return 'bg-mig-success'
@@ -123,7 +96,7 @@ export default function PlayerSeasonStatsTab({ data, loading, error }) {
           </p>
         </div>
 
-        {SECTIONS.map((section) => (
+        {ACTIVE_SECTIONS.map((section) => (
           <div key={section.label} className="px-5 py-3 border-b border-mig-border last:border-0">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-mig-muted uppercase tracking-wider">{section.label}</span>
@@ -138,6 +111,13 @@ export default function PlayerSeasonStatsTab({ data, loading, error }) {
             {section.stats.map(({ key, label }) => (
               <StatRow key={key} label={label} entry={data[key]} />
             ))}
+          </div>
+        ))}
+
+        {COMING_SOON_LABELS.map((label) => (
+          <div key={label} className="px-5 py-3 border-b border-mig-border last:border-0 flex items-center justify-between">
+            <span className="text-xs font-bold text-mig-muted uppercase tracking-wider">{label}</span>
+            <span className="text-xs bg-mig-card text-mig-dim border border-mig-border px-2 py-0.5 rounded font-medium">Coming Soon</span>
           </div>
         ))}
       </div>
