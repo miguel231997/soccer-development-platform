@@ -87,6 +87,7 @@ const NAV_COACH = [
 const NAV_PARENT = [
   { to: '/parent',          label: 'Overview',   icon: <GridIcon />,     exact: true  },
   { to: '/parent/children', label: 'My Players', icon: <UsersIcon />,    exact: false },
+  { to: '/teams',           label: 'Teams',      icon: <ShieldIcon />,   exact: false },
   { to: '/matches',         label: 'Matches',    icon: <CalendarIcon />, exact: false },
 ]
 
