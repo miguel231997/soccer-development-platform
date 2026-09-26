@@ -19,7 +19,7 @@ export const listTeamPlayersById = (teamId) =>
 
 /** Join an additional team using a PARENT registration code. */
 export const joinTeam = (code) =>
-  api.post('/api/auth/join-team', { code }).then((r) => r.data.data)
+  api.post('/api/auth/join-team', { registrationCode: code }).then((r) => r.data.data)
 
 /** Register a child to a team the parent is already a member of. */
 export const submitPlayerRegistration = (data) =>
