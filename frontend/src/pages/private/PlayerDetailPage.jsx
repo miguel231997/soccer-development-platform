@@ -297,8 +297,8 @@ function EvaluationsTab({ evals, playerId, isParent }) {
                     )}
                   </div>
 
-                  {/* Detailed breakdown — only for own eval */}
-                  {ev.own && (
+                  {/* Detailed breakdown — coaches see all, parents see none */}
+                  {!isParent && (
                     <div className="flex flex-wrap gap-3 mb-2">
                       {RATING_KEYS.filter((r) => r.key !== 'overallRating').map(({ key, label }) =>
                         ev[key] != null ? (
