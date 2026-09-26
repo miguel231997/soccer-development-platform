@@ -6,6 +6,7 @@ import com.soccerdev.match.HomeAway;
 import com.soccerdev.match.Match;
 import com.soccerdev.match.MatchRepository;
 import com.soccerdev.onboarding.TeamPlayerDto;
+import com.soccerdev.player.ParentPlayerRelationshipRepository;
 import com.soccerdev.player.Player;
 import com.soccerdev.player.PlayerRepository;
 import com.soccerdev.security.AuthorizationService;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +33,7 @@ public class TeamService {
     private final AuthorizationService authorizationService;
     private final TeamMembershipRepository teamMembershipRepository;
     private final PlayerRepository playerRepository;
+    private final ParentPlayerRelationshipRepository parentPlayerRelationshipRepository;
 
     public List<TeamResponse> list(User user) {
         List<Team> teams = switch (user.getRole()) {
@@ -108,8 +111,21 @@ public class TeamService {
         if (!isMember && !isStaff) {
             throw new AccessDeniedException("Access denied");
         }
-        return playerRepository.findByTeamId(teamId).stream()
+        List<Player> activePlayers = playerRepository.findByTeamId(teamId).stream()
                 .filter(Player::isActive)
+                .toList();
+
+        Set<Long> claimedIds = Collections.emptySet();
+        if (user.getRole() == UserRole.PARENT) {
+            List<Long> playerIds = activePlayers.stream().map(Player::getId).toList();
+            if (!playerIds.isEmpty()) {
+                claimedIds = parentPlayerRelationshipRepository.findClaimedPlayerIds(playerIds);
+            }
+        }
+
+        final Set<Long> finalClaimedIds = claimedIds;
+        return activePlayers.stream()
+                .filter(p -> !finalClaimedIds.contains(p.getId()))
                 .map(p -> TeamPlayerDto.builder()
                         .id(p.getId())
                         .firstName(p.getFirstName())
