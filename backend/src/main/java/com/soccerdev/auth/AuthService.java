@@ -58,7 +58,7 @@ public class AuthService {
             throw new IllegalArgumentException("Registration code grants an unsupported role");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmailIgnoreCase(request.getEmail())) {
             throw new EmailAlreadyExistsException(request.getEmail());
         }
 
@@ -97,7 +97,7 @@ public class AuthService {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailIgnoreCase(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
@@ -182,7 +182,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public CurrentUserResponse getCurrentUser(String email) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return CurrentUserResponse.builder()

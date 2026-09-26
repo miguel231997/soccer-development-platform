@@ -16,7 +16,7 @@ public class CurrentUserService {
 
     @Transactional(readOnly = true)
     public User getUser(UserDetails userDetails) {
-        return userRepository.findByEmail(userDetails.getUsername())
+        return userRepository.findByEmailIgnoreCase(userDetails.getUsername())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 }
