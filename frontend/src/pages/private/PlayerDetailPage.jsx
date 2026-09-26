@@ -8,16 +8,15 @@ import ErrorAlert from '../../components/ErrorAlert'
 import PlayerSeasonStatsTab from '../../components/PlayerSeasonStatsTab'
 
 const STAT_COLS = [
-  { key: 'opponent',       label: 'Match' },
-  { key: 'minutesPlayed',  label: 'Min' },
-  { key: 'goals',          label: 'G' },
-  { key: 'assists',        label: 'A' },
-  { key: 'shots',          label: 'Shots' },
-  { key: 'shotsOnTarget',  label: 'SoT' },
-  { key: 'saves',          label: 'Saves' },
-  { key: 'cleanSheet',     label: 'CS' },
-  { key: 'xg',             label: 'xG', decimal: true },
-  { key: 'xa',             label: 'xA', decimal: true },
+  { key: 'opponent',      label: 'Match' },
+  { key: 'goals',         label: 'G' },
+  { key: 'assists',       label: 'A' },
+  { key: 'shots',         label: 'Shots' },
+  { key: 'shotsOnTarget', label: 'SoT' },
+  { key: 'saves',         label: 'Saves' },
+  { key: 'cleanSheet',    label: 'CS' },
+  { key: 'yellowCards',   label: 'Y' },
+  { key: 'redCards',      label: 'R' },
 ]
 
 const RATING_KEYS = [
